@@ -1,4 +1,4 @@
-#include "tutorial_bot.cc"
+#include "kurt/tutorial_bot.cc"
 
 #include "sc2api/sc2_api.h"
 
