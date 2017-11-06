@@ -7,9 +7,9 @@
 
 #include "sc2renderer/sc2_renderer.h"
 
-const float kCameraWidth = 24.0f;
+const float kCameraWidth = 44.0f; // default 24.0f
 const int kFeatureLayerSize = 80;
-const int kPixelDrawSize = 5;
+const int kPixelDrawSize = 4;
 const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
 
 void DrawFeatureLayer1BPP(const SC2APIProtocol::ImageData& image_data, int off_x, int off_y) {
@@ -37,7 +37,7 @@ class RenderAgent : public Bot {
 public:
     virtual void OnGameStart() final {
         Bot::OnGameStart();
-        sc2::renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
+        sc2::renderer::Initialize("Feature layers", 350, 50, 2 * kDrawSize, 2 * kDrawSize);
     }
 
     virtual void OnStep() final {
