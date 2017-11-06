@@ -1,3 +1,5 @@
+#include "tutorial_bot.cc"
+
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
 
@@ -31,13 +33,15 @@ void DrawFeatureLayerHeightMap8BPP(const SC2APIProtocol::ImageData& image_data, 
     sc2::renderer::Matrix8BPPHeightMap(image_data.data().c_str(), width, height, off_x, off_y, kPixelDrawSize, kPixelDrawSize);
 }
 
-class RenderAgent : public sc2::Agent {
+class RenderAgent : public Bot {
 public:
     virtual void OnGameStart() final {
+        Bot::OnGameStart();
         sc2::renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
     }
 
     virtual void OnStep() final {
+        Bot::OnStep();
         const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
 
         const SC2APIProtocol::FeatureLayers& m = observation->feature_layer_data().renders();
@@ -52,6 +56,7 @@ public:
     }
 
     virtual void OnGameEnd() final {
+        Bot::OnGameEnd();
         sc2::renderer::Shutdown();
     }
 };
