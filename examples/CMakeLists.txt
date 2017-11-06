@@ -1,7 +1,9 @@
 include_directories("../include")
 include_directories("common")
+include_directories("kurt")
 
 file(GLOB common_sources "common/*.h" "common/*.cc")
+file(GLOB kurt_files "kurt/*.h" "kurt/*.cc")
 
 include_directories(SYSTEM "${PROJECT_BINARY_DIR}/generated")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/contrib/SDL-mirror/include")
@@ -30,7 +32,7 @@ set_target_properties(replay PROPERTIES FOLDER examples)
 target_link_libraries(replay sc2api sc2utils)
 
 #Tutorial
-add_executable(tutorial "tutorial.cc")
+add_executable(tutorial "tutorial.cc" ${kurt_files})
 set_target_properties(tutorial PROPERTIES FOLDER examples)
 target_link_libraries(tutorial sc2api sc2utils)
 
