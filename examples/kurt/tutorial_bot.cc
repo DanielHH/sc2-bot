@@ -5,11 +5,11 @@ using namespace sc2;
 
 class Bot : public Agent {
 public:
-    virtual void OnGameStart() final {
+    virtual void OnGameStart() {
         std::cout << "Hello, World!" << std::endl;
     }
     
-    virtual void OnStep() final {
+    virtual void OnStep() {
         /* TUTORIAL 1
          int gameLoop = Observation()->GetGameLoop();
          if (gameLoop%20 == 0) {
@@ -21,11 +21,11 @@ public:
         /* TUTORIAL 2 */
         TryBuildSupplyDepot();
     }
-    virtual void OnUnitCreated(const Unit* unit) final {
+    virtual void OnUnitCreated(const Unit* unit) {
         std::cout << unit->tag << std::endl;
     }
     
-    virtual void OnUnitIdle(const Unit* unit) final {
+    virtual void OnUnitIdle(const Unit* unit) {
         switch(unit->unit_type.ToType()) {
             case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
                 Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
@@ -95,7 +95,7 @@ public:
         return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
     }
     
-    const Unit* FindNearestMineralPatch(const Point2D& start){
+    const Unit* FindNearestMineralPatch(const Point2D& start) {
         Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
         float distance = std::numeric_limits<float>::max();
         const Unit* target = nullptr;
