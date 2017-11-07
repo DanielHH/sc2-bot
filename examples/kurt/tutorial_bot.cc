@@ -20,6 +20,7 @@ public:
         
         /* TUTORIAL 2 */
         TryBuildSupplyDepot();
+        TryBuildRefinary();
     }
     virtual void OnUnitCreated(const Unit* unit) {
         std::cout << unit->tag << std::endl;
@@ -91,6 +92,19 @@ public:
         return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, randomLocationNearUnit(unit), unit);
     }
     
+    bool TryBuildRefinary() {
+        const ObservationInterface* observation = Observation();
+        
+        // As soon as we have enough gold we build a refinary
+        if (observation->GetMinerals() < 100) {
+            return false;
+        }
+        const Unit* vespene_target = FindNearestVespeneGeyser();
+        // Try and build a depot. Find a random SCV and give it the order.
+        return TryBuildStructure(ABILITY_ID::BUILD_REFINERY);
+        
+    }
+    
     const Unit* FindNearestMineralPatch(const Point2D& start) {
         Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
         float distance = std::numeric_limits<float>::max();
@@ -106,4 +120,35 @@ public:
         }
         return target;
     }
+    
+    const Unit* FindNearestVespeneGeyser() {
+        Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
+        Units allied_units = Observation()->GetUnits(Unit::Alliance::Ally);
+        float distance = std::numeric_limits<float>::max();
+        const Unit* command_center = nullptr;
+        const Unit* vespene_geyser = nullptr;
+        // Look for a command center among allied units
+        for (const auto& ally : allied_units) {
+            if (ally->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER){
+                command_center = ally;
+                // look for closest free vespene gayser of that command center
+                for (const auto& unit : units) {
+                    if (unit->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER && unit->build_progress == 0) {
+                        float d = DistanceSquared2D(unit->pos, command_center->pos);
+                        if (d < distance) {
+                            distance = d;
+                            vespene_geyser = unit;
+                        }
+                    }
+                }
+            }
+            // return if we have found a suitable vespene geyser close to a command center
+            if(command_center && vespene_geyser) {
+                return vespene_geyser;
+            }
+        }
+        return nullptr;
+    }
+    
+    
 };
