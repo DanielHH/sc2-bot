@@ -46,42 +46,38 @@ public:
         }
     }
     
-    bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV) {
+    bool TryBuildStructure(ABILITY_ID ability_type_for_structure,
+                           Point2D location,
+                           const Unit* unit) {
         const ObservationInterface* observation = Observation();
         
         // If a unit already is building a supply structure of this type, do nothing.
         // Also get an scv to build the structure.
         std::vector<const Unit*> units_to_build;
-        
-        const Unit* unit_to_build = nullptr;
         Units units = observation->GetUnits(Unit::Alliance::Self);
-        for (const auto& unit : units) {
-            for (const auto& order : unit->orders) {
-                if (order.ability_id != ability_type_for_structure  &&
-                    unit->unit_type == unit_type                    &&
-                    units_to_build.size() < 3) {
-                    units_to_build.push_back(unit);
-                } else {
-                    break;
-                }
-            }
-            if (units_to_build.size() > 2) {
-                break;
-            }
-        }
         
-        for (int i  = 0; i < units_to_build.size(); i++) {
-            float rx = GetRandomScalar();
-            float ry = GetRandomScalar();
-            unit_to_build = units_to_build[i];
-            Actions()->UnitCommand(unit_to_build,
-                                   ability_type_for_structure,
-                                   Point2D(unit_to_build->pos.x + rx * 15.0f, unit_to_build->pos.y + ry * 15.0f));
-            
-        }
-        
+        Actions()->UnitCommand(unit,
+                               ability_type_for_structure,
+                               location);
         return true;
     }
+    
+    
+    const Unit* getUnitOfType(UNIT_TYPEID unit_typeid) {
+        const ObservationInterface* observation = Observation();
+        Units units = observation->GetUnits(Unit::Alliance::Self);
+        return units.front();
+    }
+    
+    
+    static Point2D randomLocationNearUnit(const Unit* unit) {
+        float rx = GetRandomScalar();
+        float ry = GetRandomScalar();
+        Point2D location = Point2D(unit->pos.x + rx * 15.0f, unit->pos.y + ry * 15.0f);
+        return location;
+        
+    }
+    
     
     bool TryBuildSupplyDepot() {
         const ObservationInterface* observation = Observation();
@@ -90,9 +86,9 @@ public:
         if (observation->GetFoodUsed() <= observation->GetFoodCap() - 2) {
             return false;
         }
-        
         // Try and build a depot. Find a random SCV and give it the order.
-        return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
+        const Unit* unit = getUnitOfType(UNIT_TYPEID::TERRAN_SCV);
+        return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, randomLocationNearUnit(unit), unit);
     }
     
     const Unit* FindNearestMineralPatch(const Point2D& start) {
