@@ -8,8 +8,12 @@ public:
     ArmyManager() {
         
     }
+    
     void OnStep (const ObservationInterface* observation_interface) {
         // DO ALL DE ARMY STUFF
+    }
+    
+    void putUnitInGroup(const Unit* unit){
         
     }
 };
