@@ -16,12 +16,13 @@ struct IsVespeneGeyser {
     }
 };
 
-class Bot : public Agent {
+class Kurt : public Agent {
 public:
     ArmyManager* army_manager;
     BuildManager* build_manager;
     StrategyManager* strategy_manager;
     const ObservationInterface* observation_interface;
+
     virtual void OnGameStart() {
         std::cout << "Hello, World!" << std::endl;
         observation_interface = Observation();

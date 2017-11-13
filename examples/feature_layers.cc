@@ -92,7 +92,7 @@ void Render() {
     SDL_RenderClear(renderer_);
 }
 
-#include "tutorial_bot.cc"
+#include "kurt/kurt.cc"
 
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
@@ -104,15 +104,15 @@ void Render() {
 const int sw = 720;
 const int sh = 720;
 
-class RenderAgent : public Bot {
+class RenderAgent : public Kurt {
 public:
     virtual void OnGameStart() final {
-        Bot::OnGameStart();
+        Kurt::OnGameStart();
         Initialize("StarCraft 1.5", 550, 0, sw, sh);
     }
 
     virtual void OnStep() final {
-        Bot::OnStep();
+        Kurt::OnStep();
 
         // Set scale used when render, easier but also less details.
         const GameInfo& GameInfo = Observation()->GetGameInfo();
@@ -159,7 +159,7 @@ public:
     }
 
     virtual void OnGameEnd() final {
-        Bot::OnGameEnd();
+        Kurt::OnGameEnd();
         Shutdown();
     }
 };
