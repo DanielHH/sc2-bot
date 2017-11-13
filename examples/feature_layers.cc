@@ -1,3 +1,5 @@
+#if !(defined(_WIN64)||defined(__APPLE__))
+
 void Initialize(const char* title, int x, int y, int w, int h, unsigned int flags = 0);
 void Shutdown();
 void Matrix1BPP(const char* bytes, int w_mat, int h_mat, int off_x, int off_y, int px_w, int px_h);
@@ -213,3 +215,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+#endif
