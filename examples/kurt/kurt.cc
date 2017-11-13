@@ -3,6 +3,7 @@
 #include "army_manager.cc"
 #include "build_manager.cc"
 #include "strategy_manager.cc"
+#include <list>
 using namespace sc2;
 
 struct IsVespeneGeyser {
@@ -17,30 +18,32 @@ struct IsVespeneGeyser {
 };
 
 class Kurt : public Agent {
+    
 public:
     ArmyManager* army_manager;
     BuildManager* build_manager;
     StrategyManager* strategy_manager;
-    const ObservationInterface* observation_interface;
+    SharedResources* shared_resources;
 
     virtual void OnGameStart() {
         std::cout << "Hello, World!" << std::endl;
-        observation_interface = Observation();
-        army_manager = new ArmyManager();
+        shared_resources = new SharedResources();
+        army_manager = new ArmyManager(shared_resources);
         build_manager = new BuildManager();
         strategy_manager = new StrategyManager();
     }
     
     virtual void OnStep() {
-        observation_interface = Observation();
-        army_manager->OnStep(observation_interface);
-        build_manager->OnStep(observation_interface);
-        strategy_manager->OnStep(observation_interface);
+        const ObservationInterface* observation = Observation();
+        army_manager->OnStep(observation);
+        build_manager->OnStep(observation);
+        strategy_manager->OnStep(observation);
         TryBuildSupplyDepot();
         TryBuildRefinary();
     }
     virtual void OnUnitCreated(const Unit* unit) {
-        std::cout << unit->tag << std::endl;
+        const ObservationInterface* observation = Observation();
+        army_manager->groupNewUnit(unit, observation);
     }
     
     virtual void OnUnitIdle(const Unit* unit) {
