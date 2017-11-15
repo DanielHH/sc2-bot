@@ -11,11 +11,56 @@ public:
     }
     void OnStep (const ObservationInterface* observation) {
         // DO ALL DE ARMY STUFF
+        
+        // If we have no scout take an SCV if no reapers exist
+        if (shared_resources->scouts.empty()){
+            if(TryGetScout()) {
+                std::cout << "Number of scouts = " + shared_resources->scouts.size() + "Should be 1" << std_endl;
+            }
+        }
+    }
+    
+    // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
+    bool TryGetScout(){
+        bool scout_found = false;
+        const Unit* scout;
+        
+        for (const Unit* unit : shared_resources->army){
+            if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_MARINE) {
+                // Marine found, but keep looking.
+                scout = unit;
+                scout_found = true;
+            } else if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_REAPER) {
+                // We found a reaper, we are done!
+                shared_resources->scouts.push_back(unit);
+                shared_resources->army.remove(unit);
+                return true;
+            }
+        }
+        
+        // if no reaper or marine is found look for a SCV.
+        if (!scout_found) {
+            for(const Unit* unit : shared_resources->workers) {
+                // Find a SCV remove it from workers and put it in scouts.
+                shared_resources->scouts.push_back(unit);
+                shared_resources->workers.remove(unit);
+                scout_found = true;
+                return true;
+            }
+            // If we have no SCV:s
+            return false;
+        } else {
+            // Add the marine in scouts and remove it from army
+            shared_resources->scouts.push_back(scout);
+            shared_resources->army.remove(scout);
+            return true;
+        }
     }
     
     void putUnitInGroup(const Unit* unit){
         
     }
+    
     void groupNewUnit(const Unit* unit, const ObservationInterface* observation) {
         if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
             shared_resources->workers.push_back(unit);
