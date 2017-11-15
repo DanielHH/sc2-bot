@@ -5,19 +5,63 @@
 using namespace sc2;
 
 class ArmyManager{
+
+    // Public variables
+public:
+    enum CombatMode { DEFEND, ATTACK, HARASS };
+
+    // Private variables
+private:
+    CombatMode current_combat_mode;
+    SharedResources* shared_resources;
+
+    // Public methods
 public:
     ArmyManager(SharedResources* shared_resources) {
         ArmyManager::shared_resources = shared_resources;
     }
+    
     void OnStep (const ObservationInterface* observation) {
         // DO ALL DE ARMY STUFF
         
-        // If we have no scout take an SCV if no reapers exist
+        // Find a scout if we have none
         if (shared_resources->scouts.empty()){
             if(TryGetScout()) {
-                std::cout << "Number of scouts = " + shared_resources->scouts.size() + "Should be 1" << std_endl;
+                std::cout << "Number of scouts: " + shared_resources->scouts.size() << std::endl;
             }
         }
+        
+        PlanScoutPath();
+        
+        switch (current_combat_mode) {
+            case DEFEND:
+                Defend();
+                break;
+            case ATTACK:
+                Attack();
+                break;
+            case HARASS:
+                Harass();
+                break;
+            default:
+                break;
+        }
+    }
+    
+    void PlanScoutPath(){
+        // TODO: implement pathplanning for scout
+    }
+    
+    void Defend() {
+        // TODO: implement Defend
+    }
+    
+    void Attack() {
+        // TODO: implement Attack
+    }
+    
+    void Harass() {
+        // TODO: implement Harass
     }
     
     // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
@@ -41,7 +85,7 @@ public:
         // if no reaper or marine is found look for a SCV.
         if (!scout_found) {
             for(const Unit* unit : shared_resources->workers) {
-                // Find a SCV remove it from workers and put it in scouts.
+                // Find a SCV, remove it from workers and put it in scouts.
                 shared_resources->scouts.push_back(unit);
                 shared_resources->workers.remove(unit);
                 scout_found = true;
@@ -61,19 +105,27 @@ public:
         
     }
     
-    void groupNewUnit(const Unit* unit, const ObservationInterface* observation) {
+    void GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
         if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
             shared_resources->workers.push_back(unit);
-        } else if (isArmyUnit(unit, observation)) {
+        } else if (IsArmyUnit(unit, observation)) {
             shared_resources->army.push_back(unit);
         }
     }
 
+    CombatMode GetCombatMode() {
+        return current_combat_mode;
+    }
+
+    void SetCombatMode(CombatMode new_combat_mode) {
+        current_combat_mode = new_combat_mode;
+    }
+
+
+    // Private methods
 private:
-    SharedResources* shared_resources;
-    
-    bool isArmyUnit(const Unit* unit, const ObservationInterface* observation) {
-        if (isStructure(unit, observation)) {
+    bool IsArmyUnit(const Unit* unit, const ObservationInterface* observation) {
+        if (IsStructure(unit, observation)) {
             return false;
         }
         switch (unit->unit_type.ToType()) {
@@ -84,7 +136,7 @@ private:
         }
     }
     
-    bool isStructure(const Unit* unit, const ObservationInterface* observation) {
+    bool IsStructure(const Unit* unit, const ObservationInterface* observation) {
         bool is_structure = false;
         auto& attributes = observation->GetUnitTypeData().at(unit->unit_type).attributes;
         for (const auto& attribute : attributes) {
