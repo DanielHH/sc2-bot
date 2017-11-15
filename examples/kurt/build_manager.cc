@@ -9,6 +9,15 @@ public:
     BuildManager() {
         
     }
+
+    void SetUpTechTree(const ObservationInterface* observation) {
+    }
+
+    vector<UnitTypeData*> GetRequirements(UnitTypeData unit) {
+        if (unit.tech_requirement != UNIT_TYPEID::INVALID) {
+        }
+    }
+
     void OnStep (const ObservationInterface* observation) {
         // DO ALL DE ARMY STUFF
     }
