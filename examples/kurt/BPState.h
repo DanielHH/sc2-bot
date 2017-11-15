@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include "BPAction.h"
 
 class BPState {
 public:
@@ -11,10 +13,10 @@ public:
 	/* Calculates the state obtained after performing
 	 * a given action when in a given state.
 	 */
-	BPState(BPState, BPAction);
+	BPState(BPState const, BPAction const);
 
 	/* Returns a list of actions that can be performed
 	 * from this state.
 	 */
-	vector<BPAction> AvailableActions();
+	std::vector<BPAction> AvailableActions() const;
 };

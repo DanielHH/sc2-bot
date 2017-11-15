@@ -4,14 +4,15 @@
 #include "BPState.h"
 
 class MCTS {
+public:
 	/* Constructors */
 
 	/* Creates an MCTS object with the given initial state */
 	MCTS(BPState);
 
 	/* Destructors */
-	~MCTS();
+	//~MCTS();
 
-	void Search(int num_iterations);
+	void Search(int);
 	BPPlan BestPlan();
 };
