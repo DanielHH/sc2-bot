@@ -43,7 +43,7 @@ public:
     }
     virtual void OnUnitCreated(const Unit* unit) {
         const ObservationInterface* observation = Observation();
-        army_manager->groupNewUnit(unit, observation);
+        army_manager->GroupNewUnit(unit, observation);
     }
     
     virtual void OnUnitIdle(const Unit* unit) {
