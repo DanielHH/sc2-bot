@@ -169,7 +169,7 @@ public:
                 return vespene_geyser;
             }
         }
-        std::cout << "NO VESPENE FOUND" << std::endl;
+//        std::cout << "NO VESPENE FOUND" << std::endl;
         return nullptr;
     }
 };
