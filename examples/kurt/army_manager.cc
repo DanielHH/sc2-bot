@@ -28,7 +28,7 @@ public:
         if (shared_resources->scouts.empty()){
             if(TryGetScout()) {
                 std::cout << "Number of scouts: " + shared_resources->scouts.size() << std::endl;
-                // kommentar branch stuff
+                // kommentar branch stuffu
             }
         }
         
