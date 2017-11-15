@@ -9,12 +9,7 @@ public:
     ArmyManager(SharedResources* shared_resources) {
         ArmyManager::shared_resources = shared_resources;
     }
-<<<<<<< HEAD
-    
-    void OnStep (const ObservationInterface* observation_interface) {
-=======
     void OnStep (const ObservationInterface* observation) {
->>>>>>> aca8cc3404b831344b8df8d32c0b80019c214d6d
         // DO ALL DE ARMY STUFF
     }
     
