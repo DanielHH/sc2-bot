@@ -30,6 +30,7 @@ public:
         shared_resources = new SharedResources();
         army_manager = new ArmyManager(shared_resources);
         build_manager = new BuildManager();
+        build_manager->OnGameStart(Observation());
         strategy_manager = new StrategyManager();
     }
     
