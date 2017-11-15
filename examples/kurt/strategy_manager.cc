@@ -1,4 +1,5 @@
 #include <sc2api/sc2_api.h>
+#include "strategy_manager.h"
 #include <iostream>
 
 using namespace sc2;

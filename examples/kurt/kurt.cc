@@ -1,9 +1,11 @@
 #include <sc2api/sc2_api.h>
 #include <iostream>
-#include "army_manager.cc"
+#include "kurt.h"
+#include "army_manager.h"
 #include "build_manager.cc"
 #include "strategy_manager.cc"
 #include <list>
+
 using namespace sc2;
 
 struct IsVespeneGeyser {
