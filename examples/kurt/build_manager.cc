@@ -94,3 +94,6 @@ void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
     // TODO Add more data to tech_tree_2
 }
 
+void BuildManager::SetGoal(BPState const *const goal) {
+    // TODO
+}
