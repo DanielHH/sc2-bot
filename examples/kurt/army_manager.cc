@@ -1,6 +1,7 @@
 #include <sc2api/sc2_api.h>
 #include <iostream>
 #include <sharedResources.cc>
+#include <sc2api/sc2_map_info.h>
 
 using namespace sc2;
 
@@ -17,7 +18,7 @@ private:
 
     // Public methods
 public:
-    ArmyManager(SharedResources* shared_resources) {
+    ArmyManager(SharedResources* shared_resources, Kurt* kurt) {
         ArmyManager::shared_resources = shared_resources;
     }
     
@@ -31,7 +32,6 @@ public:
                 // kommentar branch stuffu
             }
         }
-        // kjfwekfj
         
         PlanScoutPath();
         
@@ -43,15 +43,18 @@ public:
                 Attack();
                 break;
             case HARASS:
-                Harass();
-                break;
             default:
+                Harass();
                 break;
         }
     }
     
     void PlanScoutPath(){
         // TODO: implement pathplanning for scout
+        for (Point2d point : kurt->gameinfo.enemy_start_location) {
+            
+        }
+       
     }
     
     void Defend() {
@@ -67,7 +70,7 @@ public:
     }
     
     // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
-    bool TryGetScout(){
+    bool TryGetScout() {
         bool scout_found = false;
         const Unit* scout;
         
@@ -86,7 +89,7 @@ public:
         
         // if no reaper or marine is found look for a SCV.
         if (!scout_found) {
-            for(const Unit* unit : shared_resources->workers) {
+            for(const Unit* unit : shared_resources->workers) { // check scv order so we dont take a scv thats buidling
                 // Find a SCV, remove it from workers and put it in scouts.
                 shared_resources->scouts.push_back(unit);
                 shared_resources->workers.remove(unit);
@@ -126,6 +129,15 @@ public:
 
     // Private methods
 private:
+    bool CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
+        // Send a pathing query from the unit to that point. Can also query from point to point,
+        // but using a unit tag wherever possible will be more accurate.
+        // Note: This query must communicate with the game to get a result which affects performance.
+        // Ideally batch up the queries (using PathingDistanceBatched) and do many at once.
+        float distance = Query()->PathingDistance(unit, target_pos);
+        return distance > 0.1f;
+    }
+    
     bool IsArmyUnit(const Unit* unit, const ObservationInterface* observation) {
         if (IsStructure(unit, observation)) {
             return false;
