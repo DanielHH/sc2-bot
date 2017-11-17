@@ -2,6 +2,9 @@
 
 #include "BPAction.h"
 
+using namespace sc2;
+
+
 BPAction::BPAction() {
     // TODO
 }
