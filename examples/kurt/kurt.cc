@@ -22,7 +22,6 @@ void Kurt::OnGameStart() {
 }
 
 void Kurt::OnStep() {
-    std::cout << "kurt on step" << std::endl;
     const ObservationInterface* observation = Observation();
     army_manager->OnStep(observation);
     //build_manager->OnStep(observation);

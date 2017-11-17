@@ -33,6 +33,7 @@ target_link_libraries(replay sc2api sc2utils)
 
 #Tutorial
 add_executable(tutorial "tutorial.cc" ${kurt_files})
+add_executable(kurt "kurt/kurt.cc")
 set_target_properties(tutorial PROPERTIES FOLDER examples)
 target_link_libraries(tutorial sc2api sc2utils)
 
