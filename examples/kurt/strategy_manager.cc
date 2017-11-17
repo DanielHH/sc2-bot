@@ -2,22 +2,50 @@
 #include <iostream>
 
 using namespace sc2;
+using namespace std;
+
+map<string, Units> our_units;
+map<string, Units> enemy_units;
 
 StrategyManager::StrategyManager() {
 
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
-    // DO ALL DE ARMY STUFF
-
+    // DO ALL DE STRATEGY STUFF
 }
 
-//Save enemy units
+void StrategyManager::SortOurUnits(const Unit* unit) {
+    CheckCombatStyle(unit, our_units);
+}
+
+//Save enemy units in vector spotted_enemy_units
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
-    Units enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
-    for (const auto unit : enemy_units) {
+    Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
+    for (const auto unit : observed_enemy_units) {
+        CheckCombatStyle(unit, enemy_units);
+    }
+}
+
+void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
+    //GroundToGround
+    if(unit->unit_type == UNIT_TYPEID::TERRAN_MARINE ||
+        unit->unit_type == UNIT_TYPEID::TERRAN_REAPER ||
+        unit->unit_type == UNIT_TYPEID::TERRAN_MARAUDER) {
+        map["gg"].push_back(unit);
+    }
+   /* //GroundToAir
+    else if() {
 
     }
+    //AirToGround
+    else if () {
+
+    }
+    //AirToAir
+    else if () {
+
+    }*/
 
 }
 
@@ -32,7 +60,6 @@ bool StrategyManager::FindEnemyStructure(const ObservationInterface* observation
             return true;
         }
     }
-
     return false;
 }
 

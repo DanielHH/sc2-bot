@@ -29,9 +29,11 @@ void Kurt::OnStep() {
     TryBuildSupplyDepot();
     TryBuildRefinary();
 }
+
 void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
+    strategy_manager->SortOurUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
