@@ -1,21 +1,19 @@
 #include <iostream>
 #include "kurt.h"
+#include <list>
+
 #include "army_manager.h"
 #include "build_manager.h"
 #include "strategy_manager.h"
-#include <list>
 
 using namespace sc2;
 
 ArmyManager* army_manager;
 //BuildManager* build_manager;
 StrategyManager* strategy_manager;
-SharedResources* shared_resources;
 
 void Kurt::OnGameStart() {
-    std::cout << "Hello, World!" << std::endl;
-    shared_resources = new SharedResources();
-    army_manager = new ArmyManager(shared_resources);
+    army_manager = new ArmyManager(this);
     //build_manager = new BuildManager();
     //build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
