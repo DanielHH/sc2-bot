@@ -1,7 +1,7 @@
 #include <iostream>
 #include "kurt.h"
 #include "army_manager.h"
-#include "build_manager.cc"
+#include "build_manager.h"
 #include "strategy_manager.h"
 #include <list>
 

@@ -1,11 +1,14 @@
 #pragma once
-#include "BPAction.h"
 #include <vector>
 
-class BPPlan : std::vector<BPAction> {
+class BPAction;
+class BPState;
+
+
+class BPPlan : std::vector<BPAction *> {
 public:
 	/* Apends a basic plan for going from a given state to some goal state */
-	void AddBasicPlan(BPState const, BPState const);
+	void AddBasicPlan(BPState const * const, BPState const * const);
 
 	/* Returns the time required to execute this plan */
 	float TimeRequired() const;

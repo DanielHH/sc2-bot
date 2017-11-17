@@ -1,10 +1,11 @@
 #pragma once
 #include "MCTS.h"
+#include "BPPlan.h"
 
 void MCTS::Search(int num_iterations) {
     return; // TODO: Anything
 }
 
-BPPlan MCTS::BestPlan() {
-    return BPPlan(); // TODO: FIX THIS
+BPPlan * MCTS::BestPlan() {
+    return nullptr; // TODO: FIX THIS
 }
