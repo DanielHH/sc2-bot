@@ -1,5 +1,5 @@
-#include "kurt/kurt.cc"
 #include <sc2api/sc2_api.h>
+#include "kurt/kurt.h"
 
 using namespace sc2;
 
