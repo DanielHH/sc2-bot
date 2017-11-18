@@ -1,4 +1,3 @@
-#pragma once
 #include "BPPlan.h"
 #include "BPState.h"
 

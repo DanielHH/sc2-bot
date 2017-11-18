@@ -13,7 +13,7 @@ BuildManager::BuildManager() {
 
 UnitTypeData* BuildManager::EnumToData(UNIT_TYPEID type) {
     if (unit_types.count(type) == 0) {
-        return NULL;
+        return nullptr;
     } else {
         return &unit_types[type];
     }

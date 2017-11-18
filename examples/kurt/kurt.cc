@@ -1,5 +1,6 @@
-#include <iostream>
 #include "kurt.h"
+
+#include <iostream>
 #include <list>
 
 #include "army_manager.h"
@@ -9,20 +10,20 @@
 using namespace sc2;
 
 ArmyManager* army_manager;
-//BuildManager* build_manager;
+BuildManager* build_manager;
 StrategyManager* strategy_manager;
 
 void Kurt::OnGameStart() {
     army_manager = new ArmyManager(this);
-    //build_manager = new BuildManager();
-    //build_manager->OnGameStart(Observation());
+    build_manager = new BuildManager();
+    build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
 }
 
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
     army_manager->OnStep(observation);
-    //build_manager->OnStep(observation);
+    build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
     TryBuildSupplyDepot();
     TryBuildRefinary();
