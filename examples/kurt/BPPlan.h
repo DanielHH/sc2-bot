@@ -5,7 +5,7 @@ class BPAction;
 class BPState;
 
 
-class BPPlan : std::vector<BPAction *> {
+class BPPlan : std::vector<BPAction> {
 public:
     /* Apends a basic plan for going from a given state to some goal state */
     void AddBasicPlan(BPState * const, BPState * const);
