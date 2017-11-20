@@ -25,12 +25,16 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
     // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
     Units tmp = enemy_units;
-    for (const auto known_unit = tmp.begin(); known_unit != tmp.end(); ++known_unit) {
-        for (const auto new_unit : observed_enemy_units) {
-            if (known_unit == new_unit) {
+    for (auto known_unit = tmp.begin(); known_unit != tmp.end(); known_unit++) {
+        for (auto new_unit = observed_enemy_units.begin(); new_unit != observed_enemy_units.end(); new_unit++) {
+            if (*known_unit == *new_unit) {
+                observed_enemy_units.erase(new_unit);
+                break;
             }
         }
     }
+
+    enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
 }
 
 void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
