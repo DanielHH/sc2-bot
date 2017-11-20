@@ -27,11 +27,12 @@ public:
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
 
+    static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
+    static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
+
 private:
     static std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> unit_types;
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static void SetUpDataMaps(const sc2::ObservationInterface *);
 
-    static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
-    static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
 };
