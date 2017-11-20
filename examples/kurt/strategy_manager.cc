@@ -5,7 +5,8 @@ using namespace sc2;
 using namespace std;
 
 map<string, Units> our_units;
-map<string, Units> enemy_units;
+//map<string, Units> enemy_units;
+Units enemy_units;
 
 StrategyManager::StrategyManager() {
 
@@ -23,8 +24,12 @@ void StrategyManager::SortOurUnits(const Unit* unit) {
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
     // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
-    for (const auto unit : observed_enemy_units) {
-        CheckCombatStyle(unit, enemy_units);
+    Units tmp = enemy_units;
+    for (const auto known_unit : tmp) {
+        for (const auto new_unit : observed_enemy_units) {
+            if (known_unit == new_unit) {
+            }
+        }
     }
 }
 
