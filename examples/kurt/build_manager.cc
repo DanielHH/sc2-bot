@@ -1,14 +1,14 @@
 #include "build_manager.h"
 
 #include <iostream>
-#include <vector>
-#include <map>
 
 #include "BPState.h"
 
 using namespace sc2;
 
 bool BuildManager::setup_finished = false;
+std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> BuildManager::unit_types;
+std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > BuildManager::tech_tree_2;
 
 BuildManager::BuildManager() {
 }
