@@ -2,31 +2,27 @@
 
 #include <iostream>
 #include <vector>
-#include <map>
+#include "kurt.h"
 
 #include "BPState.h"
 
 using namespace sc2;
 
+std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > BuildManager::tech_tree_2;
+bool BuildManager::setup_finished = false;
+
 BuildManager::BuildManager() {
 }
 
-UnitTypeData* BuildManager::EnumToData(UNIT_TYPEID type) {
-    if (unit_types.count(type) == 0) {
-        return nullptr;
-    } else {
-        return &unit_types[type];
-    }
-}
-
 std::vector<UnitTypeData*> BuildManager::GetRequirements(UnitTypeData* unit) {
+    assert(setup_finished);
     std::vector<UnitTypeData*> requirements;
     UNIT_TYPEID type = unit->unit_type_id.ToType();
     if (unit->tech_requirement != UNIT_TYPEID::INVALID) {
-        requirements.push_back(EnumToData(unit->tech_requirement));
+        requirements.push_back(Kurt::GetUnitType(unit->tech_requirement));
     } else if (tech_tree_2.count(type) > 0) {
         for (UNIT_TYPEID req_elem : tech_tree_2[type]) {
-            requirements.push_back(EnumToData(req_elem));
+            requirements.push_back(Kurt::GetUnitType(req_elem));
         }
     }
     return requirements;
@@ -38,13 +34,13 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
     // Set up build tree
-    SetUpUnitDataMap(observation);
     SetUpTechTree(observation);
+    setup_finished = true;
 
     // Testing som functions...
     {
         UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_BARRACKS;
-        UnitTypeData* barData = EnumToData(bar);
+        UnitTypeData* barData = Kurt::GetUnitType(bar);
         std::cout << barData->name << " require: ";
         for (UnitTypeData* r : GetRequirements(barData)) {
             std::cout << r->name << " ";
@@ -53,7 +49,7 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     }
     {
         UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_GHOST;
-        UnitTypeData* barData = EnumToData(bar);
+        UnitTypeData* barData = Kurt::GetUnitType(bar);
         std::cout << barData->name << " require: ";
         for (UnitTypeData* r : GetRequirements(barData)) {
             std::cout << r->name << " ";
@@ -62,12 +58,6 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     }
 }
 
-
-void BuildManager::SetUpUnitDataMap(const ObservationInterface *observation) {
-    for (UnitTypeData id : observation->GetUnitTypeData()) {
-        unit_types[id.unit_type_id.ToType()] = id;
-    }
-}
 
 void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
     // Barrack upgrades
