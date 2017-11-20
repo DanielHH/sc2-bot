@@ -10,7 +10,7 @@ class BuildManager {
 public:
     BuildManager();
     static std::vector<sc2::UnitTypeData*> GetRequirements(sc2::UnitTypeData* unit);
-    static std::vector<UNIT_TYPEID> GetRequirements(sc2::UNIT_TYPEID);
+    static std::vector<sc2::UNIT_TYPEID> GetRequirements(sc2::UNIT_TYPEID);
     void OnStep(const sc2::ObservationInterface* observation);
     void OnGameStart(const sc2::ObservationInterface* observation);
     /* Removes all potential other goals and set given goal as the goal */
