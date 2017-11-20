@@ -18,6 +18,7 @@ void Kurt::OnGameStart() {
     SetUpDataMaps(observation);
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager();
+    build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
 }
 
