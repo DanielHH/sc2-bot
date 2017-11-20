@@ -1,6 +1,7 @@
 #include <sc2api/sc2_api.h>
 #include "BPAction.h"
 #include "build_manager.h"
+#include "kurt.h"
 
 using namespace sc2;
 
@@ -18,6 +19,7 @@ BPAction::~BPAction() {
 }
 
 void BPAction::Execute() {
+    
     // TODO
 }
 
@@ -30,6 +32,6 @@ bool BPAction::CanExecuteInState(BPState const * const state) const {
 }
 
 BPAction *BPAction::CreatesUnit(sc2::UNIT_TYPEID unit_type) {
-    sc2::ABILITY_ID a = BuildManager::EnumToData(unit_type)->ability_id;
+    sc2::ABILITY_ID a = Kurt::GetUnitType(unit_type)->ability_id;
     return new BPAction(a);
 }
