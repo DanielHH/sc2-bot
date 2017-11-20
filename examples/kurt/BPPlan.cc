@@ -31,7 +31,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
         }
         need_to_build.insert(type);
         for (int i = start->GetUnitAmount(type); i < amount; ++i) {
-//            add_to_plan.push(BPAction::ActionForBuilding(it->first));
+            add_to_plan.push(BPAction::CreatesUnit(type));
         }
         built.SetUnitAmount(type, amount);
         mineral_cost += Kurt::GetUnitType(type)->mineral_cost;
@@ -41,15 +41,15 @@ void BPPlan::AddBasicPlan(BPState * const start,
      * Add buildings required for to reach the goal.
      */
     while (! need_to_build.empty()) {
-        UNIT_TYPEID type = *(need_to_build.begin());
-        if (built.GetUnitAmount(type) > 0) {
+        UNIT_TYPEID curr = *(need_to_build.begin());
+        if (built.GetUnitAmount(curr) > 0) {
             continue;
         }
-        for (UNIT_TYPEID req : BuildManager::GetRequirements(type)) {
+        for (UNIT_TYPEID req : BuildManager::GetRequirements(curr)) {
             if (built.GetUnitAmount(req) > 0) {
                 continue;
             }
-//            add_to_plan.push(BPAction::ActionForBuilding(it->first));
+            add_to_plan.push(BPAction::CreatesUnit(req));
             built.SetUnitAmount(req, 1);
             mineral_cost += Kurt::GetUnitType(req)->mineral_cost;
             vespene_cost += Kurt::GetUnitType(req)->vespene_cost;
