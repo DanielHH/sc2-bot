@@ -8,10 +8,13 @@
 
 using namespace sc2;
 
+bool BuildManager::setup_finished = false;
+
 BuildManager::BuildManager() {
 }
 
 UnitTypeData* BuildManager::EnumToData(UNIT_TYPEID type) {
+    assert(setup_finished);
     if (unit_types.count(type) == 0) {
         return nullptr;
     } else {
@@ -20,6 +23,7 @@ UnitTypeData* BuildManager::EnumToData(UNIT_TYPEID type) {
 }
 
 std::vector<UnitTypeData*> BuildManager::GetRequirements(UnitTypeData* unit) {
+    assert(setup_finished);
     std::vector<UnitTypeData*> requirements;
     UNIT_TYPEID type = unit->unit_type_id.ToType();
     if (unit->tech_requirement != UNIT_TYPEID::INVALID) {
@@ -40,6 +44,7 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     // Set up build tree
     SetUpUnitDataMap(observation);
     SetUpTechTree(observation);
+    setup_finished = true;
 
     // Testing som functions...
     {
