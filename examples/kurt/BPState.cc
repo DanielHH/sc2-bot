@@ -7,15 +7,21 @@ using namespace sc2;
 BPState::BPState() {
 }
 
+BPState::BPState(BPState * const state) {
+    for (auto it = state->UnitsBegin(); it != state->UnitsEnd(); ++it) {
+        SetUnitAmount(it->first, it->second);
+    }
+}
+
 BPState::BPState(const ObservationInterface* observation) {
     // TODO
 }
 
-BPState::~BPState() {
+BPState::BPState(BPState const * const initial, BPAction const * const step) {
     // TODO
 }
 
-BPState::BPState(BPState const * const initial, BPAction const * const step) {
+BPState::~BPState() {
     // TODO
 }
 
@@ -36,3 +42,12 @@ int BPState::GetUnitAmount(UNIT_TYPEID type) {
 void BPState::SetUnitAmount(UNIT_TYPEID type, int amount) {
     unit_amount[type] = amount;
 }
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsBegin() {
+    return unit_amount.begin();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsEnd() {
+    return unit_amount.end();
+}
+
