@@ -42,6 +42,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
      */
     while (! need_to_build.empty()) {
         UNIT_TYPEID curr = *(need_to_build.begin());
+        need_to_build.erase(need_to_build.begin());
+        // TODO Not use set for need_to_build ??
         if (built.GetUnitAmount(curr) > 0) {
             continue;
         }
@@ -49,6 +51,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
             if (built.GetUnitAmount(req) > 0) {
                 continue;
             }
+            need_to_build.insert(req);
             add_to_plan.push(BPAction::CreatesUnit(req));
             built.SetUnitAmount(req, 1);
             mineral_cost += Kurt::GetUnitType(req)->mineral_cost;
