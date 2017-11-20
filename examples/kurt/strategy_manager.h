@@ -8,6 +8,16 @@
 class StrategyManager{
 public:
 
+    struct CombatPower {
+        float g2g;
+        float g2a;
+        float a2g;
+        float a2a;
+    };
+
+    CombatPower our_cp;
+    CombatPower enemy_cp;
+
     StrategyManager();
 
     void OnStep(const sc2::ObservationInterface* observation);
@@ -21,7 +31,7 @@ private:
     void CheckCombatStyle(const sc2::Unit* unit, std::map<std::string, sc2::Units> map);
 
     // calculates combatpower for given combatstyle
-    float  CalculateCombatPower(std::string combat_style);
+    void  CalculateCombatPower(CombatPower *cp);
 
     void ChooseCombatMode();
 

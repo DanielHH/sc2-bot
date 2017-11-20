@@ -61,11 +61,9 @@ void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map)
     }
 };
 
-    float  StrategyManager::CalculateCombatPower(string combat_style) {
-        /*for (enemy_units[combat_style]) {
+    void StrategyManager::CalculateCombatPower(CombatPower *cp) {
+     
 
-        }*/
-        return -1;
 };
 
 
