@@ -78,12 +78,13 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     BPState * curr = new BPState();
     curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 8);
     curr->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 3);
     BPState * goal = new BPState();
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
     BPPlan plan;
     plan.AddBasicPlan(curr, goal);
     for (BPAction a : plan) {
-        std::cout << Kurt::GetAbility(a.ability)->friendly_name << std::endl;
+        std::cout << a << std::endl;
     }
     std::cout << "plan <<<" << std::endl;
 }
