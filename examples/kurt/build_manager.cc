@@ -28,6 +28,21 @@ std::vector<UnitTypeData*> BuildManager::GetRequirements(UnitTypeData* unit) {
     return requirements;
 }
 
+std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
+    assert(setup_finished);
+    std::vector<UNIT_TYPEID> requirements;
+    UnitTypeData *data = Kurt::GetUnitType(unit);
+    if (data->tech_requirement != UNIT_TYPEID::INVALID) {
+        requirements.push_back(data->tech_requirement);
+    }
+    else if (tech_tree_2.count(unit) > 0) {
+        for (UNIT_TYPEID req_elem : tech_tree_2[unit]) {
+            requirements.push_back(req_elem);
+        }
+    }
+    return requirements;
+}
+
 void BuildManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
 }
