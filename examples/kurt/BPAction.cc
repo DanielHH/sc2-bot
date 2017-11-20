@@ -31,7 +31,7 @@ bool BPAction::CanExecuteInState(BPState const * const state) const {
     return false; // TODO
 }
 
-BPAction *BPAction::CreatesUnit(sc2::UNIT_TYPEID unit_type) {
-    sc2::ABILITY_ID a = Kurt::GetUnitType(unit_type)->ability_id;
-    return new BPAction(a);
+BPAction BPAction::CreatesUnit(sc2::UNIT_TYPEID unit_type) {
+    BPAction tmp(Kurt::GetUnitType(unit_type)->ability_id);
+    return tmp;
 }
