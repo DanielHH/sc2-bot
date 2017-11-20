@@ -92,7 +92,7 @@ void Render() {
     SDL_RenderClear(renderer_);
 }
 
-#include "kurt/kurt.cc"
+#include "kurt/kurt.h"
 
 #include "sc2api/sc2_api.h"
 #include "sc2utils/sc2_manage_process.h"
@@ -115,7 +115,7 @@ public:
         Kurt::OnStep();
 
         // Set scale used when render, easier but also less details.
-        const GameInfo& GameInfo = Observation()->GetGameInfo();
+        const sc2::GameInfo& GameInfo = Observation()->GetGameInfo();
         float scale_x = sw / (float) GameInfo.width;
         float scale_y = sh / (float) GameInfo.height;
         SDL_RenderSetScale(renderer_, scale_x, scale_y);

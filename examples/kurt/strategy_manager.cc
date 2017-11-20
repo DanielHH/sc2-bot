@@ -22,6 +22,7 @@ void StrategyManager::SortOurUnits(const Unit* unit) {
 //Save enemy units in vector spotted_enemy_units
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
+    // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
     for (const auto unit : observed_enemy_units) {
         CheckCombatStyle(unit, enemy_units);
     }
@@ -29,38 +30,35 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
 
 void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
     //GroundToGround
-    if(unit->unit_type == UNIT_TYPEID::TERRAN_MARINE ||
+    /*if(unit->unit_type == UNIT_TYPEID::TERRAN_MARINE ||
         unit->unit_type == UNIT_TYPEID::TERRAN_REAPER ||
         unit->unit_type == UNIT_TYPEID::TERRAN_MARAUDER) {
         map["gg"].push_back(unit);
+    }*/
+    if (!unit->is_flying && unit->is_alive /* && check for groundweapon */) {
+        map["g2g"].push_back(unit);
     }
-   /* //GroundToAir
-    else if() {
-
+    //GroundToAir
+    if (!unit->is_flying && unit->is_alive /* && check for airweapon */) {
+        map["g2a"].push_back(unit);
     }
     //AirToGround
-    else if () {
-
+    if (unit->is_flying && unit->is_alive /* && check for groundweapon */) {
+        map["a2g"].push_back(unit);
     }
     //AirToAir
-    else if () {
-
-    }*/
-
-}
-
-// Returns true if Enemy structure is observed. Med ObservationInterface ser man väl allt?
-bool StrategyManager::FindEnemyStructure(const ObservationInterface* observation, const Unit*& enemy_unit) {
-    Units my_units = observation->GetUnits(Unit::Alliance::Enemy);
-    for (const auto unit : my_units) {
-        if (unit->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
-            unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOT ||
-            unit->unit_type == UNIT_TYPEID::TERRAN_BARRACKS) {
-            enemy_unit = unit;
-            return true;
-        }
+    if (unit->is_flying && unit->is_alive /* && check for airweapon */) {
+        map["a2a"].push_back(unit);
     }
-    return false;
-}
+};
+
+    float  StrategyManager::CalculateCombatPower(string combat_style) {
+        /*for (enemy_units[combat_style]) {
+
+        }*/
+        return -1;
+};
+
+
 
 

@@ -3,8 +3,8 @@
 
 using namespace sc2;
 
-ArmyManager::ArmyManager(SharedResources* _shared_resources) {
-    shared_resources = _shared_resources;
+ArmyManager::ArmyManager(Kurt* parent_kurt) {
+    kurt = parent_kurt;
 }
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
@@ -13,10 +13,10 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
     if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        shared_resources->workers.push_back(unit);
+        kurt->workers.push_back(unit);
     }
     else if (IsArmyUnit(unit, observation)) {
-        shared_resources->army.push_back(unit);
+        kurt->army.push_back(unit);
     }
 }
 

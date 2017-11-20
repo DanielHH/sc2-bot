@@ -20,7 +20,8 @@ private:
 
     void CheckCombatStyle(const sc2::Unit* unit, std::map<std::string, sc2::Units> map);
 
-    void  CalculateCombatPower();
+    // calculates combatpower for given combatstyle
+    float  CalculateCombatPower(std::string combat_style);
 
     void ChooseCombatMode();
 

@@ -1,23 +1,23 @@
-#include <iostream>
 #include "kurt.h"
-#include "army_manager.h"
-#include "build_manager.cc"
-#include "strategy_manager.h"
+
+#include <iostream>
 #include <list>
+
+#include "army_manager.h"
+#include "build_manager.h"
+#include "strategy_manager.h"
 
 using namespace sc2;
 
 ArmyManager* army_manager;
 BuildManager* build_manager;
 StrategyManager* strategy_manager;
-SharedResources* shared_resources;
 
 void Kurt::OnGameStart() {
-    std::cout << "Hello, World!" << std::endl;
-    shared_resources = new SharedResources();
-    army_manager = new ArmyManager(shared_resources);
+    const ObservationInterface *observation = Observation();
+    SetUpDataMaps(observation);
+    army_manager = new ArmyManager(this);
     build_manager = new BuildManager();
-    build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
 }
 
@@ -161,4 +161,23 @@ const Unit* Kurt::FindNearestVespeneGeyser() {
     }
     //        std::cout << "NO VESPENE FOUND" << std::endl;
     return nullptr;
+}
+
+std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
+std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
+void Kurt::SetUpDataMaps(const sc2::ObservationInterface *observation) {
+    for (auto unit : observation->GetUnitTypeData()) {
+        unit_types[(sc2::UNIT_TYPEID) unit.unit_type_id] = unit;
+    }
+    for (sc2::AbilityData ability : observation->GetAbilityData()) {
+        abilities[(sc2::ABILITY_ID) ability.ability_id] = ability;
+    }
+}
+
+AbilityData *Kurt::GetAbility(ABILITY_ID id) {
+    return &abilities.at(id);
+}
+
+UnitTypeData *Kurt::GetUnitType(UNIT_TYPEID id) {
+    return &unit_types.at(id);
 }

@@ -45,7 +45,7 @@ target_link_libraries(bot_mp sc2api sc2lib sc2utils)
 # Exclude SDL and related projects to work around linker issue.
 if (NOT APPLE)
 	#feature layers
-	add_executable(feature_layers "feature_layers.cc")
+	add_executable(feature_layers "feature_layers.cc" ${kurt_files})
 	set_target_properties(feature_layers PROPERTIES FOLDER examples)
 	target_link_libraries(feature_layers sc2api sc2utils sc2renderer)
 endif ()

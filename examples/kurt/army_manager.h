@@ -1,18 +1,18 @@
 #pragma once
 
-#include <sc2api\sc2_api.h>
-#include "shared_resources.h"
+#include <sc2api/sc2_api.h>
+#include "kurt.h"
 
 enum CombatMode { DEFEND, ATTACK, HARASS };
 
 class ArmyManager {
 
 private:
-    SharedResources* shared_resources;
     CombatMode current_combat_mode;
+    Kurt* kurt;
 
 public:
-    ArmyManager(SharedResources* shared_resources);
+    ArmyManager(Kurt* kurt);
 
     // Gets called every game step
     void OnStep(const sc2::ObservationInterface* observation);
