@@ -13,6 +13,10 @@ BPState::BPState(BPState * const state) {
     for (auto it = state->UnitsBegin(); it != state->UnitsEnd(); ++it) {
         SetUnitAmount(it->first, it->second);
     }
+    minerals = state->GetMinerals();
+    vespene = state->GetVespene();
+    food_cap = state->GetFoodCap();
+    food_used = state->GetFoodUsed();
 }
 
 BPState::BPState(const ObservationInterface* observation) {
