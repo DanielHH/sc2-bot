@@ -17,7 +17,7 @@ void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
     army_manager = new ArmyManager(this);
-    build_manager = new BuildManager();
+    build_manager = new BuildManager(this);
     strategy_manager = new StrategyManager();
 }
 

@@ -11,7 +11,8 @@ using namespace sc2;
 std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > BuildManager::tech_tree_2;
 bool BuildManager::setup_finished = false;
 
-BuildManager::BuildManager() {
+BuildManager::BuildManager(Kurt *const agent_) : agent(agent_) {
+    
 }
 
 std::vector<UnitTypeData*> BuildManager::GetRequirements(UnitTypeData* unit) {
