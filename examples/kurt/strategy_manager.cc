@@ -6,8 +6,7 @@
 using namespace sc2;
 using namespace std;
 
-//map<string, Units> our_units;
-//map<string, Units> enemy_units;
+
 Units our_units;
 Units enemy_units;
 
@@ -44,30 +43,51 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
 // There will be a lot of duplicated code beacuse our_cp and enemy_cp
 // is basically doing the same thing but with different vectors and structs. This should be optimized.
 void StrategyManager::CalculateCombatPower(CombatPower *cp) {
+    //reset cp-data.
+    cp->g2g = 0;
+    cp->g2a = 0;
+    cp->a2g = 0;
+    cp->a2a = 0;
+
     if (cp->alliance == "our_cp") {
-        for (auto unit : our_units) {
-            //GroundToGround
-            if (!unit->is_flying && unit->is_alive /* && check for groundweapon */) {
-                //cp->g2g += unit.dps for groundweapon. Similar thing has to be done in all if-cases.
-            }
-            //GroundToAir
-            if (!unit->is_flying && unit->is_alive /* && check for airweapon */) {
-                
-            }
-            //AirToGround
-            if (unit->is_flying && unit->is_alive /* && check for groundweapon */) {
-                
-            }
-            //AirToAir
-            if (unit->is_flying && unit->is_alive /* && check for airweapon */) {
-                
+        CalculateCPHelp(cp, our_units);
+    }
+    else if (cp->alliance == "enemy_cp") {
+        CalculateCPHelp(cp, enemy_units);
+    }
+};
+
+void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
+    UnitTypeData* unit_data;
+    float weapon_dps;
+    for (auto unit : team) {
+        if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
+            unit_data = Kurt::GetUnitType(unit->unit_type);
+            for (auto weapon : unit_data->weapons) {
+                weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ = damage_ per attack
+                if (weapon.type == Weapon::TargetType::Ground) {
+                    //GroundToGround
+                    if (!unit->is_flying) {
+                        cp->g2g += weapon_dps;
+                    }
+                    //AirToGround
+                    else if (unit->is_flying) {
+                        cp->a2g += weapon_dps;
+                    }
+                }
+                if (weapon.type == Weapon::TargetType::Air) {
+                    //GroundToAir
+                    if (!unit->is_flying) {
+                        cp->g2a += weapon_dps;
+                    }
+                    //AirToAir
+                    if (unit->is_flying) {
+                        cp->a2a += weapon_dps;
+                    }
+                }
             }
         }
     }
-    else if (cp->alliance == "enemy_cp") {
-
-    }
-
 };
 
 void StrategyManager::ChooseCombatMode() {
