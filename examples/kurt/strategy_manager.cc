@@ -40,8 +40,6 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
 };
 
-// There will be a lot of duplicated code beacuse our_cp and enemy_cp
-// is basically doing the same thing but with different vectors and structs. This should be optimized.
 void StrategyManager::CalculateCombatPower(CombatPower *cp) {
     //reset cp-data.
     cp->g2g = 0;
