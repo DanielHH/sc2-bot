@@ -1,6 +1,8 @@
+#include "BPState.h"
+
 #include <sc2api/sc2_api.h>
 
-#include "BPState.h"
+#include <iostream>
 
 using namespace sc2;
 
@@ -74,3 +76,16 @@ int BPState::GetFoodUsed() const {
     return food_used;
 }
 
+void BPState::Print() {
+    std::cout << ">>> BPState" << std::endl;
+    std::cout << "Minerals: " << GetMinerals();
+    std::cout << ", Vespene: " << GetVespene();
+    std::cout << ", Food: " << GetFoodUsed();
+    std::cout << "/" << GetFoodCap() << std::endl;
+    for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
+        UNIT_TYPEID type = it->first;
+        int amount = it->second;
+        std::cout << UnitTypeToName(type) << ": " << amount << std::endl;
+    }
+    std::cout << "BPState <<<" << std::endl;
+}

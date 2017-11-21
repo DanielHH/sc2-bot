@@ -47,6 +47,9 @@ public:
     int GetFoodCap() const;
     int GetFoodUsed() const;
 
+    /* Prints this BPState to std::cout */
+    void Print();
+
 private:
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
     int minerals;
