@@ -29,7 +29,7 @@ private:
     //Save enemy units
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
 
-    void CheckCombatStyle(const sc2::Unit* unit, std::map<std::string, sc2::Units> map);
+    
 
     // calculates combatpower for given combatstyle
     void  CalculateCombatPower(CombatPower *cp);
@@ -43,11 +43,14 @@ private:
 
     std::string GetCombatMode();
 
+    // Decides what units should be built.
+    void DecideBuildGoal();
+
+
+    //UNUSED FUNCTIONS
     // Returns true if Enemy structure is observed.
     bool FindEnemyStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
 
-
-    // Decides what units should be built.
-    void DecideBuildGoal();
+    void CheckCombatStyle(const sc2::Unit* unit, std::map<std::string, sc2::Units> map);
 
 };
