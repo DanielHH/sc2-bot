@@ -42,6 +42,18 @@ public:
     /* Returns an iterator to the past last element of all Units in this state */
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsEnd();
 
+    int GetMinerals() const;
+    int GetVespene() const;
+    int GetFoodCap() const;
+    int GetFoodUsed() const;
+
+    /* Prints this BPState to std::cout */
+    void Print();
+
 private:
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
+    int minerals;
+    int vespene;
+    int food_cap;
+    int food_used;
 };
