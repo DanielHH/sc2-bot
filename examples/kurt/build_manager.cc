@@ -75,15 +75,14 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
         }
         std::cout << std::endl;
     }
-    std::cout << ">>> plan:" << std::endl;
-    BPState * curr = new BPState();
-    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 8);
-    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
-    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 3);
+    BPState * curr = new BPState(observation);
+//    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1);
+    curr->Print();
     BPState * goal = new BPState();
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
     BPPlan plan;
     plan.AddBasicPlan(curr, goal);
+    std::cout << ">>> plan:" << std::endl;
     for (BPAction a : plan) {
         std::cout << a << std::endl;
     }

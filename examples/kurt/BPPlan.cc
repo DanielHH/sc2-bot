@@ -15,11 +15,13 @@ using namespace sc2;
 
 void BPPlan::AddBasicPlan(BPState * const start,
         BPState * const goal) {
+    // TODO Remove duplicated code?
     BPState built(start);
     std::stack<BPAction> add_to_plan;
     std::queue<UNIT_TYPEID> need_to_build;
     int mineral_cost = 0;
     int vespene_cost = 0;
+    int food_required = 0;
     /*
      * Add buildings directly from the goal.
      */
@@ -34,8 +36,11 @@ void BPPlan::AddBasicPlan(BPState * const start,
             add_to_plan.push(BPAction::CreatesUnit(type));
         }
         built.SetUnitAmount(type, amount);
-        mineral_cost += Kurt::GetUnitType(type)->mineral_cost;
-        vespene_cost += Kurt::GetUnitType(type)->vespene_cost;
+        UnitTypeData * t_data = Kurt::GetUnitType(type);
+        mineral_cost += t_data->mineral_cost * amount;
+        vespene_cost += t_data->vespene_cost * amount;
+        food_required += t_data->food_required * amount;
+        food_required -= t_data->food_provided * amount;
     }
     /*
      * Add buildings required for to reach the goal.
@@ -51,23 +56,45 @@ void BPPlan::AddBasicPlan(BPState * const start,
             need_to_build.push(req);
             add_to_plan.push(BPAction::CreatesUnit(req));
             built.SetUnitAmount(req, 1);
-            mineral_cost += Kurt::GetUnitType(req)->mineral_cost;
-            vespene_cost += Kurt::GetUnitType(req)->vespene_cost;
+            UnitTypeData * t_data = Kurt::GetUnitType(req);
+            mineral_cost += t_data->mineral_cost;
+            vespene_cost += t_data->vespene_cost;
+            food_required += t_data->food_required;
+            food_required -= t_data->food_provided;
         }
     }
     /*
-     * Add refinery if any building requires vespene gas.
+     * Add supplydepots if there is not enough food.
+     */
+    int food_in_store = start->GetFoodCap() - start->GetFoodUsed();
+    while (food_required > food_in_store) {
+        UNIT_TYPEID supplydepot = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
+        built.SetUnitAmount(supplydepot, built.GetUnitAmount(supplydepot) + 1);
+        add_to_plan.push(BPAction::CreatesUnit(supplydepot));
+        UnitTypeData * t_data = Kurt::GetUnitType(supplydepot);
+        mineral_cost += t_data->mineral_cost;
+        vespene_cost += t_data->vespene_cost;
+        food_required += t_data->food_required;
+        food_required -= t_data->food_provided;
+    }
+    /*
+     * Add refinery if plan requires more vespene than we got
+     * and no vespene is beeing produced.
      *
      * TODO Is this bad for MCTS?
      */
-    if (vespene_cost > 0) {
+    if (vespene_cost > built.GetVespene() &&
+            built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
         built.SetUnitAmount(refinery, 1);
         add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE));
         add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE));
         add_to_plan.push(BPAction::CreatesUnit(refinery));
-        mineral_cost += Kurt::GetUnitType(refinery)->mineral_cost;
-        vespene_cost += Kurt::GetUnitType(refinery)->vespene_cost;
+        UnitTypeData * t_data = Kurt::GetUnitType(refinery);
+        mineral_cost += t_data->mineral_cost;
+        vespene_cost += t_data->vespene_cost;
+        food_required += t_data->food_required;
+        food_required -= t_data->food_provided;
     }
     /*
      * Add all actions in reverse.
