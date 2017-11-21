@@ -108,30 +108,44 @@ string StrategyManager::GetCombatMode() {
     return combat_mode;
 };
 
+// Hämtad från Buildmanager.cc
+/*
+void BuildManager::SetGoal(BPState const *const goal) {
+    // TODO
+}
+*/
 void StrategyManager::DecideBuildGoal() {
+    if (our_cp.g2g < 80 || our_cp.g2a) {
+        // SetGoal("10 marines")
+    }
 
+    else if (our_cp.a2a < 50) {
+        //SetGoal ("5 vikings")
+    }
 };
 
 
 //NOT CURRENTLY USED!
+/*
 void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
     //GroundToGround
-    if (!unit->is_flying && unit->is_alive /* && check for groundweapon */) {
+    if (!unit->is_flying && unit->is_alive) {
         map["g2g"].push_back(unit);
     }
     //GroundToAir
-    if (!unit->is_flying && unit->is_alive /* && check for airweapon */) {
+    if (!unit->is_flying && unit->is_alive) {
         map["g2a"].push_back(unit);
     }
     //AirToGround
-    if (unit->is_flying && unit->is_alive /* && check for groundweapon */) {
+    if (unit->is_flying && unit->is_alive) {
         map["a2g"].push_back(unit);
     }
     //AirToAir
-    if (unit->is_flying && unit->is_alive /* && check for airweapon */) {
+    if (unit->is_flying && unit->is_alive) {
         map["a2a"].push_back(unit);
     }
 };
+*/
 
 
 
