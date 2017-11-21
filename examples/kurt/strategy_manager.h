@@ -29,8 +29,6 @@ private:
     //Save enemy units
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
 
-    
-
     // calculates combatpower for given combatstyle
     void  CalculateCombatPower(CombatPower *cp);
 

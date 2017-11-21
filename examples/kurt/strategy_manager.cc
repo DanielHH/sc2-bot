@@ -62,7 +62,7 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
         if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
             unit_data = Kurt::GetUnitType(unit->unit_type);
             for (auto weapon : unit_data->weapons) {
-                weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ = damage_ per attack
+                weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
                 if (weapon.type == Weapon::TargetType::Ground) {
                     //GroundToGround
                     if (!unit->is_flying) {
