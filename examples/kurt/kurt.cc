@@ -33,7 +33,7 @@ void Kurt::OnStep() {
 void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
-    strategy_manager->SortOurUnits(unit);
+    strategy_manager->SaveOurUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
