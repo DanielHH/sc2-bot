@@ -1,7 +1,9 @@
 #include "BPAction.h"
 #include "build_manager.h"
 #include "kurt.h"
+
 #include <vector>
+#include <stdexcept>
 
 using namespace sc2;
 
@@ -52,7 +54,7 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         break;
                     default:
                         // No
-                        throw std::exception("Build planner - ability had invalid targeting method");
+                        throw std::runtime_error("Build planner - ability had invalid targeting method");
                     }
                     Point2D pt = Point2D(u->pos.x, u->pos.y);
                     action->UnitCommand(u, ability, pt);
@@ -68,7 +70,7 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
         // TODO
         break;
     default:
-        throw std::exception("Build planner - invalid action executed");
+        throw std::runtime_error("Build planner - invalid action executed");
     }
     // TODO
 }
