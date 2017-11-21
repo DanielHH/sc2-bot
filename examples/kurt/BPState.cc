@@ -51,3 +51,15 @@ std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsEnd() {
     return unit_amount.end();
 }
 
+int BPState::GetMinerals() const {
+    return minerals;
+}
+
+int BPState::GetVespen() const {
+    return vespene;
+}
+
+int BPState::GetFood() const {
+    return food;
+}
+

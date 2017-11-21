@@ -42,6 +42,13 @@ public:
     /* Returns an iterator to the past last element of all Units in this state */
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsEnd();
 
+    int GetMinerals() const;
+    int GetVespen() const;
+    int GetFood() const;
+
 private:
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
+    int minerals;
+    int vespene;
+    int food;
 };
