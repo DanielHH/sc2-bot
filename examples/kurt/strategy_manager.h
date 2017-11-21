@@ -37,14 +37,15 @@ private:
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
     void ChooseCombatMode();
 
-    // Decides what units should be built.
-    void DecideBuildPlan();
+    void SetCombatMode(std::string new_mode);
+
+    std::string GetCombatMode();
 
     // Returns true if Enemy structure is observed.
     bool FindEnemyStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
 
-    void SetCombatMode(std::string new_mode);
 
-    std::string GetCombatMode();
+    // Decides what units should be built.
+    void DecideBuildGoal();
 
 };

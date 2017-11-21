@@ -1,4 +1,6 @@
 #include "strategy_manager.h"
+#include "kurt.h"
+
 #include <iostream>
 
 using namespace sc2;
@@ -86,6 +88,10 @@ void StrategyManager::SetCombatMode(std::string new_mode) {
 
 string StrategyManager::GetCombatMode() {
     return combat_mode;
+};
+
+void StrategyManager::DecideBuildGoal() {
+
 };
 
 
