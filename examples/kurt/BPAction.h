@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sc2api/sc2_api.h>
+
 class BPState;
 
 class BPAction {
@@ -16,7 +18,7 @@ public:
     ~BPAction();
 
     /* Executes this action */
-    void Execute();
+    void Execute(sc2::ActionInterface *, sc2::QueryInterface *, sc2::ObservationInterface *);
 
     /* Checks if this action can be executed from the current gamestate */
     bool CanExecute() const;
