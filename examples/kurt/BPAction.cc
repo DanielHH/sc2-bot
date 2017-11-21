@@ -64,7 +64,7 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
     case BPAction::GATHER_MINERALS:
         // TODO
         break;
-    case BPAction::GATHER_GAS:
+    case BPAction::GATHER_VESPENE:
         // TODO
         break;
     default:
