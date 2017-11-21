@@ -14,7 +14,14 @@ BPState::BPState(BPState * const state) {
 }
 
 BPState::BPState(const ObservationInterface* observation) {
-    // TODO
+    for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+        UNIT_TYPEID type = unit->unit_type.ToType();
+        SetUnitAmount(type, GetUnitAmount(type) + 1);
+    }
+    minerals = observation->GetMinerals();
+    vespene = observation->GetVespene();
+    food_cap = observation->GetFoodCap();
+    food_used = observation->GetFoodUsed();
 }
 
 BPState::BPState(BPState const * const initial, BPAction const * const step) {
@@ -55,11 +62,15 @@ int BPState::GetMinerals() const {
     return minerals;
 }
 
-int BPState::GetVespen() const {
+int BPState::GetVespene() const {
     return vespene;
 }
 
-int BPState::GetFood() const {
-    return food;
+int BPState::GetFoodCap() const {
+    return food_cap;
+}
+
+int BPState::GetFoodUsed() const {
+    return food_used;
 }
 

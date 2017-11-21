@@ -43,12 +43,14 @@ public:
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsEnd();
 
     int GetMinerals() const;
-    int GetVespen() const;
-    int GetFood() const;
+    int GetVespene() const;
+    int GetFoodCap() const;
+    int GetFoodUsed() const;
 
 private:
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
     int minerals;
     int vespene;
-    int food;
+    int food_cap;
+    int food_used;
 };
