@@ -82,7 +82,7 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                     // TODO: Initialize sensibly
                     Point2D target_point(u->pos.x + GetRandomScalar() * 15
                                         , u->pos.y + GetRandomScalar() * 15);
-                    Unit target_unit;
+                    Unit const *target_unit;
                     switch (Kurt::GetAbility(ability)->target) {
                     case sc2::AbilityData::Target::None:
                         action->UnitCommand(u, ability);
@@ -91,7 +91,15 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         action->UnitCommand(u, ability, target_point);
                         break;
                     case sc2::AbilityData::Target::Unit:
-                        action->UnitCommand(u, ability, &target_unit);
+                        if (ability == ABILITY_ID::BUILD_REFINERY) {
+                            Unit::Alliance neutral = Unit::Alliance::Neutral;
+                            target_unit = FindNearestUnitOfType(
+                                  UNIT_TYPEID::NEUTRAL_VESPENEGEYSER
+                                , u->pos
+                                , obs
+                                , &neutral);
+                        }
+                        action->UnitCommand(u, ability, target_unit);
                         break;
                     case sc2::AbilityData::Target::PointOrNone:
                         action->UnitCommand(u, ability);
