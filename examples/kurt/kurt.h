@@ -17,6 +17,7 @@ public:
     virtual void OnStep();
     virtual void OnUnitCreated(const sc2::Unit* unit);
     virtual void OnUnitIdle(const sc2::Unit* unit);
+    virtual void OnUnitDestroyed(const sc2::Unit* unit);
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,
         const sc2::Unit* unit);
