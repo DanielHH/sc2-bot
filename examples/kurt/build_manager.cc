@@ -57,24 +57,6 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     setup_finished = true;
 
     // Testing som functions...
-    {
-        UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_BARRACKS;
-        UnitTypeData* barData = Kurt::GetUnitType(bar);
-        std::cout << barData->name << " require: ";
-        for (UnitTypeData* r : GetRequirements(barData)) {
-            std::cout << r->name << " ";
-        }
-        std::cout << std::endl;
-    }
-    {
-        UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_GHOST;
-        UnitTypeData* barData = Kurt::GetUnitType(bar);
-        std::cout << barData->name << " require: ";
-        for (UnitTypeData* r : GetRequirements(barData)) {
-            std::cout << r->name << " ";
-        }
-        std::cout << std::endl;
-    }
     BPState * curr = new BPState(observation);
 //    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1);
     curr->Print();
@@ -82,11 +64,7 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
     BPPlan plan;
     plan.AddBasicPlan(curr, goal);
-    std::cout << ">>> plan:" << std::endl;
-    for (BPAction a : plan) {
-        std::cout << a << std::endl;
-    }
-    std::cout << "plan <<<" << std::endl;
+    std::cout << plan << std::endl;
 }
 
 
