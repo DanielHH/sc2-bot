@@ -114,7 +114,7 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
     for (i = 0; i < vector::size(); ++i) {
         BPAction action = vector::operator[](i);
         std::cout << "Try to exec action " << action << std::endl;
-        if (! action.Execute(kurt->Actions(), nullptr, kurt->Observation())) {
+        if (! action.Execute(kurt->Actions(), kurt->Query(), kurt->Observation())) {
             break;
         }
     }

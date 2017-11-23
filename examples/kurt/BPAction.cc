@@ -28,6 +28,16 @@ bool IsIdleSCV(Unit const &unit) {
     return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty();
 }
 
+std::set<ABILITY_ID> acceptable_to_interrupt = {
+      ABILITY_ID::HARVEST_GATHER, ABILITY_ID::HARVEST_GATHER_DRONE
+    , ABILITY_ID::HARVEST_GATHER_PROBE
+    , ABILITY_ID::HARVEST_GATHER_SCV
+    , ABILITY_ID::HARVEST_RETURN, ABILITY_ID::HARVEST_RETURN_DRONE
+    , ABILITY_ID::HARVEST_RETURN_MULE
+    , ABILITY_ID::HARVEST_RETURN_PROBE
+    , ABILITY_ID::HARVEST_RETURN_SCV
+};
+
 Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, ObservationInterface const *obs, Unit::Alliance *alliance = nullptr) {
     Units candidates = obs->GetUnits(*alliance, [type, alliance](Unit const &unit) { return unit.unit_type == type; });
     Unit const *best = nullptr;
@@ -46,14 +56,18 @@ Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, Obs
 bool BPAction::Execute(ActionInterface *action, QueryInterface *query, ObservationInterface const *obs) {
     Unit::Alliance self = Unit::Alliance::Self;
     Units us;
+    auto isnt_busy = [](Unit const &unit) {
+        return unit.orders.empty()
+            || acceptable_to_interrupt.count(unit.orders[0].ability_id);
+    };
     switch (action_type) {
     case BPAction::USE_ABILITY:
-        Unit const *unit_of_interest;
-        for (const Unit *u : obs->GetUnits(Unit::Alliance::Self)) {
-            for (UnitOrder order : u->orders) {
+        for (const Unit *u : obs->GetUnits(Unit::Alliance::Self, isnt_busy)) {
+            for (AvailableAbility order : query->GetAbilitiesForUnit(u).abilities) {
                 if (order.ability_id == ability) {
                     // TODO: Initialize sensibly
-                    Point2D target_point;
+                    Point2D target_point(u->pos.x + GetRandomScalar() * 15
+                                        , u->pos.y + GetRandomScalar() * 15);
                     Unit target_unit;
                     switch (Kurt::GetAbility(ability)->target) {
                     case sc2::AbilityData::Target::None:
@@ -75,6 +89,7 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         break;
                     default:
                         // No
+                        std::cerr << "Invalid target type!!" << std::endl;
                         throw std::runtime_error("Build planner - ability had invalid targeting method");
                     }
                     Point2D pt = Point2D(u->pos.x, u->pos.y);

@@ -61,7 +61,7 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
 
     // Set some test goal
     BPState * goal = new BPState();
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 11);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
     SetGoal(goal);
 }
 
