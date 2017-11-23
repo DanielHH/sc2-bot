@@ -1,5 +1,6 @@
 #include "strategy_manager.h"
 #include "kurt.h"
+#include "BPState.h"
 
 #include <iostream>
 
@@ -112,6 +113,7 @@ void StrategyManager::ChooseCombatMode() {
     }
 };
 
+
 void StrategyManager::SetCombatMode(std::string new_mode) {
     combat_mode = new_mode;
 };
@@ -127,8 +129,11 @@ void BuildManager::SetGoal(BPState const *const goal) {
 }
 */
 void StrategyManager::DecideBuildGoal() {
+
+    BPState new_goal_state;
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        // SetGoal("10 marines")
+        new_goal_state.SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
+        build_manager.SetGoal(new_goal_state);
     }
 
     else if (our_cp.a2a < 50) {
