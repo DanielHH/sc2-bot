@@ -110,7 +110,16 @@ float BPPlan::TimeRequired() const {
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {
-    // TODO
+    int i;
+    for (i = 0; i < vector::size(); ++i) {
+        BPAction action = vector::operator[](i);
+        std::cout << "Try to exec action " << action << std::endl;
+        if (! action.Execute(kurt->Actions(), nullptr, kurt->Observation())) {
+            break;
+        }
+    }
+    auto beg = vector::begin();
+    vector::erase(beg, beg + i);
 }
 
 std::string BPPlan::ToString() const {
