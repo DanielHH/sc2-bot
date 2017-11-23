@@ -50,6 +50,12 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
 void BuildManager::OnStep(const ObservationInterface* observation) {
     if (current_plan.empty() && goal != nullptr) {
         InitNewPlan(observation);
+        if (current_plan.empty()) {
+            goal = nullptr;
+            std::cout << "goal is reached" << std::endl;
+            // Goal is reached, need a better goal checker
+            // when multiple goals can be active at the same time.
+        }
     }
     current_plan.ExecuteStep(agent);
 }
