@@ -109,7 +109,7 @@ float BPPlan::TimeRequired() const {
     return INFINITY; // TODO
 }
 
-void BPPlan::ExecuteStep() {
+void BPPlan::ExecuteStep(Kurt * const kurt) {
     // TODO
 }
 
