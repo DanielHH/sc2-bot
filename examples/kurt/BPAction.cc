@@ -28,7 +28,7 @@ bool IsIdleSCV(Unit const &unit) {
     return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty();
 }
 
-Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, ObservationInterface *obs, Unit::Alliance *alliance = nullptr) {
+Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, ObservationInterface const *obs, Unit::Alliance *alliance = nullptr) {
     Units candidates = obs->GetUnits(*alliance, [type, alliance](Unit const &unit) { return unit.unit_type == type; });
     Unit const *best = nullptr;
     float distance_squared = INFINITY;
@@ -43,7 +43,7 @@ Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, Obs
     return best;
 }
 
-void BPAction::Execute(ActionInterface *action, QueryInterface *query, ObservationInterface *obs) {
+bool BPAction::Execute(ActionInterface *action, QueryInterface *query, ObservationInterface const *obs) {
     Unit::Alliance self = Unit::Alliance::Self;
     Units us;
     switch (action_type) {
@@ -79,7 +79,7 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                     }
                     Point2D pt = Point2D(u->pos.x, u->pos.y);
                     action->UnitCommand(u, ability, pt);
-                    return;
+                    return true;
                 }
             }
         }
@@ -117,14 +117,18 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
     default:
         throw std::runtime_error("Build planner - invalid action executed");
     }
-    // TODO
+    return false;
 }
 
 bool BPAction::CanExecute() const {
     return false; // TODO
 }
 
-bool BPAction::CanExecuteInState(BPState const * const state) const {
+bool BPAction::CanExecuteInStateNow(BPState const * const state) const {
+    return false; // TODO
+}
+
+bool BPAction::CanExecuteInStateNowOrSoon(BPState const * const state) const {
     return false; // TODO
 }
 
