@@ -63,7 +63,19 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
             unit_data = Kurt::GetUnitType(unit->unit_type);
             for (auto weapon : unit_data->weapons) {
                 weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
-                if (weapon.type == Weapon::TargetType::Ground) {
+                if (weapon.type == Weapon::TargetType::Any) { //Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
+                    //GroundToBoth
+                    if (!unit->is_flying) {
+                        cp->g2a += weapon_dps;
+                        cp->g2g += weapon_dps;
+                    }
+                    //AirToBoth
+                    if (unit->is_flying) {
+                        cp->a2a += weapon_dps;
+                        cp->a2g += weapon_dps;
+                    }
+                }
+                else if (weapon.type == Weapon::TargetType::Ground) {
                     //GroundToGround
                     if (!unit->is_flying) {
                         cp->g2g += weapon_dps;
@@ -73,7 +85,7 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
                         cp->a2g += weapon_dps;
                     }
                 }
-                if (weapon.type == Weapon::TargetType::Air) {
+                else if (weapon.type == Weapon::TargetType::Air) {
                     //GroundToAir
                     if (!unit->is_flying) {
                         cp->g2a += weapon_dps;
@@ -115,7 +127,7 @@ void BuildManager::SetGoal(BPState const *const goal) {
 }
 */
 void StrategyManager::DecideBuildGoal() {
-    if (our_cp.g2g < 80 || our_cp.g2a) {
+    if (our_cp.g2g < 80 || our_cp.g2a < 80) {
         // SetGoal("10 marines")
     }
 
