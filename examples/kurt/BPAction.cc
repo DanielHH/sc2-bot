@@ -31,8 +31,8 @@ bool IsIdleSCV(Unit const &unit) {
 bool IsSCVOnMinerals(Unit const &unit) {
     return unit.unit_type == UNIT_TYPEID::TERRAN_SCV &&
         ! unit.orders.empty() &&
-        (unit.orders[0].ability_id == ABILITY_ID::HARVEST_GATHER_SCV ||
-         unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN_SCV);
+        (unit.orders[0].ability_id == ABILITY_ID::HARVEST_GATHER ||
+         unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN);
 }
 
 bool IsSCVOnVespene(Unit const &unit) {
@@ -53,7 +53,9 @@ std::set<ABILITY_ID> acceptable_to_interrupt = {
 };
 
 Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, ObservationInterface const *obs, Unit::Alliance *alliance = nullptr) {
-    Units candidates = obs->GetUnits(*alliance, [type, alliance](Unit const &unit) { return unit.unit_type == type; });
+    Units candidates;
+    if (alliance == nullptr) candidates = obs->GetUnits([type](Unit const &unit) { return unit.unit_type == type; });
+    else candidates = obs->GetUnits(*alliance, [type, alliance](Unit const &unit) { return unit.unit_type == type; });
     Unit const *best = nullptr;
     float distance_squared = INFINITY;
     for (Unit const *candidate : candidates) {
