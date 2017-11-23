@@ -112,3 +112,20 @@ float BPPlan::TimeRequired() const {
 void BPPlan::ExecuteStep() {
     // TODO
 }
+
+std::string BPPlan::ToString() const {
+    std::string val = "BPPlan(";
+    for (int i = 0; i < vector::size(); ++i) {
+        BPAction action = vector::operator[](i);
+        val += action.ToString();
+        if (i + 1 < vector::size()) {
+            val += ", ";
+        }
+    }
+    val += ")";
+    return val;
+}
+
+std::ostream& operator<<(std::ostream& os, const BPPlan & plan) {
+    return os << plan.ToString();
+}

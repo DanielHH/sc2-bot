@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <vector>
 
 class BPAction;
@@ -15,4 +16,8 @@ public:
 
     /* Executes as much of this plan as possible during one game tick */
     void ExecuteStep();
+
+    std::string ToString() const;
 };
+
+std::ostream& operator<<(std::ostream&, const BPPlan&);
