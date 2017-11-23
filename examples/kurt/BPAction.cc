@@ -24,7 +24,28 @@ BPAction::~BPAction() {
     // DOOT
 }
 
+bool IsIdleSCV(Unit const &unit) {
+    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty();
+}
+
+Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, ObservationInterface *obs, Unit::Alliance *alliance = nullptr) {
+    Units candidates = obs->GetUnits(*alliance, [type, alliance](Unit const &unit) { return unit.unit_type == type; });
+    Unit const *best = nullptr;
+    float distance_squared = INFINITY;
+    for (Unit const *candidate : candidates) {
+        float dx2 = (candidate->pos.x - location.x) * (candidate->pos.x - location.x);
+        float dy2 = (candidate->pos.y - location.y) * (candidate->pos.y - location.y);
+        if (dx2 + dy2 < distance_squared) {
+            distance_squared = dx2 + dy2;
+            best = candidate;
+        }
+    }
+    return best;
+}
+
 void BPAction::Execute(ActionInterface *action, QueryInterface *query, ObservationInterface *obs) {
+    Unit::Alliance self = Unit::Alliance::Self;
+    Units us;
     switch (action_type) {
     case BPAction::USE_ABILITY:
         Unit const *unit_of_interest;
@@ -61,13 +82,36 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                 }
             }
         }
-        
+
         break;
     case BPAction::GATHER_MINERALS:
-        // TODO
+        // Find an idle SCV
+        us = obs->GetUnits(IsIdleSCV);
+        if (!us.empty()) {
+            Unit const *target = FindNearestUnitOfType(UNIT_TYPEID::NEUTRAL_MINERALFIELD, us[0]->pos, obs);
+            if (target == nullptr) {
+                throw std::runtime_error("There are no minerals!?");
+            }
+            action->UnitCommand(us[0], ABILITY_ID::SMART, target);
+        }
+        else {
+            // TODO: Find a suitable SCV to interrupt, instead of throwing up.
+            throw std::runtime_error("No idle SCVs found for GATHER_MINERALS action (TODO: Find a suitable one to interrupt)");
+        }
         break;
     case BPAction::GATHER_VESPENE:
-        // TODO
+        us = obs->GetUnits([](Unit const &unit) { return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty(); });
+        if (!us.empty()) {
+            Unit::Alliance a = Unit::Alliance::Self;
+            Unit const *target = FindNearestUnitOfType(UNIT_TYPEID::TERRAN_REFINERY, us[0]->pos, obs, &self);
+            if (target == nullptr) {
+                throw std::runtime_error("You must construct additional refineries");
+            }
+        }
+        else {
+            // TODO: Find a suitable SCV to interrupt, instead of throwing up.
+            throw std::runtime_error("No idle SCVs found for GATHER_VESPENE action (TODO: Find a suitable one to interrupt)");
+        }
         break;
     default:
         throw std::runtime_error("Build planner - invalid action executed");
