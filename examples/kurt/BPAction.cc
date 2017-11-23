@@ -79,6 +79,7 @@ void BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                     }
                     Point2D pt = Point2D(u->pos.x, u->pos.y);
                     action->UnitCommand(u, ability, pt);
+                    return;
                 }
             }
         }
