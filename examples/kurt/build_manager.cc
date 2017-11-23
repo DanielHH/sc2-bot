@@ -58,6 +58,15 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
         }
     }
     current_plan.ExecuteStep(agent);
+
+    // TESTING
+    for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
+        std::cout << UnitTypeToName(u->unit_type) << ":";
+        for (auto uo : u->orders) {
+            std::cout << " " << AbilityTypeToName(uo.ability_id);
+        }
+        std::cout << std::endl;
+    }
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
