@@ -1,8 +1,10 @@
 #pragma once
+#include <iostream>
 #include <vector>
 
 class BPAction;
 class BPState;
+class Kurt;
 
 
 class BPPlan : public std::vector<BPAction> {
@@ -14,5 +16,9 @@ public:
     float TimeRequired() const;
 
     /* Executes as much of this plan as possible during one game tick */
-    void ExecuteStep();
+    void ExecuteStep(Kurt * const);
+
+    std::string ToString() const;
 };
+
+std::ostream& operator<<(std::ostream&, const BPPlan&);

@@ -48,7 +48,10 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
 }
 
 void BuildManager::OnStep(const ObservationInterface* observation) {
-    // DO ALL DE ARMY STUFF
+    if (current_plan.empty() && goal != nullptr) {
+        InitNewPlan(observation);
+    }
+    current_plan.ExecuteStep(agent);
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
@@ -56,39 +59,30 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     SetUpTechTree(observation);
     setup_finished = true;
 
-    // Testing som functions...
-    {
-        UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_BARRACKS;
-        UnitTypeData* barData = Kurt::GetUnitType(bar);
-        std::cout << barData->name << " require: ";
-        for (UnitTypeData* r : GetRequirements(barData)) {
-            std::cout << r->name << " ";
-        }
-        std::cout << std::endl;
-    }
-    {
-        UNIT_TYPEID bar = UNIT_TYPEID::TERRAN_GHOST;
-        UnitTypeData* barData = Kurt::GetUnitType(bar);
-        std::cout << barData->name << " require: ";
-        for (UnitTypeData* r : GetRequirements(barData)) {
-            std::cout << r->name << " ";
-        }
-        std::cout << std::endl;
-    }
-    BPState * curr = new BPState(observation);
-//    curr->SetUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1);
-    curr->Print();
+    // Set some test goal
     BPState * goal = new BPState();
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
-    BPPlan plan;
-    plan.AddBasicPlan(curr, goal);
-    std::cout << ">>> plan:" << std::endl;
-    for (BPAction a : plan) {
-        std::cout << a << std::endl;
-    }
-    std::cout << "plan <<<" << std::endl;
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 11);
+    SetGoal(goal);
 }
 
+void BuildManager::SetGoal(BPState * const goal_) {
+    goal = goal_;
+}
+
+void BuildManager::InitNewPlan(const ObservationInterface* observation) {
+    BPState * current_state = new BPState(observation);
+    current_plan.AddBasicPlan(current_state, goal);
+
+    std::cout << "--- Creating new plan ---" << std::endl;
+    std::cout << "Current state:" << std::endl;
+    current_state->Print();
+    std::cout << "Goal state:" << std::endl;
+    goal->Print();
+    std::cout << "Current plan:" << std::endl;
+    std::cout << current_plan << std::endl;
+
+    delete current_state;
+}
 
 void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
     // Barrack upgrades
@@ -113,8 +107,4 @@ void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
     tech_tree_2[UNIT_TYPEID::TERRAN_BATTLECRUISER].push_back(UNIT_TYPEID::TERRAN_FUSIONCORE);
 
     // TODO Add more data to tech_tree_2
-}
-
-void BuildManager::SetGoal(BPState const *const goal) {
-    // TODO
 }
