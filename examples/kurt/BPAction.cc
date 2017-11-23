@@ -100,7 +100,7 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
         }
 
         break;
-    case BPAction::GATHER_MINERALS:
+    case BPAction::GATHER_MINERALS_SCV:
         // Find an idle SCV
         us = obs->GetUnits(IsIdleSCV);
         if (!us.empty()) {
@@ -115,7 +115,7 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
             throw std::runtime_error("No idle SCVs found for GATHER_MINERALS action (TODO: Find a suitable one to interrupt)");
         }
         break;
-    case BPAction::GATHER_VESPENE:
+    case BPAction::GATHER_VESPENE_SCV:
         us = obs->GetUnits([](Unit const &unit) { return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty(); });
         if (!us.empty()) {
             Unit::Alliance a = Unit::Alliance::Self;
@@ -154,10 +154,12 @@ BPAction BPAction::CreatesUnit(sc2::UNIT_TYPEID unit_type) {
 std::string BPAction::ToString() const {
     if (action_type == BPAction::USE_ABILITY) {
         return AbilityTypeToName(AbilityID(ability));
-    } else if (action_type == BPAction::GATHER_MINERALS) {
+    } else if (action_type == BPAction::GATHER_MINERALS_SCV) {
         return "GATHER_MINERALS";
-    } else if (action_type == BPAction::GATHER_VESPENE) {
+    } else if (action_type == BPAction::GATHER_VESPENE_SCV) {
         return "GATHER_VESPENE";
+    } else {
+        return "INVALID";
     }
 }
 

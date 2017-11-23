@@ -87,8 +87,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
             built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
         built.SetUnitAmount(refinery, 1);
-        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE));
-        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE));
+        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
+        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
         add_to_plan.push(BPAction::CreatesUnit(refinery));
         UnitTypeData * t_data = Kurt::GetUnitType(refinery);
         mineral_cost += t_data->mineral_cost;

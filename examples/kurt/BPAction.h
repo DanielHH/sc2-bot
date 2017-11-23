@@ -8,10 +8,10 @@ class BPState;
 class BPAction {
 public:
     static const int USE_ABILITY = 0;
-    static const int GATHER_MINERALS = 1;
-    static const int GATHER_VESPENE = 2;
+    static const int GATHER_MINERALS_SCV = 1;
+    static const int GATHER_VESPENE_SCV = 2;
 
-    int action_type; // 0: Use ability. 1: Gather minerals. 2: Gather vespene. Anything else: invalid
+    int action_type; // What type of action, constants above.
     sc2::ABILITY_ID ability; // The ability to use.
 
     /* Constructors */
