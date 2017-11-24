@@ -1,6 +1,7 @@
 #include "army_manager.h"
 #include <iostream>
 #include <sc2api/sc2_map_info.h>
+#include "BPAction.h"
 
 using namespace sc2;
 
@@ -128,16 +129,18 @@ bool ArmyManager::TryGetScout() {
     // if no reaper or marine is found look for a SCV.
     if (!scout_found) {
         for(const Unit* unit : kurt->workers) { // check scv order so we dont take a scv thats buidling
-            // Find a SCV, remove it from workers and put it in scouts.
+            // Find a SCV which is acceptable to interrupt, remove it from workers and put it in scouts.
             for(UnitOrder order : unit->orders) {
-                //if(order)
+                std::set<sc2::ABILITY_ID> acceptable_to_interrupt = BPAction::acceptable_to_interrupt;
+                if(acceptable_to_interrupt.find(order.ability_id) != acceptable_to_interrupt.end()) {
+                    kurt->scouts.push_back(unit);
+                    kurt->workers.remove(unit);
+                    scout_found = true;
+                    return true;
+                }
             }
-            kurt->scouts.push_back(unit);
-            kurt->workers.remove(unit);
-            scout_found = true;
-            return true;
         }
-        // If we have no SCV:s
+        // no SCV:s exists that are allowed to be interrupted.
         return false;
     } else {
         // Add the marine in scouts and remove it from army

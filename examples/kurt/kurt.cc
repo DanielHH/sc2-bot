@@ -7,6 +7,7 @@
 #include "army_manager.h"
 #include "build_manager.h"
 #include "strategy_manager.h"
+#include "world_cell.h"
 
 using namespace sc2;
 
@@ -21,6 +22,12 @@ void Kurt::OnGameStart() {
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
+    PopulateWorldRepresentation();
+    std::cout << observation->GetGameInfo().pathing_grid.height << std::endl;
+    std::cout << "Height: " << observation->GetGameInfo().pathing_grid.width << std::endl;
+    std::cout << "world_rep Width " << (world_representation.front()).size() << std::endl;
+    std::cout << "world_rep height " << world_representation.size() << std::endl;
+    
 }
 
 void Kurt::OnStep() {
@@ -55,7 +62,6 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit){
     bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
     if (found) {
         scouts.remove(destroyed_unit);
-        std::cout << found + "found in scouts" << std::endl;
         return;
     }
     
@@ -167,6 +173,31 @@ const Unit* Kurt::FindNearestVespeneGeyser() {
     }
     //        std::cout << "NO VESPENE FOUND" << std::endl;
     return nullptr;
+}
+
+void Kurt::PopulateWorldRepresentation(){
+    ImageData actual_world = Observation()->GetGameInfo().pathing_grid;
+    
+    int rest_height = actual_world.height % chunk_size;
+    int rest_width = actual_world.width % chunk_size;
+    
+    for (int y = 1; y <= actual_world.height; ++y) {
+        if (y % chunk_size == 0) {
+            world_representation.push_back(std::vector<WorldCell*>());
+        } else if (y == actual_world.height-rest_height)
+        
+        for (int x = 1; x <= actual_world.width; ++x) {
+            if (x % chunk_size == 0 && y % chunk_size == 0) {
+                (world_representation.front()).push_back(new WorldCell(x,y));
+            } else if (x == actual_world.width - rest_width && y % chunk_size == 0) {
+                (world_representation.front()).push_back(new WorldCell(x+rest_width, y));
+            } else if (x % chunk_size == 0 && y == actual_world.height - rest_height) {
+                (world_representation.front()).push_back(new WorldCell(x, y+rest_height));
+            } else if (x == actual_world.width - rest_width && y == actual_world.height - rest_height) {
+                (world_representation.front()).push_back(new WorldCell(x+rest_width, y+rest_height));
+            }
+        }
+    }
 }
 
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;

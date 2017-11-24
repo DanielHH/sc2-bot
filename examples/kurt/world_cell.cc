@@ -1,5 +1,10 @@
 #include "world_cell.h"
 
+WorldCell::WorldCell(int x, int y){
+    real_world_x = x;
+    real_world_y = y;
+}
+
 float WorldCell::GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt) {
     float total_enemy_dmg = 0;
     float total_allied_dmg = 1; // init to 1 to avoid division by zero
