@@ -42,7 +42,7 @@ bool IsSCVOnVespene(Unit const &unit) {
          unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN);
 }
 
-std::set<ABILITY_ID> acceptable_to_interrupt = {
+std::set<ABILITY_ID> BPAction::acceptable_to_interrupt = {
       ABILITY_ID::HARVEST_GATHER, ABILITY_ID::HARVEST_GATHER_DRONE
     , ABILITY_ID::HARVEST_GATHER_PROBE
     , ABILITY_ID::HARVEST_GATHER_SCV

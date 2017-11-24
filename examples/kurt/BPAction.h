@@ -46,6 +46,8 @@ public:
     static BPAction CreatesUnit(sc2::UNIT_TYPEID unit_type);
 
     std::string ToString() const;
+
+    static std::set<sc2::ABILITY_ID> acceptable_to_interrupt;
 };
 
 std::ostream& operator<<(std::ostream& os, const BPAction & obj);
