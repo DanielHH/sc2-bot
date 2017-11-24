@@ -1,21 +1,34 @@
 #pragma once
 
-#include "BPState.h"
+class BPState;
 
 class BPAction {
 public:
-	/* Constructors */
-	BPAction();
+    static const int USE_ABILITY = 0;
+    static const int GATHER_MINERALS = 1;
+    static const int GATHER_GAS = 2;
 
-	/* Destrutors */
-	~BPAction();
+    /* Constructors */
+    BPAction();
+    BPAction(sc2::ABILITY_ID);
 
-	/* Executes this action */
-	void Execute();
+    /* Destrutors */
+    ~BPAction();
 
-	/* Checks if this action can be executed from the current gamestate */
-	bool CanExecute();
+    /* Executes this action */
+    void Execute();
 
-	/* Checks if this action can be executed from the given BPState */
-	bool CanExecuteInState(BPState state);
+    /* Checks if this action can be executed from the current gamestate */
+    bool CanExecute() const;
+
+    /* Checks if this action can be executed from the given BPState */
+    bool CanExecuteInState(BPState const * const) const;
+
+    int action_type; // 0: Use ability. 1: Gather minerals. 2: Gather gas. Anything else: invalid
+    sc2::ABILITY_ID ability; // The ability to use.
+
+    /* Creates a new unit with the action used to create a given unit.
+    * Note: The caller is responsible for freeing the return value using delete.
+    */
+    static BPAction *CreatesUnit(sc2::UNIT_TYPEID unit_type);
 };
