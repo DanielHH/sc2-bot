@@ -18,7 +18,8 @@ void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
     army_manager = new ArmyManager(this);
-    build_manager = new BuildManager();
+    build_manager = new BuildManager(this);
+    build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
 }
 
@@ -27,8 +28,6 @@ void Kurt::OnStep() {
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
-    TryBuildSupplyDepot();
-    TryBuildRefinary();
 }
 void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
@@ -37,10 +36,6 @@ void Kurt::OnUnitCreated(const Unit* unit) {
 
 void Kurt::OnUnitIdle(const Unit* unit) {
     switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-        Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
-        break;
-    }
     case UNIT_TYPEID::TERRAN_SCV: {
         const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
         if (!mineral_target) {

@@ -1,21 +1,40 @@
+#include "BPState.h"
+
 #include <sc2api/sc2_api.h>
 
-#include "BPState.h"
+#include <iostream>
 
 using namespace sc2;
 
 BPState::BPState() {
 }
 
+BPState::BPState(BPState * const state) {
+    for (auto it = state->UnitsBegin(); it != state->UnitsEnd(); ++it) {
+        SetUnitAmount(it->first, it->second);
+    }
+    minerals = state->GetMinerals();
+    vespene = state->GetVespene();
+    food_cap = state->GetFoodCap();
+    food_used = state->GetFoodUsed();
+}
+
 BPState::BPState(const ObservationInterface* observation) {
+    for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+        UNIT_TYPEID type = unit->unit_type.ToType();
+        SetUnitAmount(type, GetUnitAmount(type) + 1);
+    }
+    minerals = observation->GetMinerals();
+    vespene = observation->GetVespene();
+    food_cap = observation->GetFoodCap();
+    food_used = observation->GetFoodUsed();
+}
+
+BPState::BPState(BPState const * const initial, BPAction const * const step) {
     // TODO
 }
 
 BPState::~BPState() {
-    // TODO
-}
-
-BPState::BPState(BPState const * const initial, BPAction const * const step) {
     // TODO
 }
 
@@ -35,4 +54,42 @@ int BPState::GetUnitAmount(UNIT_TYPEID type) {
 
 void BPState::SetUnitAmount(UNIT_TYPEID type, int amount) {
     unit_amount[type] = amount;
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsBegin() {
+    return unit_amount.begin();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsEnd() {
+    return unit_amount.end();
+}
+
+int BPState::GetMinerals() const {
+    return minerals;
+}
+
+int BPState::GetVespene() const {
+    return vespene;
+}
+
+int BPState::GetFoodCap() const {
+    return food_cap;
+}
+
+int BPState::GetFoodUsed() const {
+    return food_used;
+}
+
+void BPState::Print() {
+    std::cout << ">>> BPState" << std::endl;
+    std::cout << "Minerals: " << GetMinerals();
+    std::cout << ", Vespene: " << GetVespene();
+    std::cout << ", Food: " << GetFoodUsed();
+    std::cout << "/" << GetFoodCap() << std::endl;
+    for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
+        UNIT_TYPEID type = it->first;
+        int amount = it->second;
+        std::cout << UnitTypeToName(type) << ": " << amount << std::endl;
+    }
+    std::cout << "BPState <<<" << std::endl;
 }
