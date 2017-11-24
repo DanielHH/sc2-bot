@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sc2api/sc2_api.h>
+#include "kurt.h"
 
 class WorldCell {
     
@@ -10,9 +11,9 @@ private:
     float gas_amount;
     float enemy_dps;
     float last_seen;
-    std::vector<const sc2::Unit*> buildings;
-    std::vector<const sc2::Unit*> troops;
-    
+    sc2::Units buildings;
+    sc2::Units troops;
+    float UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt* kurt);
     
 public:
         
@@ -21,8 +22,8 @@ public:
     float GetEnemyDps();
     float GetLastSeen();
     float GetScoutPriority();
-    std::vector<const sc2::Unit*> GetTroops();
-    float GetRelativeStrength(std::vector<const sc2::Unit*> allied_troops);
+    sc2::Units GetTroops();
+    float GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt);
     
     void SetMineralAmount(float amount);
     void SetGasAmount(float amount);

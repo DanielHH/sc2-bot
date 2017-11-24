@@ -1,15 +1,48 @@
 #include "world_cell.h"
 
-float WorldCell::GetRelativeStrength(std::vector<const sc2::Unit *> allied_troops) {
-    for (const sc2::Unit* allied_troop : allied_troops) {
-        
-        for (const sc2::Unit* enemy_troop: GetTroops()) {
-            
-        }
+float WorldCell::GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt) {
+    float total_enemy_dmg = 0;
+    float total_allied_dmg = 1; // init to 1 to avoid division by zero
+    for (const sc2::Unit* enemy_trooper: GetTroops()) {
+        total_enemy_dmg += UnitDamageVSSquad(enemy_trooper, allied_troops, kurt);
     }
+    for (const sc2::Unit* allied_trooper : allied_troops) {
+        total_allied_dmg += UnitDamageVSSquad(allied_trooper, GetTroops(), kurt);
+    }
+    return total_enemy_dmg / total_allied_dmg;
 }
 
-std::vector<const sc2::Unit*>WorldCell::GetTroops(){return troops;}
+
+float WorldCell::UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt* kurt) {
+    float total_unit_dmg = 0;
+    sc2::UnitTypeData* unit_type_data = kurt->GetUnitType(unit->unit_type);
+    std::vector<sc2::Weapon> weapons = unit_type_data->weapons;
+    for (auto weapon : unit_type_data->weapons) {
+        float unit_dmg = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
+        for (const sc2::Unit* enemy_trooper : units) {
+            if (weapon.type == sc2::Weapon::TargetType::Any) {
+                //To Air And Ground
+                total_unit_dmg += unit_dmg;
+            }
+            else if (weapon.type == sc2::Weapon::TargetType::Ground) {
+                //To Ground
+                if (!enemy_trooper->is_flying) {
+                    total_unit_dmg += unit_dmg;
+                }
+            }
+            else if (weapon.type == sc2::Weapon::TargetType::Air) {
+                //To Air
+                if (enemy_trooper->is_flying) {
+                    total_unit_dmg += unit_dmg;
+                }
+            }
+        }
+    }
+    return total_unit_dmg / units.size();
+}
+
+
+sc2::Units WorldCell::GetTroops(){return troops;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}
 float WorldCell::GetEnemyDps() {return enemy_dps;}
