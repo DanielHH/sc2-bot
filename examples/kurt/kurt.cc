@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <list>
+#include <algorithm>
 
 #include "army_manager.h"
 #include "build_manager.h"
@@ -53,6 +54,18 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 
     }
+}
+
+void Kurt::OnUnitDestroyed(const Unit *destroyed_unit){
+    bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
+    if (found) {
+        scouts.remove(destroyed_unit);
+        std::cout << found + "found in scouts" << std::endl;
+        return;
+    }
+    
+    found = (std::find(army.begin(), army.end(), destroyed_unit) !=army.end());
+    army.remove(destroyed_unit);
 }
 
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
