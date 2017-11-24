@@ -3,9 +3,11 @@
 #include <sc2api/sc2_api.h>
 #include "kurt.h"
 
-enum CombatMode { DEFEND, ATTACK, HARASS };
 
 class ArmyManager {
+
+public:
+    enum CombatMode { DEFEND, ATTACK, HARASS };
 
 private:
     CombatMode current_combat_mode;

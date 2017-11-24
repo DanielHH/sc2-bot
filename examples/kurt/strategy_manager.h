@@ -1,6 +1,8 @@
 #pragma once
 
 #include <sc2api/sc2_api.h>
+#include "kurt.h"
+#include "army_manager.h"
 #include <map>
 #include <string>
 
@@ -8,17 +10,16 @@
 class StrategyManager{
 public:
 
-    std::string combat_mode;
-
+    /* Stores the total DPS all units has together against air and ground units  */
     struct CombatPower {
         std::string alliance;
-        float g2g;
-        float g2a;
-        float a2g;
-        float a2a;
+        float g2g; // Ground to ground DPS
+        float g2a; // Ground to air DPS
+        float a2g; // Air to ground DPS
+        float a2a; // Air to air DPS
     } our_cp, enemy_cp;
 
-    StrategyManager();
+    StrategyManager(Kurt* kurt);
 
     void OnStep(const sc2::ObservationInterface* observation);
 
@@ -26,6 +27,8 @@ public:
     void SaveOurUnits(const sc2::Unit* unit);
 
 private:
+    Kurt* kurt;
+
     //Save enemy units
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
 
@@ -35,11 +38,7 @@ private:
     void CalculateCPHelp(CombatPower *cp, sc2::Units alliance);
 
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
-    void ChooseCombatMode();
-
-    void SetCombatMode(std::string new_mode);
-
-    std::string GetCombatMode();
+    ArmyManager::CombatMode CalculateCombatMode();
 
     // Decides what units should be built.
     void DecideBuildGoal();

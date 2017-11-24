@@ -20,7 +20,7 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
     }
 }
 
-CombatMode ArmyManager::GetCombatMode() {
+ArmyManager::CombatMode ArmyManager::GetCombatMode() {
     return current_combat_mode;
 }
 

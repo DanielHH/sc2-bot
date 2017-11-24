@@ -1,35 +1,61 @@
 #include "strategy_manager.h"
 #include "kurt.h"
-#include "BPState.h"
-
+#include "game_plan.h"
 #include <iostream>
 
 using namespace sc2;
 using namespace std;
 
-
 Units our_units;
 Units enemy_units;
+GamePlan current_plan;
 
-StrategyManager::StrategyManager() {
+StrategyManager::StrategyManager(Kurt* parent_kurt) {
+    kurt = parent_kurt;
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
 
+    // Create a test plan
+    cout << "Creating plan..." << endl;
+    current_plan = GamePlan();
+    // Build order of 3 marines
+    BPState* test_build = new BPState();
+    test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
+    current_plan.AddBuildOrderNode(test_build);
+    // Attack order
+    current_plan.AddCombatNode(ArmyManager::ATTACK);
+    // Harass order
+    current_plan.AddCombatNode(ArmyManager::HARASS);
+    cout << "Plan created" << endl;
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
-    // DO ALL DE STRATEGY STUFF
+    int current_game_loop = observation->GetGameLoop();
+
+    SaveSpottedEnemyUnits(observation);
+
+    if (current_game_loop % 1000 == 0) {
+        current_plan.ExecuteNextNode();
+    }
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
     our_units.push_back(unit);
 }
 
-//Save enemy units in vector spotted_enemy_units
+/*
+Save enemy units in vector spotted_enemy_units. This saves the minimal amount of units that
+we know the enemy has, but the enemy might have more units in the fog of war.
+*/
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
     // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
     Units tmp = enemy_units;
+
+    /*
+    For every observed enemy, check if a unit of the same type is already saved in enemy_units.
+    If there is, count the new unit as already seen and don't add it to the enemy_units vector.
+    */
     for (auto known_unit = tmp.begin(); known_unit != tmp.end(); known_unit++) {
         for (auto new_unit = observed_enemy_units.begin(); new_unit != observed_enemy_units.end(); new_unit++) {
             if (*known_unit == *new_unit) {
@@ -38,6 +64,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
             }
         }
     }
+    // Save the observed units that didn't get filtered out as already seen.
     enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
 };
 
@@ -59,6 +86,7 @@ void StrategyManager::CalculateCombatPower(CombatPower *cp) {
 void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     UnitTypeData* unit_data;
     float weapon_dps;
+
     for (auto unit : team) {
         if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
             unit_data = Kurt::GetUnitType(unit->unit_type);
@@ -101,25 +129,17 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     }
 };
 
-void StrategyManager::ChooseCombatMode() {
+ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        SetCombatMode("Attack!");
+        //kurt->army_manager->SetCombatMode(ArmyManager::ATTACK);
+        return ArmyManager::ATTACK;
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
-        SetCombatMode("Defend!");
+        return ArmyManager::DEFEND;
     }
     else {
-        SetCombatMode("Harrass!");
+        return ArmyManager::HARASS;
     }
-};
-
-
-void StrategyManager::SetCombatMode(std::string new_mode) {
-    combat_mode = new_mode;
-};
-
-string StrategyManager::GetCombatMode() {
-    return combat_mode;
 };
 
 // Hämtad från Buildmanager.cc
@@ -129,11 +149,8 @@ void BuildManager::SetGoal(BPState const *const goal) {
 }
 */
 void StrategyManager::DecideBuildGoal() {
-
-    BPState new_goal_state;
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        new_goal_state.SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
-        build_manager.SetGoal(new_goal_state);
+        // SetGoal("10 marines")
     }
 
     else if (our_cp.a2a < 50) {

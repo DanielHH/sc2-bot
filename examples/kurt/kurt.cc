@@ -16,9 +16,10 @@ StrategyManager* strategy_manager;
 void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
+
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager();
-    strategy_manager = new StrategyManager();
+    strategy_manager = new StrategyManager(this);
 }
 
 void Kurt::OnStep() {
@@ -26,6 +27,7 @@ void Kurt::OnStep() {
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
+
     TryBuildSupplyDepot();
     TryBuildRefinary();
 }
