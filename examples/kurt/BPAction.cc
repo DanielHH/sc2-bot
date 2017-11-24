@@ -145,7 +145,7 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
             Unit const *target = FindNearestUnitOfType(
                     UNIT_TYPEID::TERRAN_REFINERY, scv->pos, obs);
             if (target == nullptr) {
-                throw std::runtime_error("There are no refineries!?");
+                return false;
             }
             action->UnitCommand(scv, ABILITY_ID::SMART, target);
             return true;
