@@ -29,7 +29,6 @@ private:
     
     bool IsArmyUnit(const sc2::Unit* unit, const class sc2::ObservationInterface* observation);
     bool IsStructure(const sc2::Unit* unit, const sc2::ObservationInterface* observation);
-
     
     void Harass();
     void Attack();

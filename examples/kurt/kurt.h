@@ -3,8 +3,6 @@
 #include <sc2api/sc2_api.h>
 #include <list>
 
-
-
 class Kurt : public sc2::Agent {
 
 public:

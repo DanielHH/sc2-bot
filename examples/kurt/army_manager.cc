@@ -65,8 +65,6 @@ void ArmyManager::PlanScoutPath() {
         float y_distance = abs(check_point->pos.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         if (euk_distance_to_unit > longest_euk_dist) {
-            /*scout_path.push_front(check_point->pos);
-            longest_euk_dist = euk_distance_to_unit;*/
             longest_euk_dist = euk_distance_to_unit;
         }
         scout_path.push(check_point->pos);
