@@ -90,6 +90,11 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         action->UnitCommand(u, ability);
                         break;
                     case sc2::AbilityData::Target::Point:
+                        // Assume we have to place a unit.
+                        while (!query->Placement(ability, target_point, u)) {
+                            target_point = Point2D(u->pos.x + GetRandomScalar() * 15
+                                , u->pos.y + GetRandomScalar() * 15);
+                        }
                         action->UnitCommand(u, ability, target_point);
                         break;
                     case sc2::AbilityData::Target::Unit:
@@ -116,8 +121,8 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         std::cerr << "Invalid target type!!" << std::endl;
                         throw std::runtime_error("Build planner - ability had invalid targeting method");
                     }
-                    Point2D pt = Point2D(u->pos.x, u->pos.y);
-                    action->UnitCommand(u, ability, pt);
+                    /*Point2D pt = Point2D(u->pos.x, u->pos.y);
+                    action->UnitCommand(u, ability, pt);*/
                     return true;
                 }
             }
