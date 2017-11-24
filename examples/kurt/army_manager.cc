@@ -129,6 +129,9 @@ bool ArmyManager::TryGetScout() {
     if (!scout_found) {
         for(const Unit* unit : kurt->workers) { // check scv order so we dont take a scv thats buidling
             // Find a SCV, remove it from workers and put it in scouts.
+            for(UnitOrder order : unit->orders) {
+                //if(order)
+            }
             kurt->scouts.push_back(unit);
             kurt->workers.remove(unit);
             scout_found = true;
