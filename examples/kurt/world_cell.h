@@ -1,4 +1,6 @@
+#pragma once
 
+#include <sc2api/sc2_api.h>
 
 class WorldCell {
     
@@ -8,42 +10,22 @@ private:
     float gas_amount;
     float enemy_dps;
     float last_seen;
+    std::vector<const sc2::Unit*> buildings;
+    std::vector<const sc2::Unit*> troops;
+    
     
 public:
-    
-    WordlCell(){
         
-    }
+    float GetMineralAmount();
+    float GetGasAmount();
+    float GetEnemyDps();
+    float GetLastSeen();
+    float GetScoutPriority();
+    std::vector<const sc2::Unit*> GetTroops();
+    float GetRelativeStrength(std::vector<const sc2::Unit*> allied_troops);
     
-    float GetMineralAmount(){
-        return mineral_amount;
-    }
-    
-    float GetGasAmount(){
-        return gas_amount;
-    }
-    
-    float GetEnemyDps(){
-        return enemy_dps;
-    }
-    
-    float GetLastSeen(){
-        return last_seen;
-    }
-    
-    void SetMineralAmount(float amount){
-        mineral_amount = amount;
-    }
-    
-    void SetGasAmount(float amount){
-        gas_amount = amount;
-    }
-    
-    void SetEnemyDps(float dps){
-        enemy_dps = dps;
-    }
-    
-    void SetLastSeen(float time){
-        last_seen = time;
-    }
+    void SetMineralAmount(float amount);
+    void SetGasAmount(float amount);
+    void SetEnemyDps(float dps);
+    void SetLastSeen(float time);
 };
