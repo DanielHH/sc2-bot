@@ -59,6 +59,11 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 }
 
+void Kurt::SendBuildOrder(const BPState* build_order) {
+    //build_manager->SetGoal(build_order);
+    std::cout << "Build something!" << std::endl;
+}
+
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
     Point2D location,
     const Unit* unit) {

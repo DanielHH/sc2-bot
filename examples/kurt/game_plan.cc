@@ -1,16 +1,17 @@
 #include "game_plan.h";
 
-GamePlan::GamePlan() {
+GamePlan::GamePlan(Kurt* _kurt) {
+    kurt = _kurt;
 }
 
 void GamePlan::AddCombatNode(ArmyManager::CombatMode combat_order) {
-    CombatNode* new_node = new CombatNode(combat_order);
+    CombatNode* new_node = new CombatNode(kurt, combat_order);
 
     AddNode(new_node);
 }
 
 void GamePlan::AddBuildOrderNode(BPState* build_order) {
-    BuildOrderNode* new_node = new BuildOrderNode(build_order);
+    BuildOrderNode* new_node = new BuildOrderNode(kurt, build_order);
 
     AddNode(new_node);
 }
@@ -24,6 +25,7 @@ void GamePlan::ExecuteNextNode() {
         head_node = next_node;
     }
     else {
+        // TODO: ask for new plan
         std::cout << "Nothing to execute!" << std::endl;
     }
 }

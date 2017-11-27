@@ -1,5 +1,4 @@
 #include "strategy_manager.h"
-#include "kurt.h"
 #include "game_plan.h"
 #include <iostream>
 
@@ -8,7 +7,7 @@ using namespace std;
 
 Units our_units;
 Units enemy_units;
-GamePlan current_plan;
+
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -17,18 +16,18 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
 
     // Create a test plan
     cout << "Creating plan..." << endl;
-    current_plan = GamePlan();
+    current_plan = new GamePlan(parent_kurt);
 
     // Build order of 3 marines
     BPState* test_build = new BPState();
     test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
-    current_plan.AddBuildOrderNode(test_build);
+    current_plan->AddBuildOrderNode(test_build);
 
     // Attack order
-    current_plan.AddCombatNode(ArmyManager::ATTACK);
+    current_plan->AddCombatNode(ArmyManager::ATTACK);
 
     // Harass order
-    current_plan.AddCombatNode(ArmyManager::HARASS);
+    current_plan->AddCombatNode(ArmyManager::HARASS);
     cout << "Plan created" << endl;
 }
 
@@ -38,7 +37,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     SaveSpottedEnemyUnits(observation);
 
     if (current_game_loop % 1000 == 0) {
-        current_plan.ExecuteNextNode();
+        current_plan->ExecuteNextNode();
     }
 }
 

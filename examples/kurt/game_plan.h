@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BPState.h"
+#include "kurt.h"
 #include "army_manager.h"
 #include <iostream>
 
@@ -11,13 +12,18 @@ class GamePlan {
 
 private:
     /* Superclass for more specific nodes */
-    struct Node {
-        Node* next;
+    class Node {
+    protected:
+        Kurt* kurt;
 
-        Node() {
+        Node(Kurt* _kurt) {
+            kurt = _kurt;
             next = nullptr;
             return;
         }
+
+    public:
+        Node* next;
 
         /* Execute the part of the plan this node represents */
         virtual void Execute() {
@@ -26,37 +32,40 @@ private:
     };
 
     /* Switches the combat mode of the army manager when executed */
-    struct CombatNode : Node {
+    class CombatNode : public Node {
         ArmyManager::CombatMode combat_order;
 
-        CombatNode(ArmyManager::CombatMode _combat_order) {
-            Node();
+    public:
+        CombatNode(Kurt* kurt, ArmyManager::CombatMode _combat_order) : Node(kurt) {
             combat_order = _combat_order;
         }
 
         void Execute() {
-            // SetCombatMode(combat_order) to army_manager
+            // TODO: SetCombatMode(combat_order) to army_manager
             std::cout << "Set CombatMode: " << combat_order << std::endl;
         }
     };
 
     /* Requests a group of units from the build manager when executed*/
-    struct BuildOrderNode : Node {
+    class BuildOrderNode : public Node {
         BPState* build_order;
 
-        BuildOrderNode(BPState* _build_order) {
-            Node();
+    public:
+        BuildOrderNode(Kurt* kurt, BPState* _build_order) : Node(kurt) {
             build_order = _build_order;
         }
 
         void Execute() {
-            // Give build_order to build_manager
-            std::cout << "Build something!" << std::endl;
+            // TODO: Give build_order to build_manager
+            
+            kurt->SendBuildOrder(build_order);
         }
     };
 
 public:
-    GamePlan();
+    Kurt* kurt;
+
+    GamePlan(Kurt* _kurt);
 
     /* Adds a new CombatNode to the end of the plan */
     void AddCombatNode(ArmyManager::CombatMode combat_order);
