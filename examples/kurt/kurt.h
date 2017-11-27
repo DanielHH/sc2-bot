@@ -3,12 +3,16 @@
 #include <sc2api/sc2_api.h>
 #include <list>
 
+
+class WorldRepresentation;
+
 class Kurt : public sc2::Agent {
 
 public:
     std::list<const sc2::Unit*> workers;
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
+    WorldRepresentation* world_rep;
 
     virtual void OnGameStart();
     virtual void OnStep();

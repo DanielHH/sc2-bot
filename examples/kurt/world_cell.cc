@@ -3,6 +3,8 @@
 WorldCell::WorldCell(int x, int y){
     real_world_x = x;
     real_world_y = y;
+    gas_amount = 0;
+    mineral_amount = 0;
 }
 
 float WorldCell::GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt) {

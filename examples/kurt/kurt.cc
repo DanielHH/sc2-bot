@@ -22,7 +22,7 @@ void Kurt::OnGameStart() {
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
-    WorldRepresentation* world_rep = new WorldRepresentation(this);
+    world_rep = new WorldRepresentation(this);
     world_rep->PrintWorld();
 }
 

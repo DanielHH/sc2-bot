@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sc2api/sc2_map_info.h>
 #include "BPAction.h"
+#include "world_cell.h"
+#include "world_representation.h"
 
 using namespace sc2;
 
@@ -16,7 +18,13 @@ bool DistanceComp(Point2D a, Point2D b){
     return a_distance_from < b_distance_from;
 }
 
+bool SmartComp(WorldCell a, WorldCell b) {
+    return true;
+}
+
 std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
+
+std::priority_queue<WorldCell, std::vector<WorldCell>, std::function<bool(WorldCell, WorldCell)>> smart_scout_path(SmartComp);
 
 bool ran = false;
 void ArmyManager::OnStep(const ObservationInterface* observation) {
@@ -51,6 +59,8 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
             ArmyManager::Harass();
             break;
     }
+}
+void ArmyManager::PlanSmartScoutPath(){
 }
 
 void ArmyManager::PlanScoutPath() {

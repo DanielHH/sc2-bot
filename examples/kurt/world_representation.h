@@ -3,6 +3,7 @@
 #include <sc2api/sc2_api.h>
 #include "kurt.h"
 #include "world_cell.h"
+#include <iostream>
 
 
 class WorldRepresentation {
