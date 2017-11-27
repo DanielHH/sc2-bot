@@ -144,13 +144,19 @@ ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
     }
 };
 
-void StrategyManager::DecideBuildGoal() {
+void StrategyManager::SetGamePlan() {
+
+
+
+}
+
+void StrategyManager::SetBuildGoal() {
 
     BPState* new_goal_state = new BPState();
+
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
-
     else if (our_cp.a2a < 50) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
