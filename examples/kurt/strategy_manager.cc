@@ -18,12 +18,15 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     // Create a test plan
     cout << "Creating plan..." << endl;
     current_plan = GamePlan();
+
     // Build order of 3 marines
     BPState* test_build = new BPState();
     test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
     current_plan.AddBuildOrderNode(test_build);
+
     // Attack order
     current_plan.AddCombatNode(ArmyManager::ATTACK);
+
     // Harass order
     current_plan.AddCombatNode(ArmyManager::HARASS);
     cout << "Plan created" << endl;
@@ -131,7 +134,6 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
 
 ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        //kurt->army_manager->SetCombatMode(ArmyManager::ATTACK);
         return ArmyManager::ATTACK;
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
