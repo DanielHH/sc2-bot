@@ -5,6 +5,7 @@ WorldCell::WorldCell(int x, int y){
     real_world_y = y;
     gas_amount = 0;
     mineral_amount = 0;
+    seen_on_game_step = 0;
 }
 
 float WorldCell::GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt) {
@@ -48,14 +49,17 @@ float WorldCell::UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt
     return total_unit_dmg / units.size();
 }
 
+sc2::Point2D WorldCell::GetCellLocationAs2DPoint(int chunk_size) {
+    return sc2::Point2D(real_world_x-chunk_size/2,real_world_y-chunk_size/2);
+}
 
 sc2::Units WorldCell::GetTroops(){return troops;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}
 float WorldCell::GetEnemyDps() {return enemy_dps;}
-float WorldCell::GetLastSeen() {return last_seen;}
+float WorldCell::GetSeenOnGameStep() {return seen_on_game_step;}
 
 void WorldCell::SetMineralAmount(float amount) {mineral_amount = amount;}
 void WorldCell::SetGasAmount(float amount) {gas_amount = amount;}
 void WorldCell::SetEnemyDps(float dps) {enemy_dps = dps;}
-void WorldCell::SetLastSeen(float time) {last_seen = time;}
+void WorldCell::SetSeenOnGameStep(float step) {seen_on_game_step = step;}

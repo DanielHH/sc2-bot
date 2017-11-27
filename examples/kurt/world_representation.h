@@ -9,11 +9,11 @@
 class WorldRepresentation {
 
 private:
-    int chunk_size = 8;
-    std::vector<std::vector<WorldCell*>> world_representation;
     void PopulateNeutralUnits(Kurt* kurt);
 
 public:
+    std::vector<std::vector<WorldCell*>> world_representation;
     WorldRepresentation(Kurt* kurt);
+    int chunk_size = 16;
     void PrintWorld();
 };

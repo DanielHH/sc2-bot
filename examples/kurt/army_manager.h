@@ -39,4 +39,5 @@ private:
     bool CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos);
     void PutUnitInGroup(const sc2::Unit* unit);
     void ScoutPath();
+    void ScoutSmartPath();
 };

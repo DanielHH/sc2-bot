@@ -6,9 +6,10 @@
 #include "world_representation.h"
 
 using namespace sc2;
-
+Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
+    comp_kurt = parent_kurt;
 }
 
 bool DistanceComp(Point2D a, Point2D b){
@@ -18,13 +19,21 @@ bool DistanceComp(Point2D a, Point2D b){
     return a_distance_from < b_distance_from;
 }
 
-bool SmartComp(WorldCell a, WorldCell b) {
-    return true;
+bool SmartComp(WorldCell* a, WorldCell* b) {
+    float a_gas = a->GetGasAmount();
+    float a_mineral = a->GetMineralAmount();
+    float a_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
+    
+    float b_gas = b->GetGasAmount();
+    float b_mineral = b->GetMineralAmount();
+    float b_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
+    
+    return (a_gas + a_mineral) + a_seen_game_steps_ago < (b_gas + b_mineral) + b_seen_game_steps_ago;
 }
 
 std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
 
-std::priority_queue<WorldCell, std::vector<WorldCell>, std::function<bool(WorldCell, WorldCell)>> smart_scout_path(SmartComp);
+std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>> smart_scout_path(SmartComp);
 
 bool ran = false;
 void ArmyManager::OnStep(const ObservationInterface* observation) {
@@ -42,11 +51,12 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     std::cout << pathing_grid.height << std::endl;
     std::cout << pathing_grid.width << std::endl;*/
     if (!ran) {
-        ArmyManager::PlanScoutPath();
+        //ArmyManager::PlanScoutPath();
+        ArmyManager::PlanSmartScoutPath();
         ran = true;
     }
     
-    ArmyManager::ScoutPath();
+    ArmyManager::ScoutSmartPath();
     switch (current_combat_mode) {
         case DEFEND:
             ArmyManager::Defend();
@@ -61,6 +71,15 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 void ArmyManager::PlanSmartScoutPath(){
+    WorldRepresentation* world_rep = kurt->world_rep;
+    
+    smart_scout_path = std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>>(SmartComp);
+    
+    for (int y = 0; y < world_rep->world_representation.size(); ++y) {
+        for (int x = 0; x < world_rep->world_representation[y].size(); ++x) {
+            smart_scout_path.push((world_rep->world_representation[y])[x]);
+        }
+    }
 }
 
 void ArmyManager::PlanScoutPath() {
@@ -86,6 +105,24 @@ void ArmyManager::PlanScoutPath() {
         std::cout << point.y << std::endl;
         scout_path.pop();
     }*/
+}
+
+void ArmyManager::ScoutSmartPath(){
+    const Unit* scout = kurt->scouts.front();
+    float scout_x = scout->pos.x;
+    float scout_y = scout->pos.y;
+    
+    while (!smart_scout_path.empty()){
+        Point2D point_to_visit = (smart_scout_path.top())->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+        float x_distance = abs(point_to_visit.x - scout_x);
+        float y_distance = abs(point_to_visit.y - scout_y);
+        float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
+        kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
+        if(euk_distance_to_unit < 10) {
+            smart_scout_path.pop();
+        }
+        return;
+    }
 }
 
 void ArmyManager::ScoutPath(){

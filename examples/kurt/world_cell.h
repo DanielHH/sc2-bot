@@ -11,7 +11,7 @@ private:
     float mineral_amount;
     float gas_amount;
     float enemy_dps;
-    float last_seen;
+    float seen_on_game_step;
     sc2::Units buildings;
     sc2::Units troops;
     float UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt* kurt);
@@ -21,13 +21,15 @@ public:
     float GetMineralAmount();
     float GetGasAmount();
     float GetEnemyDps();
-    float GetLastSeen();
+    float GetSeenOnGameStep();
     float GetScoutPriority();
+    sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);
     sc2::Units GetTroops();
     float GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt);
+
     
     void SetMineralAmount(float amount);
     void SetGasAmount(float amount);
     void SetEnemyDps(float dps);
-    void SetLastSeen(float time);
+    void SetSeenOnGameStep(float game_step);
 };
