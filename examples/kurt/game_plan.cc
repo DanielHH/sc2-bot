@@ -5,9 +5,13 @@ GamePlan::GamePlan(Kurt* _kurt) {
     head_node = nullptr;
 }
 
+
+GamePlan::~GamePlan() {
+    this->Clear();
+}
+
 void GamePlan::AddCombatNode(Kurt::CombatMode combat_order) {
     CombatNode* new_node = new CombatNode(kurt, combat_order);
-
     AddNode(new_node);
 }
 
@@ -31,24 +35,33 @@ void GamePlan::ExecuteNextNode() {
     }
 }
 
+void GamePlan::Clear() {
+    Node* current_node = head_node;
+    Node* next_node;
+
+    while (current_node != nullptr) {
+        next_node = current_node->next;
+        delete current_node;
+        current_node = next_node;
+    }
+
+    head_node = nullptr;
+}
+
 void GamePlan::AddNode(Node* new_node) {
     // If plan is empty, add the node as head_node
     if (head_node == nullptr) {
-        std::cout << "Inserting first node" << std::endl;
         head_node = new_node;
     }
     else {
         Node* current_node = head_node;
 
         // Get the tail_node
-        std::cout << "Iterating through nodes" << std::endl;
         while (current_node->next != nullptr) {
             current_node = current_node->next;
-            std::cout << "..." << std::endl;
         }
 
         // Add the new node as tail
         current_node->next = new_node;
-        std::cout << "Node added!" << std::endl;
     }
 }

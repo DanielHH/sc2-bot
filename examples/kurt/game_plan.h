@@ -17,7 +17,6 @@ private:
         Kurt* kurt;
 
         Node(Kurt* _kurt) {
-            std::cout << "Nodeconstructor" << std::endl;
             kurt = _kurt;
             next = nullptr;
             return;
@@ -69,6 +68,8 @@ public:
 
     GamePlan(Kurt* _kurt);
 
+    ~GamePlan();
+
     /* Adds a new CombatNode to the end of the plan */
     void AddCombatNode(Kurt::CombatMode combat_order);
 
@@ -77,6 +78,9 @@ public:
 
     /* Executes the head_node in the plan */
     void ExecuteNextNode();
+
+    /* Clears the GamePlan by deleting all its nodes */
+    void Clear();
 
 private:
     Node* head_node; // The first node in the plan
