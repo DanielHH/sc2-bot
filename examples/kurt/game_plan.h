@@ -43,6 +43,7 @@ private:
         void Execute() {
             // TODO: SetCombatMode(combat_order) to army_manager
             std::cout << "Set CombatMode: " << combat_order << std::endl;
+            kurt->ExecuteSubplan();
         }
     };
 

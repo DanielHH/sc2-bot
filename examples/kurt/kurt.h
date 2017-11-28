@@ -24,6 +24,9 @@ public:
     /* Called when a unit is idle */
     virtual void OnUnitIdle(const sc2::Unit* unit);
 
+    /* Executes the next part of the current plan */
+    void ExecuteSubplan();
+
     /* Gives the build manager a new goal to work against */
     void SendBuildOrder(const BPState* build_order);
 

@@ -59,6 +59,11 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 }
 
+void Kurt::ExecuteSubplan() {
+    std::cout << "Kurt exec" << std::endl;
+    strategy_manager->ExecuteSubplan();
+}
+
 void Kurt::SendBuildOrder(const BPState* build_order) {
     //build_manager->SetGoal(build_order);
     std::cout << "Build something!" << std::endl;

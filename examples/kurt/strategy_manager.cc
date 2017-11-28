@@ -27,8 +27,6 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
 
     // Harass order
     current_plan->AddCombatNode(ArmyManager::HARASS);
-
-    current_plan->Clear();
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -43,6 +41,10 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
     our_units.push_back(unit);
+}
+
+void StrategyManager::ExecuteSubplan() {
+    std::cout << "SM exec" << std::endl;
 }
 
 /*
