@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <list>
+#include <algorithm>
 
 #include "army_manager.h"
 #include "build_manager.h"
@@ -18,7 +19,8 @@ void Kurt::OnGameStart() {
     SetUpDataMaps(observation);
 
     army_manager = new ArmyManager(this);
-    build_manager = new BuildManager();
+    build_manager = new BuildManager(this);
+    build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager(this);
 }
 
@@ -27,9 +29,6 @@ void Kurt::OnStep() {
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
-
-    TryBuildSupplyDepot();
-    TryBuildRefinary();
 }
 
 void Kurt::OnUnitCreated(const Unit* unit) {
@@ -40,10 +39,6 @@ void Kurt::OnUnitCreated(const Unit* unit) {
 
 void Kurt::OnUnitIdle(const Unit* unit) {
     switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-        Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
-        break;
-    }
     case UNIT_TYPEID::TERRAN_SCV: {
         const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
         if (!mineral_target) {
@@ -57,6 +52,18 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 
     }
+}
+
+void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
+    bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
+    if (found) {
+        scouts.remove(destroyed_unit);
+        std::cout << found + "found in scouts" << std::endl;
+        return;
+    }
+
+    found = (std::find(army.begin(), army.end(), destroyed_unit) != army.end());
+    army.remove(destroyed_unit);
 }
 
 void Kurt::ExecuteSubplan() {

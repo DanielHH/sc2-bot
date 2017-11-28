@@ -25,6 +25,9 @@ public:
     /* Called when a unit is idle */
     virtual void OnUnitIdle(const sc2::Unit* unit);
 
+    /* Called when a unit is destroyes */
+    virtual void OnUnitDestroyed(const sc2::Unit* unit);
+
     /* Executes the next part of the current plan */
     void ExecuteSubplan();
 
