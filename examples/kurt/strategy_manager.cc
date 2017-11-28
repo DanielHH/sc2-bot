@@ -24,10 +24,10 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     current_plan->AddBuildOrderNode(test_build);
 
     // Attack order
-    current_plan->AddCombatNode(ArmyManager::ATTACK);
+    current_plan->AddCombatNode(Kurt::ATTACK);
 
     // Harass order
-    current_plan->AddCombatNode(ArmyManager::HARASS);
+    current_plan->AddCombatNode(Kurt::HARASS);
     cout << "Plan created" << endl;
 }
 
@@ -131,16 +131,17 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     }
 };
 
-ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
+Kurt::CombatMode StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        return ArmyManager::ATTACK;
+        //attack
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
-        return ArmyManager::DEFEND;
+        //defend
     }
     else {
-        return ArmyManager::HARASS;
+       //harrass
     }
+    return Kurt::ATTACK;
 };
 
 void StrategyManager::SetGamePlan() {

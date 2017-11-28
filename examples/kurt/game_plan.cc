@@ -5,7 +5,7 @@ GamePlan::GamePlan(Kurt* _kurt) {
     head_node = nullptr;
 }
 
-void GamePlan::AddCombatNode(ArmyManager::CombatMode combat_order) {
+void GamePlan::AddCombatNode(Kurt::CombatMode combat_order) {
     CombatNode* new_node = new CombatNode(kurt, combat_order);
 
     AddNode(new_node);
