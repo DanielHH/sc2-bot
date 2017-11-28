@@ -2,6 +2,7 @@
 
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;
+    head_node = nullptr;
 }
 
 void GamePlan::AddCombatNode(ArmyManager::CombatMode combat_order) {
@@ -33,17 +34,21 @@ void GamePlan::ExecuteNextNode() {
 void GamePlan::AddNode(Node* new_node) {
     // If plan is empty, add the node as head_node
     if (head_node == nullptr) {
+        std::cout << "Inserting first node" << std::endl;
         head_node = new_node;
     }
     else {
         Node* current_node = head_node;
 
         // Get the tail_node
+        std::cout << "Iterating through nodes" << std::endl;
         while (current_node->next != nullptr) {
             current_node = current_node->next;
+            std::cout << "..." << std::endl;
         }
 
         // Add the new node as tail
         current_node->next = new_node;
+        std::cout << "Node added!" << std::endl;
     }
 }

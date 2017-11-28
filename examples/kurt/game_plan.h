@@ -17,6 +17,7 @@ private:
         Kurt* kurt;
 
         Node(Kurt* _kurt) {
+            std::cout << "Nodeconstructor" << std::endl;
             kurt = _kurt;
             next = nullptr;
             return;
