@@ -1,5 +1,5 @@
 #include "strategy_manager.h"
-#include "game_plan.h"
+#include "plans.cc"
 #include <iostream>
 
 using namespace sc2;
@@ -51,7 +51,7 @@ void StrategyManager::ExecuteSubplan() {
 Save enemy units in vector spotted_enemy_units. This saves the minimal amount of units that
 we know the enemy has, but the enemy might have more units in the fog of war.
 */
-void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
+void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) { //TODO: Remove structures from this vector. Make a new vector for this.
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
     // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
     Units tmp = enemy_units;
