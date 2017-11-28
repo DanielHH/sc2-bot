@@ -5,6 +5,16 @@
 #include <vector>
 #include <stdexcept>
 
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 using namespace sc2;
 
 
@@ -195,3 +205,7 @@ std::ostream& operator<<(std::ostream& os, const BPAction & action) {
     return os << action.ToString();
 }
 
+
+#undef DEBUG
+#undef PRINT
+#undef TEST

@@ -1,6 +1,16 @@
 #include "strategy_manager.h"
 #include <iostream>
 
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 using namespace sc2;
 
 StrategyManager::StrategyManager() {
@@ -37,3 +47,6 @@ bool StrategyManager::FindEnemyStructure(const ObservationInterface* observation
 }
 
 
+#undef DEBUG
+#undef PRINT
+#undef TEST
