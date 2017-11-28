@@ -2,16 +2,6 @@
 #include "game_plan.h"
 #include <iostream>
 
-//#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
-
 using namespace sc2;
 using namespace std;
 
@@ -202,6 +192,3 @@ void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map)
 
 
 
-#undef DEBUG
-#undef PRINT
-#undef TEST

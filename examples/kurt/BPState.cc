@@ -3,19 +3,6 @@
 #include <sc2api/sc2_api.h>
 
 #include <iostream>
-#include <fstream>
-#include <iterator>
-#include <map>
-
-//#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
 
 using namespace sc2;
 
@@ -52,19 +39,7 @@ BPState::~BPState() {
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
-    std::vector<BPAction *> tmp;
-    std::ifstream abilities_file;
-    TEST({ abilities_file.open("sc2-gamedata/v3.19.1.58600/units.json");
-
-
-    std::map<UNIT_TYPEID, std::vector<ABILITY_ID>> ability_map;
-
-    for (std::string line; abilities_file >> line;) {
-
-    } })
-    
-
-    
+    std::vector<BPAction *> tmp; // TODO
     return tmp;
 }
 
@@ -118,20 +93,3 @@ void BPState::Print() {
     }
     std::cout << "BPState <<<" << std::endl;
 }
-
-bool BPState::operator<(BPState const &other) const {
-    if (minerals < other.minerals) return true;
-    if (vespene < other.vespene) return true;
-    if (food_cap - food_used < other.food_cap - other.food_used) return true;
-    if (food_cap < other.food_cap) return true;
-    for (auto pair : unit_amount) {
-        if (other.unit_amount.find(pair.first) != other.unit_amount.cend()) {
-            if (pair.second < other.unit_amount.at(pair.first)) return true;
-        }
-    }
-    return false;
-}
-
-#undef DEBUG
-#undef PRINT
-#undef TEST

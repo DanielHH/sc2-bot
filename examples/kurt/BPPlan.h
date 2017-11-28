@@ -6,6 +6,7 @@ class BPAction;
 class BPState;
 class Kurt;
 
+
 class BPPlan : public std::vector<BPAction> {
 public:
     /* Apends a basic plan for going from a given state to some goal state */

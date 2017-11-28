@@ -50,8 +50,6 @@ public:
     /* Prints this BPState to std::cout */
     void Print();
 
-    bool operator<(BPState const &other) const;
-
 private:
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
     int minerals;

@@ -2,16 +2,6 @@
 #include <iostream>
 #include <sc2api/sc2_map_info.h>
 
-//#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
-
 using namespace sc2;
 
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
@@ -198,7 +188,3 @@ bool ArmyManager::IsStructure(const Unit* unit, const ObservationInterface* obse
     }
     return is_structure;
 }
-
-#undef DEBUG
-#undef TEST
-#undef PRINT

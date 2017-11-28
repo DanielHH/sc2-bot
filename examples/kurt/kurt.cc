@@ -1,22 +1,12 @@
 #include "kurt.h"
 
+#include <iostream>
 #include <list>
 #include <algorithm>
 
 #include "army_manager.h"
 #include "build_manager.h"
 #include "strategy_manager.h"
-
-#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
-
 
 using namespace sc2;
 
@@ -202,7 +192,6 @@ const Unit* Kurt::FindNearestVespeneGeyser() {
 
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
-std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;
 void Kurt::SetUpDataMaps(const sc2::ObservationInterface *observation) {
     for (auto unit : observation->GetUnitTypeData()) {
         unit_types[(sc2::UNIT_TYPEID) unit.unit_type_id] = unit;
@@ -219,7 +208,3 @@ AbilityData *Kurt::GetAbility(ABILITY_ID id) {
 UnitTypeData *Kurt::GetUnitType(UNIT_TYPEID id) {
     return &unit_types.at(id);
 }
-
-#undef DEBUG // Stop debug prints from leaking
-#undef TEST
-#undef PRINT

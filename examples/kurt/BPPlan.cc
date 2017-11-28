@@ -7,18 +7,9 @@
 
 #include "sc2api/sc2_api.h"
 
+#include <iostream>
 #include <queue>
 #include <stack>
-
-//#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
 
 using namespace sc2;
 
@@ -122,7 +113,7 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
     int i;
     for (i = 0; i < vector::size(); ++i) {
         BPAction action = vector::operator[](i);
-        PRINT("Try to exec action " << action)
+        std::cout << "Try to exec action " << action << std::endl;
         if (! action.Execute(kurt->Actions(), kurt->Query(), kurt->Observation())) {
             break;
         }
@@ -147,7 +138,3 @@ std::string BPPlan::ToString() const {
 std::ostream& operator<<(std::ostream& os, const BPPlan & plan) {
     return os << plan.ToString();
 }
-
-#undef DEBUG
-#undef TEST
-#undef PRINT

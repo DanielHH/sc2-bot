@@ -63,7 +63,6 @@ private:
 
     static std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> unit_types;
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
-    static std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> unit_ability_map;
     static void SetUpDataMaps(const sc2::ObservationInterface *);
 
 };
