@@ -154,7 +154,7 @@ void StrategyManager::DecideBuildGoal() {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
 
-    current_plan.AddBuildOrderNode(new_goal_state);
+    current_plan->AddBuildOrderNode(new_goal_state);
 };
 
 
