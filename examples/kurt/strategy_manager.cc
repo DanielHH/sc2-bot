@@ -86,7 +86,7 @@ void StrategyManager::CalculateCombatPower(CombatPower *cp) {
 };
 
 void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
-    UnitTypeData* unit_data;
+    UnitTypeData* unit_data = new UnitTypeData();
     float weapon_dps;
 
     for (auto unit : team) {
@@ -143,20 +143,18 @@ ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
     }
 };
 
-// Hämtad från Buildmanager.cc
-/*
-void BuildManager::SetGoal(BPState const *const goal) {
-    // TODO
-}
-*/
 void StrategyManager::DecideBuildGoal() {
+
+    BPState* new_goal_state = new BPState();
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        // SetGoal("10 marines")
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
 
     else if (our_cp.a2a < 50) {
-        //SetGoal ("5 vikings")
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
+
+    current_plan.AddBuildOrderNode(new_goal_state);
 };
 
 
