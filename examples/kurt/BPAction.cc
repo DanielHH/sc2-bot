@@ -5,6 +5,16 @@
 #include <vector>
 #include <stdexcept>
 
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 using namespace sc2;
 
 
@@ -42,7 +52,7 @@ bool IsSCVOnVespene(Unit const &unit) {
          unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN);
 }
 
-std::set<ABILITY_ID> acceptable_to_interrupt = {
+std::set<ABILITY_ID> BPAction::acceptable_to_interrupt = {
       ABILITY_ID::HARVEST_GATHER, ABILITY_ID::HARVEST_GATHER_DRONE
     , ABILITY_ID::HARVEST_GATHER_PROBE
     , ABILITY_ID::HARVEST_GATHER_SCV
@@ -90,6 +100,11 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         action->UnitCommand(u, ability);
                         break;
                     case sc2::AbilityData::Target::Point:
+                        // Assume we have to place a unit.
+                        while (!query->Placement(ability, target_point, u)) {
+                            target_point = Point2D(u->pos.x + GetRandomScalar() * 15
+                                , u->pos.y + GetRandomScalar() * 15);
+                        }
                         action->UnitCommand(u, ability, target_point);
                         break;
                     case sc2::AbilityData::Target::Unit:
@@ -116,8 +131,8 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
                         std::cerr << "Invalid target type!!" << std::endl;
                         throw std::runtime_error("Build planner - ability had invalid targeting method");
                     }
-                    Point2D pt = Point2D(u->pos.x, u->pos.y);
-                    action->UnitCommand(u, ability, pt);
+                    /*Point2D pt = Point2D(u->pos.x, u->pos.y);
+                    action->UnitCommand(u, ability, pt);*/
                     return true;
                 }
             }
@@ -190,3 +205,7 @@ std::ostream& operator<<(std::ostream& os, const BPAction & action) {
     return os << action.ToString();
 }
 
+
+#undef DEBUG
+#undef PRINT
+#undef TEST
