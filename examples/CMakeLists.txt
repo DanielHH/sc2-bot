@@ -2,6 +2,7 @@ include_directories("../include")
 include_directories("common")
 include_directories("kurt")
 
+
 file(GLOB common_sources "common/*.h" "common/*.cc")
 file(GLOB kurt_files "kurt/*.h" "kurt/*.cc")
 
@@ -40,7 +41,6 @@ target_link_libraries(tutorial sc2api sc2utils)
 add_executable(bot_mp "bot_mp.cc" ${common_sources})
 set_target_properties(bot_mp PROPERTIES FOLDER examples)
 target_link_libraries(bot_mp sc2api sc2lib sc2utils)
-
 
 # Exclude SDL and related projects to work around linker issue.
 if (NOT APPLE)

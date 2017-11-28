@@ -49,6 +49,22 @@ float WorldCell::UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt
     return total_unit_dmg / units.size();
 }
 
+bool WorldCell::SmartComp(WorldCell* a, WorldCell* b) {
+    float a_gas = a->GetGasAmount();
+    float a_mineral = a->GetMineralAmount();
+    float a_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
+    
+    float b_gas = b->GetGasAmount();
+    float b_mineral = b->GetMineralAmount();
+    float b_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
+    
+    return (a_gas + a_mineral) + a_seen_game_steps_ago < (b_gas + b_mineral) + b_seen_game_steps_ago;
+}
+
+bool WorldCell::operator < (WorldCell* rhs) {
+    return SmartComp(this, rhs);
+}
+
 sc2::Point2D WorldCell::GetCellLocationAs2DPoint(int chunk_size) {
     return sc2::Point2D(real_world_x-chunk_size/2,real_world_y-chunk_size/2);
 }
@@ -58,8 +74,14 @@ float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}
 float WorldCell::GetEnemyDps() {return enemy_dps;}
 float WorldCell::GetSeenOnGameStep() {return seen_on_game_step;}
+const sc2::Unit* WorldCell::GetScout() {
+    return scout;
+}
 
 void WorldCell::SetMineralAmount(float amount) {mineral_amount = amount;}
 void WorldCell::SetGasAmount(float amount) {gas_amount = amount;}
 void WorldCell::SetEnemyDps(float dps) {enemy_dps = dps;}
 void WorldCell::SetSeenOnGameStep(float step) {seen_on_game_step = step;}
+const sc2::Unit* WorldCell::SetScout(const sc2::Unit* unit) {
+    scout = unit;
+}

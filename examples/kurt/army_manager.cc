@@ -19,18 +19,6 @@ bool DistanceComp(Point2D a, Point2D b){
     return a_distance_from < b_distance_from;
 }
 
-bool SmartComp(WorldCell* a, WorldCell* b) {
-    float a_gas = a->GetGasAmount();
-    float a_mineral = a->GetMineralAmount();
-    float a_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
-    
-    float b_gas = b->GetGasAmount();
-    float b_mineral = b->GetMineralAmount();
-    float b_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
-    
-    return (a_gas + a_mineral) + a_seen_game_steps_ago < (b_gas + b_mineral) + b_seen_game_steps_ago;
-}
-
 std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
 
 std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>> smart_scout_path(SmartComp);
@@ -82,6 +70,7 @@ void ArmyManager::PlanSmartScoutPath(){
     }
 }
 
+/*
 void ArmyManager::PlanScoutPath() {
     // TODO: implement pathplanning for scout
     //scout_path = kurt->Observation()->GetGameInfo().enemy_start_locations;
@@ -99,13 +88,14 @@ void ArmyManager::PlanScoutPath() {
         }
         scout_path.push(check_point->pos);
     }
-    /*while (!scout_path.empty()) {
+    while (!scout_path.empty()) {
         Point2D point = scout_path.top();
         std::cout << point.x << std::endl;
         std::cout << point.y << std::endl;
         scout_path.pop();
-    }*/
+    }
 }
+*/
 
 void ArmyManager::ScoutSmartPath(){
     const Unit* scout = kurt->scouts.front();
@@ -113,6 +103,8 @@ void ArmyManager::ScoutSmartPath(){
     float scout_y = scout->pos.y;
     
     while (!smart_scout_path.empty()){
+        for (int i = 0; i<smart_scout_path.size(); i++) {
+        }
         Point2D point_to_visit = (smart_scout_path.top())->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
