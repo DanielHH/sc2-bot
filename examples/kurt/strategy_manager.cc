@@ -15,7 +15,6 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     enemy_cp.alliance = "enemy_cp";
 
     // Create a test plan
-    cout << "Creating plan..." << endl;
     current_plan = new GamePlan(parent_kurt);
 
     // Build order of 3 marines
@@ -28,7 +27,8 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
 
     // Harass order
     current_plan->AddCombatNode(ArmyManager::HARASS);
-    cout << "Plan created" << endl;
+
+    current_plan->Clear();
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
