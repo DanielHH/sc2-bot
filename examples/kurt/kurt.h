@@ -2,6 +2,7 @@
 
 #include <sc2api/sc2_api.h>
 #include <list>
+#include "BPState.h"
 
 class Kurt : public sc2::Agent {
 
@@ -10,12 +11,35 @@ public:
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
 
+    enum CombatMode { DEFEND, ATTACK, HARASS };
 
+    /* Called once when the game starts */
     virtual void OnGameStart();
+
+    /* Called every step in the game */
     virtual void OnStep();
+
+    /* Called every time a new unit is created*/
     virtual void OnUnitCreated(const sc2::Unit* unit);
+
+    /* Called when a unit is idle */
     virtual void OnUnitIdle(const sc2::Unit* unit);
+
+    /* Called when a unit is destroyes */
     virtual void OnUnitDestroyed(const sc2::Unit* unit);
+
+    /* Executes the next part of the current plan */
+    void ExecuteSubplan();
+
+    /* Gives the build manager a new goal to work against */
+    void SendBuildOrder(const BPState* build_order);
+
+    /* Returns current combat mode*/
+    CombatMode GetCombatMode();
+
+    /* Sets combat mode */
+    void SetCombatMode(CombatMode new_combat_mode);
+
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,
         const sc2::Unit* unit);
@@ -26,10 +50,17 @@ public:
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
 
+    /* Returns data about an ability */
     static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
+
+    /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
 
+
+
 private:
+    CombatMode current_combat_mode;
+
     static std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> unit_types;
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static void SetUpDataMaps(const sc2::ObservationInterface *);

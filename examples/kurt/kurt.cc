@@ -17,10 +17,11 @@ StrategyManager* strategy_manager;
 void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
+
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
-    strategy_manager = new StrategyManager();
+    strategy_manager = new StrategyManager(this);
 }
 
 void Kurt::OnStep() {
@@ -29,9 +30,11 @@ void Kurt::OnStep() {
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
 }
+
 void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
+    strategy_manager->SaveOurUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
@@ -51,16 +54,34 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 }
 
-void Kurt::OnUnitDestroyed(const Unit *destroyed_unit){
+void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
     if (found) {
         scouts.remove(destroyed_unit);
         std::cout << found + "found in scouts" << std::endl;
         return;
     }
-    
-    found = (std::find(army.begin(), army.end(), destroyed_unit) !=army.end());
+
+    found = (std::find(army.begin(), army.end(), destroyed_unit) != army.end());
     army.remove(destroyed_unit);
+}
+
+void Kurt::ExecuteSubplan() {
+    std::cout << "Kurt exec" << std::endl;
+    strategy_manager->ExecuteSubplan();
+}
+
+void Kurt::SendBuildOrder(const BPState* build_order) {
+    //build_manager->SetGoal(build_order);
+    std::cout << "Build something!" << std::endl;
+}
+
+Kurt::CombatMode Kurt::GetCombatMode() {
+    return current_combat_mode;
+}
+
+void Kurt::SetCombatMode(CombatMode new_combat_mode) {
+    current_combat_mode = new_combat_mode;
 }
 
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,

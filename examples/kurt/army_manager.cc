@@ -38,14 +38,14 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
     
     ArmyManager::ScoutPath();
-    switch (current_combat_mode) {
-        case DEFEND:
+    switch (kurt->GetCombatMode()) {
+        case Kurt::DEFEND:
             ArmyManager::Defend();
             break;
-        case ATTACK:
+        case Kurt::ATTACK:
             ArmyManager::Attack();
             break;
-        case HARASS:
+        case Kurt::HARASS:
         default:
             ArmyManager::Harass();
             break;
@@ -155,14 +155,6 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
     else if (IsArmyUnit(unit, observation)) {
         kurt->army.push_back(unit);
     }
-}
-
-CombatMode ArmyManager::GetCombatMode() {
-    return current_combat_mode;
-}
-
-void ArmyManager::SetCombatMode(CombatMode new_combat_mode) {
-    current_combat_mode = new_combat_mode;
 }
 
 bool ArmyManager::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
