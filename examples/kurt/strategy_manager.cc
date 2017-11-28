@@ -23,10 +23,10 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     current_plan->AddBuildOrderNode(test_build);
 
     // Attack order
-    current_plan->AddCombatNode(ArmyManager::ATTACK);
+    current_plan->AddCombatNode(Kurt::ATTACK);
 
     // Harass order
-    current_plan->AddCombatNode(ArmyManager::HARASS);
+    current_plan->AddCombatNode(Kurt::HARASS);
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -133,25 +133,32 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     }
 };
 
-ArmyManager::CombatMode StrategyManager::CalculateCombatMode() {
+Kurt::CombatMode StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        return ArmyManager::ATTACK;
+        //attack
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
-        return ArmyManager::DEFEND;
+        //defend
     }
     else {
-        return ArmyManager::HARASS;
+       //harrass
     }
+    return Kurt::ATTACK;
 };
 
-void StrategyManager::DecideBuildGoal() {
+void StrategyManager::SetGamePlan() {
+
+
+
+}
+
+void StrategyManager::SetBuildGoal() {
 
     BPState* new_goal_state = new BPState();
+
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
-
     else if (our_cp.a2a < 50) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }

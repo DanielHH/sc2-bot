@@ -20,14 +20,6 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
     }
 }
 
-ArmyManager::CombatMode ArmyManager::GetCombatMode() {
-    return current_combat_mode;
-}
-
-void ArmyManager::SetCombatMode(CombatMode new_combat_mode) {
-    current_combat_mode = new_combat_mode;
-}
-
 bool ArmyManager::IsArmyUnit(const Unit* unit, const ObservationInterface* observation) {
     if (IsStructure(unit, observation)) {
         return false;

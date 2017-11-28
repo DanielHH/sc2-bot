@@ -4,13 +4,14 @@
 #include <list>
 #include "BPState.h"
 
-
 class Kurt : public sc2::Agent {
 
 public:
     std::list<const sc2::Unit*> workers;
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
+
+    enum CombatMode { DEFEND, ATTACK, HARASS };
 
     /* Called once when the game starts */
     virtual void OnGameStart();
@@ -30,6 +31,12 @@ public:
     /* Gives the build manager a new goal to work against */
     void SendBuildOrder(const BPState* build_order);
 
+    /* Returns current combat mode*/
+    CombatMode GetCombatMode();
+
+    /* Sets combat mode */
+    void SetCombatMode(CombatMode new_combat_mode);
+
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,
         const sc2::Unit* unit);
@@ -46,7 +53,11 @@ public:
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
 
+
+
 private:
+    CombatMode current_combat_mode;
+
     static std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> unit_types;
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static void SetUpDataMaps(const sc2::ObservationInterface *);

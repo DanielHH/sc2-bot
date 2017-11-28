@@ -69,6 +69,14 @@ void Kurt::SendBuildOrder(const BPState* build_order) {
     std::cout << "Build something!" << std::endl;
 }
 
+Kurt::CombatMode Kurt::GetCombatMode() {
+    return current_combat_mode;
+}
+
+void Kurt::SetCombatMode(CombatMode new_combat_mode) {
+    current_combat_mode = new_combat_mode;
+}
+
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
     Point2D location,
     const Unit* unit) {

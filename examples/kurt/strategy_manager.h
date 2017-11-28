@@ -43,10 +43,13 @@ private:
     void CalculateCPHelp(CombatPower *cp, sc2::Units alliance);
 
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
-    ArmyManager::CombatMode CalculateCombatMode();
+    Kurt::CombatMode CalculateCombatMode();
+
+    //
+    void SetGamePlan();
 
     // Decides what units should be built.
-    void DecideBuildGoal();
+    void SetBuildGoal();
 
 
     //UNUSED FUNCTIONS

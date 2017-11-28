@@ -33,17 +33,18 @@ private:
 
     /* Switches the combat mode of the army manager when executed */
     class CombatNode : public Node {
-        ArmyManager::CombatMode combat_order;
+        Kurt::CombatMode combat_order;
 
     public:
-        CombatNode(Kurt* kurt, ArmyManager::CombatMode _combat_order) : Node(kurt) {
+        CombatNode(Kurt* kurt, Kurt::CombatMode _combat_order) : Node(kurt) {
             combat_order = _combat_order;
         }
 
         void Execute() {
             // TODO: SetCombatMode(combat_order) to army_manager
             std::cout << "Set CombatMode: " << combat_order << std::endl;
-            kurt->ExecuteSubplan();
+            kurt->SetCombatMode(combat_order);
+            // Execute next node here?
         }
     };
 
@@ -56,7 +57,7 @@ private:
             build_order = _build_order;
         }
 
-        void Execute() {
+        void Execute() {            
             kurt->SendBuildOrder(build_order);
         }
     };
@@ -69,7 +70,7 @@ public:
     ~GamePlan();
 
     /* Adds a new CombatNode to the end of the plan */
-    void AddCombatNode(ArmyManager::CombatMode combat_order);
+    void AddCombatNode(Kurt::CombatMode combat_order);
 
     /* Adds a new BuildOrderNode to the end of the plan */
     void AddBuildOrderNode(BPState* build_order);
