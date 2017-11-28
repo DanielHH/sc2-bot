@@ -1,5 +1,6 @@
 #include "build_manager.h"
 
+#include <iostream>
 #include <vector>
 #include "kurt.h"
 
@@ -7,16 +8,6 @@
 #include "BPAction.h"
 #include "BPPlan.h"
 #include "MCTS.h"
-
-//#define DEBUG // Comment out to disable debug prints in this file.
-#ifdef DEBUG
-#include <iostream>
-#define PRINT(s) std::cout << s << std::endl;
-#define TEST(s) s
-#else
-#define PRINT(s)
-#define TEST(s)
-#endif // DEBUG
 
 using namespace sc2;
 
@@ -69,18 +60,17 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
     current_plan.ExecuteStep(agent);
 
     // TESTING
-    TEST(for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
+    for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
         std::cout << UnitTypeToName(u->unit_type) << ":";
         for (auto uo : u->orders) {
             std::cout << " " << AbilityTypeToName(uo.ability_id);
         }
         std::cout << std::endl;
-    })
+    }
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
     // Set up build tree
-    std::cout << (int)(Kurt::GetAbility(ABILITY_ID::BUILD_TECHLAB_STARPORT)->target) << std::endl;
     SetUpTechTree(observation);
     setup_finished = true;
 
@@ -92,7 +82,6 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
 
 void BuildManager::SetGoal(BPState * const goal_) {
     goal = goal_;
-    
 }
 
 void BuildManager::InitNewPlan(const ObservationInterface* observation) {
@@ -134,7 +123,3 @@ void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
 
     // TODO Add more data to tech_tree_2
 }
-
-#undef DEBUG
-#undef PRINT
-#undef TEST
