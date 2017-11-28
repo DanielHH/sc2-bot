@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 
+class GamePlan;
 
 class StrategyManager{
 public:
@@ -28,6 +29,7 @@ public:
 
 private:
     Kurt* kurt;
+    GamePlan* current_plan;
 
     //Save enemy units
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
