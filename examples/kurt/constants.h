@@ -2,6 +2,11 @@
 
 #include "sc2api/sc2_api.h"
 
+const uint32_t STEPS_PER_SEC = 24;
+
+const double MINERALS_PER_SEC_PER_SCV = 1.08;
+const double VESPENE_PER_SEC_PER_SCV = 1.68;
+
 // Some bindings for UNIT_TYPEID to make the modelling of the game easier.
 // The class is used to make the usage of a fake id similar to a real one.
 class UNIT_FAKEID {
