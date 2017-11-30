@@ -45,6 +45,7 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
     strategy_manager->SaveOurUnits(unit);
+    build_manager->GroupAndSaveUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
@@ -55,7 +56,9 @@ void Kurt::OnUnitIdle(const Unit* unit) {
             break;
         }
         Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-        scv_minerals.push_back(unit);
+        if (! UnitInScvMinerals(unit)) {
+            scv_minerals.push_back(unit);
+        }
         break;
     }
     default: {
@@ -71,6 +74,19 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
+}
+
+
+bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
+    return std::find(list.begin(), list.end(), unit) != list.end();
+}
+
+bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {
+    return UnitInList(scv_minerals, unit);
+}
+
+bool Kurt::UnitInScvVespene(const sc2::Unit* unit) {
+    return UnitInList(scv_vespene, unit);
 }
 
 void Kurt::ExecuteSubplan() {
