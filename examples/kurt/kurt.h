@@ -8,6 +8,8 @@ class Kurt : public sc2::Agent {
 
 public:
     std::list<const sc2::Unit*> workers;
+    std::list<const sc2::Unit*> scv_minerals;
+    std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
 
