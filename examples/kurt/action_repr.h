@@ -29,7 +29,7 @@ public:
 
     std::vector<struct UnitReq> unit_rewards;
 
-    static enum class ACTION {
+    enum class ACTION {
         //Resource gathering
         SCV_GATHER_MINERALS,
         SCV_GATHER_GAS,
@@ -83,5 +83,5 @@ public:
         // Other
     };
 
-    static std::map<ActionRepr::ACTION, ActionRepr> ActionRepr::values;
+    static std::map<ActionRepr::ACTION, ActionRepr> values;
 };

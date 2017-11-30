@@ -54,14 +54,14 @@ BPState::~BPState() {
 std::vector<BPAction *> BPState::AvailableActions() const {
     std::vector<BPAction *> tmp;
     std::ifstream abilities_file;
-    TEST({ abilities_file.open("sc2-gamedata/v3.19.1.58600/units.json");
+    TEST(( abilities_file.open("sc2-gamedata/v3.19.1.58600/units.json");
 
 
     std::map<UNIT_TYPEID, std::vector<ABILITY_ID>> ability_map;
 
     for (std::string line; abilities_file >> line;) {
 
-    } })
+    } ))
     
 
     
