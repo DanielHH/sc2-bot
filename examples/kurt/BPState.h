@@ -5,6 +5,7 @@
 #include <vector>
 
 class BPAction;
+class Kurt;
 
 class BPState {
 public:
@@ -12,7 +13,7 @@ public:
     BPState();
 
     /* Creates a BPState representing the current gamestate */
-    BPState(const sc2::ObservationInterface*);
+    BPState(const sc2::ObservationInterface*, Kurt * const kurt);
 
     /* Creates a copy of given BPState */
     BPState(BPState * const);

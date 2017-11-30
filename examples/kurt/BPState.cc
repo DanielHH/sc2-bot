@@ -1,5 +1,8 @@
 #include "BPState.h"
 
+#include "constants.h"
+#include "kurt.h"
+
 #include <sc2api/sc2_api.h>
 
 #include <iostream>
@@ -32,11 +35,13 @@ BPState::BPState(BPState * const state) {
     food_used = state->GetFoodUsed();
 }
 
-BPState::BPState(const ObservationInterface* observation) {
+BPState::BPState(const ObservationInterface* observation, Kurt * const kurt) {
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
         SetUnitAmount(type, GetUnitAmount(type) + 1);
     }
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     minerals = observation->GetMinerals();
     vespene = observation->GetVespene();
     food_cap = observation->GetFoodCap();
@@ -114,7 +119,15 @@ void BPState::Print() {
     for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
         UNIT_TYPEID type = it->first;
         int amount = it->second;
-        std::cout << UnitTypeToName(type) << ": " << amount << std::endl;
+        std::string name;
+        if (type == UNIT_FAKEID::TERRAN_SCV_MINERALS) {
+            name = "TERRAN_SCV_MINERALS";
+        } else if (type == UNIT_FAKEID::TERRAN_SCV_VESPENE) {
+            name = "TERRAN_SCV_VESPENE";
+        } else {
+            name = UnitTypeToName(type);
+        }
+        std::cout << name << ": " << amount << std::endl;
     }
     std::cout << "BPState <<<" << std::endl;
 }
