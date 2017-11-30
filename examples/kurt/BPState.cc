@@ -46,6 +46,7 @@ BPState::BPState(const ObservationInterface* observation, Kurt * const kurt) {
     vespene = observation->GetVespene();
     food_cap = observation->GetFoodCap();
     food_used = observation->GetFoodUsed();
+    time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
 BPState::BPState(BPState const * const initial, BPAction const * const step) {
@@ -54,6 +55,20 @@ BPState::BPState(BPState const * const initial, BPAction const * const step) {
 
 BPState::~BPState() {
     // TODO
+}
+
+void BPState::Update(double delta_time) {
+}
+
+void BPState::UpdateUntilAvailable(BPAction action) {
+}
+
+void BPState::SimpleUpdate(double delta_time) {
+    minerals += delta_time * MINERALS_PER_SEC_PER_SCV *
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+    vespene += delta_time * VESPENE_PER_SEC_PER_SCV *
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE);
+    time += delta_time;
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
