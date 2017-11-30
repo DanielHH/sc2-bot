@@ -108,7 +108,7 @@ void BuildManager::SetGoal(BPState * const goal_) {
 }
 
 void BuildManager::InitNewPlan(const ObservationInterface* observation) {
-    BPState * current_state = new BPState(observation, agent);
+    BPState * current_state = new BPState(agent);
     current_plan.AddBasicPlan(current_state, goal);
 
     std::cout << "--- Creating new plan ---" << std::endl;

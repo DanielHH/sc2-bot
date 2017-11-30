@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <vector>
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -35,11 +36,29 @@ BPState::BPState(BPState * const state) {
     food_used = state->GetFoodUsed();
 }
 
-BPState::BPState(const ObservationInterface* observation, Kurt * const kurt) {
+BPState::BPState(Kurt * const kurt) {
+    const ObservationInterface* observation = kurt->Observation();
+    std::vector<const Unit*> commandcenters;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
         SetUnitAmount(type, GetUnitAmount(type) + 1);
+        if (type == UNIT_TYPEID::TERRAN_COMMANDCENTER) {
+            commandcenters.push_back(unit);
+        }
     }
+    for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
+        UNIT_TYPEID type = neutral->unit_type.ToType();
+        for (auto center : commandcenters) {
+            if (DistanceSquared3D(center->pos, neutral->pos) <
+                    BASE_RESOURCE_TEST_RANGE2) {
+                SetUnitAmount(type, GetUnitAmount(type) + 1);
+                break;
+            }
+        }
+    }
+    int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+    geyser_amount -= GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
+    SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     minerals = observation->GetMinerals();
