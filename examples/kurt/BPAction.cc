@@ -34,22 +34,8 @@ BPAction::~BPAction() {
     // DOOT
 }
 
-bool IsIdleSCV(Unit const &unit) {
-    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV && unit.orders.empty();
-}
-
-bool IsSCVOnMinerals(Unit const &unit) {
-    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV &&
-        ! unit.orders.empty() &&
-        (unit.orders[0].ability_id == ABILITY_ID::HARVEST_GATHER ||
-         unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN);
-}
-
-bool IsSCVOnVespene(Unit const &unit) {
-    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV &&
-        ! unit.orders.empty() &&
-        (unit.orders[0].ability_id == ABILITY_ID::HARVEST_GATHER ||
-         unit.orders[0].ability_id == ABILITY_ID::HARVEST_RETURN);
+bool IsSCV(Unit const &unit) {
+    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV;
 }
 
 std::set<ABILITY_ID> BPAction::acceptable_to_interrupt = {
@@ -79,7 +65,11 @@ Unit const *FindNearestUnitOfType(UNIT_TYPEID type, Point2D const &location, Obs
     return best;
 }
 
-bool BPAction::Execute(ActionInterface *action, QueryInterface *query, ObservationInterface const *obs) {
+bool BPAction::Execute(
+        Kurt * const kurt,
+        ActionInterface *action,
+        QueryInterface *query,
+        ObservationInterface const *obs) {
     Unit::Alliance self = Unit::Alliance::Self;
     Units us;
     auto isnt_busy = [](Unit const &unit) {
@@ -140,33 +130,41 @@ bool BPAction::Execute(ActionInterface *action, QueryInterface *query, Observati
 
         break;
     case BPAction::GATHER_MINERALS_SCV:
-        us = obs->GetUnits(Unit::Alliance::Self, IsSCVOnVespene);
-        if (!us.empty()) {
-            Unit const *scv = us[0];
+        // Make an SCV stop gather vespene and start gather minerals
+        us = obs->GetUnits(Unit::Alliance::Self, IsSCV);
+        for (Unit const * scv : us) {
+            if (! kurt->UnitInScvVespene(scv)) {
+                continue;
+            }
             Unit const *target = FindNearestUnitOfType(
                     UNIT_TYPEID::NEUTRAL_MINERALFIELD, scv->pos, obs);
             if (target == nullptr) {
-                throw std::runtime_error("There are no minerals!?");
+                continue;
             }
             action->UnitCommand(scv, ABILITY_ID::SMART, target);
+            kurt->scv_vespene.remove(scv);
+            kurt->scv_minerals.push_back(scv);
             return true;
-        } else {
-            return false;
         }
+        return false;
     case BPAction::GATHER_VESPENE_SCV:
-        us = obs->GetUnits(Unit::Alliance::Self, IsSCVOnMinerals);
-        if (!us.empty()) {
-            Unit const *scv = us[0];
+        // Make an SCV stop gather minerals and start gather vespene
+        us = obs->GetUnits(Unit::Alliance::Self, IsSCV);
+        for (Unit const * scv : us) {
+            if (! kurt->UnitInScvMinerals(scv)) {
+                continue;
+            }
             Unit const *target = FindNearestUnitOfType(
                     UNIT_TYPEID::TERRAN_REFINERY, scv->pos, obs);
             if (target == nullptr) {
-                return false;
+                continue;
             }
             action->UnitCommand(scv, ABILITY_ID::SMART, target);
+            kurt->scv_vespene.push_back(scv);
+            kurt->scv_minerals.remove(scv);
             return true;
-        } else {
-            return false;
         }
+        return false;
     default:
         throw std::runtime_error("Build planner - invalid action executed");
     }

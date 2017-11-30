@@ -3,6 +3,7 @@
 #include <sc2api/sc2_api.h>
 #include <iostream>
 
+class Kurt;
 class BPState;
 
 class BPAction {
@@ -25,7 +26,11 @@ public:
     /* Executes this action.
      * Returns true if this action was executed (start) in game, false otherwise.
      */
-    bool Execute(sc2::ActionInterface *, sc2::QueryInterface *, sc2::ObservationInterface const *);
+    bool Execute(
+            Kurt * const,
+            sc2::ActionInterface *,
+            sc2::QueryInterface *,
+            sc2::ObservationInterface const *);
 
     /* Checks if this action can be executed from the current gamestate */
     bool CanExecute() const;
