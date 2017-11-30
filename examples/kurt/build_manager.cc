@@ -45,13 +45,12 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
     assert(setup_finished);
     std::vector<UNIT_TYPEID> requirements;
     UnitTypeData *data = Kurt::GetUnitType(unit);
-    if (data->tech_requirement != UNIT_TYPEID::INVALID) {
-        requirements.push_back(data->tech_requirement);
-    }
-    else if (tech_tree_2.count(unit) > 0) {
+    if (tech_tree_2.count(unit) > 0) {
         for (UNIT_TYPEID req_elem : tech_tree_2[unit]) {
             requirements.push_back(req_elem);
         }
+    } else if (data->tech_requirement != UNIT_TYPEID::INVALID) {
+        requirements.push_back(data->tech_requirement);
     }
     return requirements;
 }
@@ -86,7 +85,10 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
 
     // Set some test goal
     BPState * goal = new BPState();
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 2);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 2);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
     SetGoal(goal);
 }
 
