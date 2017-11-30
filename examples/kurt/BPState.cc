@@ -127,6 +127,7 @@ int BPState::GetFoodUsed() const {
 
 void BPState::Print() {
     std::cout << ">>> BPState" << std::endl;
+    std::cout << "Gametime: " << time << std::endl;
     std::cout << "Minerals: " << GetMinerals();
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
