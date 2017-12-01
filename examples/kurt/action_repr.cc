@@ -25,7 +25,7 @@ ActionRepr::ActionRepr(
 
 }
 
-std::map<ActionRepr::ACTION, ActionRepr> ActionRepr::values = {
+std::map<ACTION, ActionRepr> ActionRepr::values = {
     //Resource gathering
     { ACTION::SCV_GATHER_MINERALS, ActionRepr({},{},{},{}) },
     { ACTION::SCV_GATHER_VESPENE, ActionRepr({},{},{},{}) },
