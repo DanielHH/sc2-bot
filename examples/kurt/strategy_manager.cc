@@ -23,10 +23,9 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
-    Plans* plan = new Plans();
 
     //current_plan = CreateDefaultGamePlan(kurt);
-    current_plan = plan->RushPlan(kurt);
+    current_plan = RushPlan(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
 
@@ -152,7 +151,8 @@ void StrategyManager::CalculateCombatMode() {
 };
 
 void StrategyManager::SetGamePlan() {
-
+    delete current_plan;
+    current_plan = DynamicGamePlan(kurt);
 }
 
 void StrategyManager::SetBuildGoal() {
