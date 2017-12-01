@@ -1,4 +1,6 @@
-#if !(defined(_WIN64)||defined(__APPLE__))
+#if (defined(_WIN64)||defined(__APPLE__))
+int main(void) { return 1; }
+#endif
 
 void Initialize(const char* title, int x, int y, int w, int h, unsigned int flags = 0);
 void Shutdown();
@@ -213,4 +215,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-#endif
