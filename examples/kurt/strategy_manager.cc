@@ -1,6 +1,5 @@
 #include "strategy_manager.h"
-#include "plans.cc"
-#include <iostream>
+#include "plans.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -24,8 +23,12 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
+    Plans* plan = new Plans();
 
-    current_plan = CreateDefaultGamePlan(kurt);  
+    //current_plan = CreateDefaultGamePlan(kurt);
+    current_plan = plan->RushPlan(kurt);
+    //current_plan = DynamicGamePlan(kurt);  
+
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -164,6 +167,19 @@ void StrategyManager::SetBuildGoal() {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
     }
+
+    kurt->SendBuildOrder(new_goal_state);
+};
+
+
+//NOT CURRENTLY USED!
+/*
+void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
+    //GroundToGround
+    if (!unit->is_flying && unit->is_alive) {
+        map["g2g"].push_back(unit);
+>>>>>>> 81559c0b9f8398d5db4a9ca3346fc67c32e49833
+    }
     else if (our_cp.g2g < enemy_cp.g2g || our_cp.a2g < enemy_cp.a2g) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
@@ -171,7 +187,7 @@ void StrategyManager::SetBuildGoal() {
 };
 
 
-
+*/
 
 #undef DEBUG
 #undef PRINT

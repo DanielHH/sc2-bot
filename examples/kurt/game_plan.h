@@ -1,5 +1,11 @@
 #pragma once
 
+#ifndef TEST
+#define TEST
+
+
+
+
 #include "BPState.h"
 #include "kurt.h"
 #include "army_manager.h"
@@ -25,6 +31,11 @@ private:
     public:
         Node* next;
 
+        /* If this node executes directly, return true to execute the next node aswell */
+        virtual bool Nextecute() {
+            return false;
+        }
+
         /* Execute the part of the plan this node represents */
         virtual void Execute() {
             return;
@@ -32,12 +43,31 @@ private:
     };
 
     /* Switches the combat mode of the army manager when executed */
-    class CombatNode : public Node {
+    class StatCombatNode : public Node {
         Kurt::CombatMode combat_order;
 
     public:
-        CombatNode(Kurt* kurt) : Node(kurt) {
 
+        StatCombatNode(Kurt* kurt, Kurt::CombatMode _combat_order) : Node(kurt) {
+            combat_order = _combat_order;
+        }
+
+        bool Nextecute() {
+            return true;
+        }
+
+        void Execute() {
+            kurt->SetCombatMode(combat_order);
+        }
+    };
+
+    /* Switches the combat mode of the army manager when executed */
+    class DynCombatNode : public Node {
+    public:
+        DynCombatNode(Kurt* kurt) : Node(kurt) {}
+
+        bool Nextecute() {
+            return true;
         }
 
         void Execute() {
@@ -46,16 +76,26 @@ private:
     };
 
     /* Requests a group of units from the build manager when executed*/
-    class BuildOrderNode : public Node {
+    class StatBuildOrderNode : public Node {
         BPState* build_order;
 
     public:
-        BuildOrderNode(Kurt* kurt, BPState* _build_order) : Node(kurt) {
+        StatBuildOrderNode(Kurt* kurt, BPState* _build_order) : Node(kurt) {
             build_order = _build_order;
         }
 
         void Execute() {            
             kurt->SendBuildOrder(build_order);
+        }
+    };
+
+    /* Requests a group of units from the build manager when executed*/
+    class DynBuildOrderNode : public Node {
+    public:
+        DynBuildOrderNode(Kurt* kurt) : Node(kurt) {}
+
+        void Execute() {
+            kurt->CalculateBuildOrder();
         }
     };
 
@@ -66,11 +106,17 @@ public:
 
     ~GamePlan();
 
-    /* Adds a new CombatNode to the end of the plan */
-    void AddCombatNode(Kurt::CombatMode combat_order);
+    /* Adds a new static CombatNode to the end of the plan */
+    void AddStatCombatNode(Kurt::CombatMode combat_order);
 
-    /* Adds a new BuildOrderNode to the end of the plan */
-    void AddBuildOrderNode(BPState* build_order);
+    /* Adds a new dynamic CombatNode to the end of the plan */
+    void AddDynCombatNode();
+
+    /* Adds a new static BuildOrderNode to the end of the plan */
+    void AddStatBuildOrderNode(BPState* build_order);
+
+    /* Adds a new dynamic BuildOrderNode to the end of the plan */
+    void AddDynBuildOrderNode();
 
     /* Executes the head_node in the plan */
     void ExecuteNextNode();
@@ -84,3 +130,5 @@ private:
     /* Adds a Node as the tail of the plan */
     void AddNode(Node* new_node);
 };
+
+#endif // !test

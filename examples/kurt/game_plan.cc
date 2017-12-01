@@ -1,4 +1,14 @@
-#include "game_plan.h";
+#include "game_plan.h"
+
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
 
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;
@@ -10,13 +20,24 @@ GamePlan::~GamePlan() {
     this->Clear();
 }
 
-void GamePlan::AddCombatNode(Kurt::CombatMode combat_order) {
-    CombatNode* new_node = new CombatNode(kurt, combat_order);
+void GamePlan::AddStatCombatNode(Kurt::CombatMode combat_order) {
+    StatCombatNode* new_node = new StatCombatNode(kurt, combat_order);
     AddNode(new_node);
 }
 
-void GamePlan::AddBuildOrderNode(BPState* build_order) {
-    BuildOrderNode* new_node = new BuildOrderNode(kurt, build_order);
+void GamePlan::AddDynCombatNode() {
+    DynCombatNode* new_node = new DynCombatNode(kurt);
+    AddNode(new_node);
+}
+
+void GamePlan::AddStatBuildOrderNode(BPState* build_order) {
+    StatBuildOrderNode* new_node = new StatBuildOrderNode(kurt, build_order);
+
+    AddNode(new_node);
+}
+
+void GamePlan::AddDynBuildOrderNode() {
+    DynBuildOrderNode* new_node = new DynBuildOrderNode(kurt);
 
     AddNode(new_node);
 }
@@ -25,9 +46,16 @@ void GamePlan::ExecuteNextNode() {
     if (head_node != nullptr) {
         Node* next_node = head_node->next;
 
+        bool nextecute = head_node->Nextecute();
+        PRINT(nextecute)
+
         head_node->Execute();
         delete head_node;
         head_node = next_node;
+
+        if (nextecute) {
+            ExecuteNextNode();
+        }
     }
     else {
         // TODO: ask for new plan
@@ -65,3 +93,7 @@ void GamePlan::AddNode(Node* new_node) {
         current_node->next = new_node;
     }
 }
+
+#undef DEBUG // Stop debug prints from leaking
+#undef TEST
+#undef PRINT

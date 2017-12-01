@@ -1,13 +1,11 @@
-#include "game_plan.h"
-#include <sc2api\sc2_api.h>
+#include "plans.h"
 
 
-//default_plan = new GamePlan();
 
 using namespace sc2;
 using namespace std;
 
-GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
+GamePlan* Plans::CreateDefaultGamePlan(Kurt* kurt) {
     GamePlan* plan;
     // Build order of 3 marines
     BPState* first_build_order= new BPState();
@@ -15,8 +13,9 @@ GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
     BPState* third_build_order = new BPState();
     BPState* fourth_build_order = new BPState();
     BPState* fifth_build_order = new BPState();
+
     //first_build
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 2);
     //second_build
     second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 8);
@@ -32,24 +31,51 @@ GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
     fifth_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
 
 
-    plan->AddBuildOrderNode(first_build_order);
-    plan->AddCombatNode(kurt);
-    plan->AddBuildOrderNode(second_build_order);
-    plan->AddCombatNode(kurt);
-    plan->AddBuildOrderNode(third_build_order);
-    plan->AddCombatNode(kurt);
-    plan->AddBuildOrderNode(fourth_build_order);
-    plan->AddCombatNode(kurt);
-    plan->AddBuildOrderNode(fifth_build_order);
+    plan->AddStatBuildOrderNode(first_build_order);
+    plan->AddDynCombatNode();
+    plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddDynCombatNode();
+    plan->AddStatBuildOrderNode(third_build_order);
+    plan->AddDynCombatNode();
+    plan->AddStatBuildOrderNode(fourth_build_order);
+    plan->AddDynCombatNode();
+    plan->AddStatBuildOrderNode(fifth_build_order);
 
     return plan;
 }
 
-GamePlan* DynamicGamePlan(Kurt* kurt) {
+GamePlan* Plans::RushPlan(Kurt* kurt) {
+    GamePlan* plan;
+    // Build order of 3 marines
+    BPState* first_build_order = new BPState();
+    BPState* second_build_order = new BPState();
+    BPState* third_build_order = new BPState();
+
+    //first_build
+    
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 4);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+    //second_build
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);
+    //third_build
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 20);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 20);
+
+
+    plan->AddStatBuildOrderNode(first_build_order);
+    plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddStatCombatNode(Kurt::ATTACK);
+    plan->AddStatBuildOrderNode(third_build_order);
+
+
+    return plan;
+}
+
+GamePlan* Plans::DynamicGamePlan(Kurt* kurt) {
     GamePlan* plan;
 
-    plan->AddBuildOrderNode();
-    plan->AddCombatNode(kurt);
+    plan->AddDynBuildOrderNode();
+    plan->AddDynCombatNode();
 
     return plan; 
 
