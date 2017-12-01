@@ -35,13 +35,25 @@ public:
      */
     void UpdateUntilAvailable(BPAction);
 
+    /* Checks if given action can be executed from this state,
+     * without needing to wait for more resources or
+     * other ongoing actions to finish.
+     */
+    bool CanExecuteNow(BPAction const) const;
+
+    /* Checks if given action can be executed from this state,
+     * may require waiting for more resources or/and
+     * other ongoing actions to finish but not creating other new actions.
+     */
+    bool CanExecuteNowOrSoon(BPAction const) const;
+
     /* Returns a list of actions that can be performed
      * from this state.
      */
     std::vector<BPAction *> AvailableActions() const;
 
     /* Returns the amount of given units in this BPState */
-    int GetUnitAmount(sc2::UNIT_TYPEID);
+    int GetUnitAmount(sc2::UNIT_TYPEID) const;
 
     /* Set this BPState to contain given amount of given unit */
     void SetUnitAmount(sc2::UNIT_TYPEID, int);
@@ -57,6 +69,8 @@ public:
     int GetFoodCap() const;
     int GetFoodUsed() const;
 
+    int GetTime() const;
+
     /* Prints this BPState to std::cout */
     void Print();
 
@@ -69,9 +83,7 @@ private:
     void SimpleUpdate(double);
 
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
-    int minerals;
-    int vespene;
-    int food_cap;
-    int food_used;
+    std::map<sc2::UNIT_TYPEID, int> unit_being_produced;
+
     double time;
 };

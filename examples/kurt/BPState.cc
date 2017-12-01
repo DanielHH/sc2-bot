@@ -30,10 +30,7 @@ BPState::BPState(BPState * const state) {
     for (auto it = state->UnitsBegin(); it != state->UnitsEnd(); ++it) {
         SetUnitAmount(it->first, it->second);
     }
-    minerals = state->GetMinerals();
-    vespene = state->GetVespene();
-    food_cap = state->GetFoodCap();
-    food_used = state->GetFoodUsed();
+    time = state->GetTime();
 }
 
 BPState::BPState(Kurt * const kurt) {
@@ -61,10 +58,10 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
-    minerals = observation->GetMinerals();
-    vespene = observation->GetVespene();
-    food_cap = observation->GetFoodCap();
-    food_used = observation->GetFoodUsed();
+    SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
+    SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
+    SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
+    SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
@@ -83,11 +80,21 @@ void BPState::UpdateUntilAvailable(BPAction action) {
 }
 
 void BPState::SimpleUpdate(double delta_time) {
-    minerals += delta_time * MINERALS_PER_SEC_PER_SCV *
+    int minerals = GetMinerals() +
+        delta_time * MINERALS_PER_SEC_PER_SCV *
         GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
-    vespene += delta_time * VESPENE_PER_SEC_PER_SCV *
+    SetUnitAmount(UNIT_FAKEID::MINERALS, minerals);
+    int vespene = GetVespene() +
+        delta_time * VESPENE_PER_SEC_PER_SCV *
         GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE);
+    SetUnitAmount(UNIT_FAKEID::VESPENE, vespene);
     time += delta_time;
+}
+
+bool BPState::CanExecuteNow(BPAction const) const {
+}
+
+bool BPState::CanExecuteNowOrSoon(BPAction const) const {
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
@@ -107,12 +114,12 @@ std::vector<BPAction *> BPState::AvailableActions() const {
     return tmp;
 }
 
-int BPState::GetUnitAmount(UNIT_TYPEID type) {
+int BPState::GetUnitAmount(UNIT_TYPEID type) const {
     // Need to test if element exist to prevent allocating more values
     if (unit_amount.count(type) == 0) {
         return 0;
     } else {
-        return unit_amount[type];
+        return unit_amount.at(type);
     }
 }
 
@@ -128,25 +135,29 @@ std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsEnd() {
     return unit_amount.end();
 }
 
+int BPState::GetTime() const {
+    return time;
+}
+
 int BPState::GetMinerals() const {
-    return minerals;
+    return GetUnitAmount(UNIT_FAKEID::MINERALS);
 }
 
 int BPState::GetVespene() const {
-    return vespene;
+    return GetUnitAmount(UNIT_FAKEID::VESPENE);
 }
 
 int BPState::GetFoodCap() const {
-    return food_cap;
+    return GetUnitAmount(UNIT_FAKEID::FOOD_CAP);
 }
 
 int BPState::GetFoodUsed() const {
-    return food_used;
+    return GetUnitAmount(UNIT_FAKEID::FOOD_USED);
 }
 
 void BPState::Print() {
     std::cout << ">>> BPState" << std::endl;
-    std::cout << "Gametime: " << time << std::endl;
+    std::cout << "Gametime: " << GetTime() << std::endl;
     std::cout << "Minerals: " << GetMinerals();
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
@@ -168,10 +179,7 @@ void BPState::Print() {
 }
 
 bool BPState::operator<(BPState const &other) const {
-    if (minerals < other.minerals) return true;
-    if (vespene < other.vespene) return true;
-    if (food_cap - food_used < other.food_cap - other.food_used) return true;
-    if (food_cap < other.food_cap) return true;
+    if (GetTime() < other.GetTime()) return true;
     for (auto pair : unit_amount) {
         if (other.unit_amount.find(pair.first) != other.unit_amount.cend()) {
             if (pair.second < other.unit_amount.at(pair.first)) return true;
