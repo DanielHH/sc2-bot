@@ -25,18 +25,11 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     enemy_cp.alliance = "enemy_cp";
 
     // Create a test plan
-    current_plan = new GamePlan(parent_kurt);
+   // current_plan = new GamePlan(kurt);
 
-    // Build order of 3 marines
-    BPState* test_build = new BPState();
-    test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
-    current_plan->AddBuildOrderNode(test_build);
+    current_plan = CreateDefaultGamePlan(kurt);
 
-    // Attack order
-    current_plan->AddCombatNode(Kurt::ATTACK);
-
-    // Harass order
-    current_plan->AddCombatNode(Kurt::HARASS);
+    
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -44,17 +37,17 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     SaveSpottedEnemyUnits(observation);
 
-    if (current_game_loop % 1000 == 0) {
-        current_plan->ExecuteNextNode();
-    }
+
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
     our_units.push_back(unit);
+    //update combatpower. TODO: Make more efficient.
+    CalculateCombatPower(&our_cp);
 }
 
 void StrategyManager::ExecuteSubplan() {
-    std::cout << "SM exec" << std::endl;
+    current_plan->ExecuteNextNode();
 }
 
 /*
@@ -80,6 +73,9 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     }
     // Save the observed units that didn't get filtered out as already seen.
     enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
+
+    //Update combatpower. TODO: Make more efficient.
+    CalculateCombatPower(&enemy_cp);
 };
 
 void StrategyManager::CalculateCombatPower(CombatPower *cp) {
@@ -143,17 +139,16 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     }
 };
 
-Kurt::CombatMode StrategyManager::CalculateCombatMode() {
+void StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        //attack
+        kurt->SetCombatMode(Kurt::ATTACK);
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
-        //defend
+        kurt->SetCombatMode(Kurt::DEFEND);
     }
     else {
-       //harrass
+        kurt->SetCombatMode(Kurt::HARASS);
     }
-    return Kurt::ATTACK;
 };
 
 void StrategyManager::SetGamePlan() {
