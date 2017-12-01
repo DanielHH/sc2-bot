@@ -16,7 +16,6 @@ public:
     static std::vector<sc2::UNIT_TYPEID> GetRequirements(sc2::UNIT_TYPEID);
     void OnStep(const sc2::ObservationInterface* observation);
     void OnGameStart(const sc2::ObservationInterface* observation);
-    void GroupAndSaveUnits(const sc2::Unit* unit);
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
 
