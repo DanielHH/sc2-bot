@@ -53,6 +53,7 @@ enum class ACTION {
 
 class ActiveAction {
 public:
+    ActiveAction(ACTION);
     ACTION action;
     double time_left;
 };
