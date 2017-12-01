@@ -1,6 +1,5 @@
 #include "strategy_manager.h"
 #include "plans.cc"
-#include <iostream>
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
