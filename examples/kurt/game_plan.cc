@@ -1,4 +1,4 @@
-#include "game_plan.h";
+#include "game_plan.h"
 
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;
