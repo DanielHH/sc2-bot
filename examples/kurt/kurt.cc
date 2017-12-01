@@ -18,11 +18,11 @@ StrategyManager* strategy_manager;
 void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
+    world_rep = new WorldRepresentation(this);
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager();
-    world_rep = new WorldRepresentation(this);
     world_rep->PrintWorld();
 }
 

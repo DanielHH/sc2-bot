@@ -8,6 +8,7 @@ class WorldCell {
 private:
     int real_world_x;
     int real_world_y;
+    Kurt* kurt;
     const sc2::Unit* scout;
     float mineral_amount;
     float gas_amount;
@@ -18,7 +19,7 @@ private:
     float UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt* kurt);
     
 public:
-    WorldCell(int x, int y);
+    WorldCell(int x, int y, Kurt* kurt);
     float GetMineralAmount();
     float GetGasAmount();
     float GetEnemyDps();

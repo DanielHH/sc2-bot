@@ -1,11 +1,12 @@
 #include "world_cell.h"
 
-WorldCell::WorldCell(int x, int y){
+WorldCell::WorldCell(int x, int y, Kurt* parent_kurt){
     real_world_x = x;
     real_world_y = y;
     gas_amount = 0;
     mineral_amount = 0;
     seen_on_game_step = 0;
+    kurt = parent_kurt;
 }
 
 float WorldCell::GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt) {
@@ -52,11 +53,11 @@ float WorldCell::UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt
 bool WorldCell::SmartComp(WorldCell* a, WorldCell* b) {
     float a_gas = a->GetGasAmount();
     float a_mineral = a->GetMineralAmount();
-    float a_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
+    float a_seen_game_steps_ago = kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
     
     float b_gas = b->GetGasAmount();
     float b_mineral = b->GetMineralAmount();
-    float b_seen_game_steps_ago = comp_kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
+    float b_seen_game_steps_ago = kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
     
     return (a_gas + a_mineral) + a_seen_game_steps_ago < (b_gas + b_mineral) + b_seen_game_steps_ago;
 }

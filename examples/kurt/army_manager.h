@@ -3,6 +3,7 @@
 #include <sc2api/sc2_api.h>
 #include "kurt.h"
 #include <queue>
+#include "cell_priority_queue.h"
 
 
 //using namespace sc2;
@@ -26,6 +27,7 @@ public:
 private:
     CombatMode current_combat_mode;
     Kurt* kurt;
+    CellPriorityQueue* cellPriorityQueue;
     
     bool IsArmyUnit(const sc2::Unit* unit, const class sc2::ObservationInterface* observation);
     bool IsStructure(const sc2::Unit* unit, const sc2::ObservationInterface* observation);

@@ -17,13 +17,13 @@ WorldRepresentation::WorldRepresentation(Kurt* kurt){
         }
         for (int x = 1; x <= actual_world.width; ++x) {
             if (x % chunk_size == 0 && y % chunk_size == 0) {
-                (world_representation.back()).push_back(new WorldCell(x,y));
+                (world_representation.back()).push_back(new WorldCell(x,y,kurt));
             } else if (x == actual_world.width && rest_width > 0 && y % chunk_size == 0) {
-                (world_representation.back()).push_back(new WorldCell(x, y));
+                (world_representation.back()).push_back(new WorldCell(x, y, kurt));
             } else if (x % chunk_size == 0 && y == actual_world.height && rest_height > 0) {
-                (world_representation.back()).push_back(new WorldCell(x, y));
+                (world_representation.back()).push_back(new WorldCell(x, y, kurt));
             } else if (x == actual_world.width && rest_width > 0 && y == actual_world.height && rest_height > 0) {
-                (world_representation.back()).push_back(new WorldCell(x, y));
+                (world_representation.back()).push_back(new WorldCell(x, y, kurt));
             }
         }
     }

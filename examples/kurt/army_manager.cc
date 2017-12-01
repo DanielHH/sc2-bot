@@ -3,13 +3,14 @@
 #include <sc2api/sc2_map_info.h>
 #include "BPAction.h"
 #include "world_cell.h"
-#include "world_representation.h"
 
 using namespace sc2;
 Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     comp_kurt = parent_kurt;
+    cellPriorityQueue = new CellPriorityQueue(kurt->world_rep);
+    
 }
 
 bool DistanceComp(Point2D a, Point2D b){
@@ -20,8 +21,9 @@ bool DistanceComp(Point2D a, Point2D b){
 }
 
 std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
-
+/*
 std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>> smart_scout_path(SmartComp);
+ */
 
 bool ran = false;
 void ArmyManager::OnStep(const ObservationInterface* observation) {
@@ -59,15 +61,8 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 void ArmyManager::PlanSmartScoutPath(){
-    WorldRepresentation* world_rep = kurt->world_rep;
     
-    smart_scout_path = std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>>(SmartComp);
     
-    for (int y = 0; y < world_rep->world_representation.size(); ++y) {
-        for (int x = 0; x < world_rep->world_representation[y].size(); ++x) {
-            smart_scout_path.push((world_rep->world_representation[y])[x]);
-        }
-    }
 }
 
 /*
@@ -102,16 +97,14 @@ void ArmyManager::ScoutSmartPath(){
     float scout_x = scout->pos.x;
     float scout_y = scout->pos.y;
     
-    while (!smart_scout_path.empty()){
-        for (int i = 0; i<smart_scout_path.size(); i++) {
-        }
-        Point2D point_to_visit = (smart_scout_path.top())->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+    for (int i = 0; i < cellPriorityQueue->queue.size(); i++){
+        Point2D point_to_visit = (cellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
         if(euk_distance_to_unit < 10) {
-            smart_scout_path.pop();
+            //cellPriorityQueue->queue
         }
         return;
     }
