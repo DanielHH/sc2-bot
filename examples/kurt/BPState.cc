@@ -81,7 +81,7 @@ BPState::~BPState() {
 void BPState::Update(double delta_time) {
 }
 
-void BPState::UpdateUntilAvailable(BPAction action) {
+void BPState::UpdateUntilAvailable(ACTION action) {
 }
 
 void BPState::SimpleUpdate(double delta_time) {
@@ -94,6 +94,32 @@ void BPState::SimpleUpdate(double delta_time) {
         GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE);
     SetUnitAmount(UNIT_FAKEID::VESPENE, vespene);
     time += delta_time;
+}
+
+void BPState::AddAction(ACTION action) {
+    UpdateUntilAvailable(action);
+    ActionRepr ar = ActionRepr::values.at(action);
+    for (UnitAmount ua : ar.consumed) {
+        SetUnitAmount(ua.type, GetUnitAmount(ua.type) - ua.amount);
+    }
+    for (UnitAmount ua : ar.borrowed) {
+        UNIT_TYPEID type = ua.type;
+        int amount = ua.amount;
+        SetUnitAmount(type, GetUnitAmount(type) - amount);
+        SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
+    }
+    for (UnitAmount ua : ar.produced) {
+        SetUnitProdAmount(ua.type, GetUnitProdAmount(ua.type) + ua.amount);
+    }
+    ActiveAction aa(action);
+    for (auto it = actions.begin(); it != actions.end(); ++it) {
+        ActiveAction other = *it;
+        if (aa < other) {
+            actions.insert(it, aa);
+            return;
+        }
+    }
+    actions.push_back(aa);
 }
 
 bool BPState::CanExecuteNow(ACTION action) const {
@@ -223,6 +249,12 @@ void BPState::Print() {
     for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
         UNIT_TYPEID type = it->first;
         int amount = it->second;
+        if (    type == UNIT_FAKEID::MINERALS ||
+                type == UNIT_FAKEID::VESPENE ||
+                type == UNIT_FAKEID::FOOD_CAP ||
+                type == UNIT_FAKEID::FOOD_USED) {
+            continue;
+        }
         std::string name;
         if (type == UNIT_FAKEID::TERRAN_SCV_MINERALS) {
             name = "TERRAN_SCV_MINERALS";

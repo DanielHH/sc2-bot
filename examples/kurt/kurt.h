@@ -47,7 +47,7 @@ public:
     void ExecuteSubplan();
 
     /* Gives the build manager a new goal to work against */
-    void SendBuildOrder(const BPState* build_order);
+    void SendBuildOrder(BPState* const build_order);
 
     /* Returns current combat mode*/
     CombatMode GetCombatMode();
