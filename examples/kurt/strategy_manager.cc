@@ -36,7 +36,7 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     current_plan->AddCombatNode(Kurt::ATTACK);
 
     // Harass order
-    current_plan->AddCombatNode(Kurt::HARASS);
+    //current_plan->AddCombatNode(Kurt::HARASS);
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
