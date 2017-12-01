@@ -10,6 +10,7 @@
 #define TEST(s)
 #endif // DEBUG
 
+
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;
     head_node = nullptr;

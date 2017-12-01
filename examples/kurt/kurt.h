@@ -4,13 +4,19 @@
 #include <list>
 #include "BPState.h"
 
+
+class WorldRepresentation;
+
 class Kurt : public sc2::Agent {
 
 public:
     std::list<const sc2::Unit*> workers;
+    std::list<const sc2::Unit*> scv_minerals;
+    std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
-
+    
+    WorldRepresentation* world_rep;
     enum CombatMode { DEFEND, ATTACK, HARASS };
 
     /* Called once when the game starts */
@@ -28,11 +34,20 @@ public:
     /* Called when a unit is destroyes */
     virtual void OnUnitDestroyed(const sc2::Unit* unit);
 
+    /* Test if given unit exist in given list. */
+    bool UnitInList(std::list<const sc2::Unit*>& list, const sc2::Unit* unit);
+
+    /* Test if given unit is in the list scv_minerals. */
+    bool UnitInScvMinerals(const sc2::Unit* unit);
+
+    /* Test if given unit is in the list scv_vespene. */
+    bool UnitInScvVespene(const sc2::Unit* unit);
+
     /* Executes the next part of the current plan */
     void ExecuteSubplan();
 
     /* Gives the build manager a new goal to work against */
-    void SendBuildOrder(const BPState* build_order);
+    void SendBuildOrder(BPState* const build_order);
 
     /* Returns current combat mode*/
     CombatMode GetCombatMode();
@@ -63,7 +78,6 @@ public:
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
 
 
-
 private:
     CombatMode current_combat_mode;
 
@@ -71,5 +85,4 @@ private:
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> unit_ability_map;
     static void SetUpDataMaps(const sc2::ObservationInterface *);
-
 };

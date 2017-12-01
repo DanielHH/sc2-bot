@@ -41,7 +41,6 @@ add_executable(bot_mp "bot_mp.cc" ${common_sources})
 set_target_properties(bot_mp PROPERTIES FOLDER examples)
 target_link_libraries(bot_mp sc2api sc2lib sc2utils)
 
-
 # Exclude SDL and related projects to work around linker issue.
 if (NOT APPLE)
 	#feature layers
