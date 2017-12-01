@@ -6,6 +6,7 @@
 #include "army_manager.h"
 #include "build_manager.h"
 #include "strategy_manager.h"
+#include "world_representation.h"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -27,11 +28,12 @@ StrategyManager* strategy_manager;
 void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
-
+    world_rep = new WorldRepresentation(this);
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
     strategy_manager = new StrategyManager(this);
+    world_rep->PrintWorld();
 }
 
 void Kurt::OnStep() {
