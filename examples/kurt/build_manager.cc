@@ -58,15 +58,15 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
 void BuildManager::OnStep(const ObservationInterface* observation) {
     if (current_plan.empty() && goal != nullptr) {
         InitNewPlan(observation);
-        if (current_plan.empty()) {
-            goal = nullptr;
-            std::cout << "goal is reached" << std::endl;
-            agent->ExecuteSubplan();
-            // Goal is reached, need a better goal checker
-            // when multiple goals can be active at the same time.
-        }
     }
     current_plan.ExecuteStep(agent);
+    if (current_plan.empty()) {
+        goal = nullptr;
+        std::cout << "goal is reached" << std::endl;
+        agent->ExecuteSubplan();
+        // Goal is reached, need a better goal checker
+        // when multiple goals can be active at the same time.
+    }
 
     // TESTING
     TEST(for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
@@ -91,16 +91,6 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 2);
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
     SetGoal(goal);
-}
-
-void BuildManager::GroupAndSaveUnits(const Unit* unit) {
-    if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        if (! agent->UnitInScvMinerals(unit)) {
-            agent->scv_minerals.push_back(unit);
-        }
-    } else {
-        // Maybe add to workers list?
-    }
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {

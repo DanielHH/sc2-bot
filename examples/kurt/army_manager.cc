@@ -26,9 +26,9 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
     if (kurt->scouts.empty()) {
         ArmyManager::TryGetScout();
+    } else {
+        ArmyManager::ScoutSmartPath();
     }
-    
-    ArmyManager::ScoutSmartPath();
     switch (kurt->GetCombatMode()) {
         case Kurt::DEFEND:
             ArmyManager::Defend();
@@ -53,7 +53,7 @@ void ArmyManager::ScoutSmartPath(){
     float scout_x = scout->pos.x;
     float scout_y = scout->pos.y;
     
-    for (int i = 0; i < cellPriorityQueue->queue.size(); i++){
+    for (int i = 0; i < cellPriorityQueue->queue.size(); i++) {
         Point2D point_to_visit = (cellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
@@ -127,7 +127,9 @@ void ArmyManager::PutUnitInGroup(const Unit* unit) {
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
     if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        kurt->workers.push_back(unit);
+        if (! kurt->UnitInScvMinerals(unit)) {
+            kurt->scv_minerals.push_back(unit);
+        }
     }
     else if (IsArmyUnit(unit, observation)) {
         kurt->army.push_back(unit);
