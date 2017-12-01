@@ -99,17 +99,21 @@ void BPState::SimpleUpdate(double delta_time) {
 void BPState::AddAction(ACTION action) {
     UpdateUntilAvailable(action);
     ActionRepr ar = ActionRepr::values.at(action);
-    for (UnitAmount ua : ar.consumed) {
-        SetUnitAmount(ua.type, GetUnitAmount(ua.type) - ua.amount);
+    for (auto pair : ar.consumed) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        SetUnitAmount(type, GetUnitAmount(type) - amount);
     }
-    for (UnitAmount ua : ar.borrowed) {
-        UNIT_TYPEID type = ua.type;
-        int amount = ua.amount;
+    for (auto pair : ar.borrowed) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
         SetUnitAmount(type, GetUnitAmount(type) - amount);
         SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
     }
-    for (UnitAmount ua : ar.produced) {
-        SetUnitProdAmount(ua.type, GetUnitProdAmount(ua.type) + ua.amount);
+    for (auto pair : ar.produced) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
     }
     ActiveAction aa(action);
     for (auto it = actions.begin(); it != actions.end(); ++it) {
@@ -123,8 +127,10 @@ void BPState::AddAction(ACTION action) {
 }
 
 bool BPState::CanExecuteNow(ACTION action) const {
-    for (UnitAmount unit_amount : ActionRepr::values.at(action).required) {
-        if (unit_amount.amount > GetUnitAmount(unit_amount.type)) {
+    for (auto pair : ActionRepr::values.at(action).required) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        if (amount > GetUnitAmount(type)) {
             return false;
         }
     }
@@ -132,10 +138,10 @@ bool BPState::CanExecuteNow(ACTION action) const {
 }
 
 bool BPState::CanExecuteNowOrSoon(ACTION action) const {
-    for (UnitAmount unit_amount : ActionRepr::values.at(action).required) {
-        UNIT_TYPEID type = unit_amount.type;
-        if (unit_amount.amount >
-                GetUnitAmount(type) + GetUnitProdAmount(type)) {
+    for (auto pair : ActionRepr::values.at(action).required) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
             if (type == UNIT_FAKEID::MINERALS &&
                     GetMineralRate() > 0) {
                 continue;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "game_plan.h"
-#include <sc2api\sc2_api.h>
+#include <sc2api/sc2_api.h>
 
 class Plans{
 public:

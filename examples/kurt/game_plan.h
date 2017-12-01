@@ -1,11 +1,5 @@
 #pragma once
 
-#ifndef TEST
-#define TEST
-
-
-
-
 #include "BPState.h"
 #include "kurt.h"
 #include "army_manager.h"
@@ -130,5 +124,3 @@ private:
     /* Adds a Node as the tail of the plan */
     void AddNode(Node* new_node);
 };
-
-#endif // !test
