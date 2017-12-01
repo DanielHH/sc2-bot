@@ -12,22 +12,15 @@
 #define TEST(s)
 #endif // DEBUG
 
-ActionRepr::ActionRepr(int mineral_cost, int gas_cost, int food_cost,
-    std::vector<struct UnitReq> const &non_busy_unit_costs,
-    std::vector<struct UnitReq> const &maybe_busy_unit_costs,
-    int time_required,
-    int mineral_reward, int gas_reward, int food_reward,
-    std::vector<struct UnitReq> const &unit_rewards) :
-mineral_cost(mineral_cost),
-gas_cost(gas_cost),
-food_cost(food_cost),
-non_busy_unit_costs(non_busy_unit_costs),
-maybe_busy_unit_reqs(maybe_busy_unit_costs),
-time_required(time_required),
-mineral_reward(mineral_reward),
-gas_reward(gas_reward),
-food_reward(food_reward),
-unit_rewards(unit_rewards)
+ActionRepr::ActionRepr(
+    std::vector<struct UnitAmount> const & required_,
+    std::vector<struct UnitAmount> const & consumed_,
+    std::vector<struct UnitAmount> const & borrowed_,
+    std::vector<struct UnitAmount> const & produced_) :
+    required(required_),
+    consumed(consumed_),
+    borrowed(borrowed_),
+    produced(produced_)
 {
 
 }
