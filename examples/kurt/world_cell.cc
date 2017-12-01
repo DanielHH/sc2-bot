@@ -1,4 +1,5 @@
 #include "world_cell.h"
+#include <iostream>
 
 WorldCell::WorldCell(int x, int y, Kurt* parent_kurt){
     real_world_x = x;
@@ -48,22 +49,6 @@ float WorldCell::UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt
         }
     }
     return total_unit_dmg / units.size();
-}
-
-bool WorldCell::SmartComp(WorldCell* a, WorldCell* b) {
-    float a_gas = a->GetGasAmount();
-    float a_mineral = a->GetMineralAmount();
-    float a_seen_game_steps_ago = kurt->Observation()->GetGameLoop() - a->GetSeenOnGameStep();
-    
-    float b_gas = b->GetGasAmount();
-    float b_mineral = b->GetMineralAmount();
-    float b_seen_game_steps_ago = kurt->Observation()->GetGameLoop() - b->GetSeenOnGameStep();
-    
-    return (a_gas + a_mineral) + a_seen_game_steps_ago < (b_gas + b_mineral) + b_seen_game_steps_ago;
-}
-
-bool WorldCell::operator < (WorldCell* rhs) {
-    return SmartComp(this, rhs);
 }
 
 sc2::Point2D WorldCell::GetCellLocationAs2DPoint(int chunk_size) {

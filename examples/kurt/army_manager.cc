@@ -9,41 +9,13 @@ Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     comp_kurt = parent_kurt;
-    cellPriorityQueue = new CellPriorityQueue(kurt->world_rep);
-    
+    cellPriorityQueue = new CellPriorityQueue(kurt);
 }
 
-bool DistanceComp(Point2D a, Point2D b){
-    Point2D bottom_left(0,0);
-    float a_distance_from = Distance2D(bottom_left, a);
-    float b_distance_from = Distance2D(bottom_left, b);
-    return a_distance_from < b_distance_from;
-}
-
-std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
-/*
-std::priority_queue<WorldCell*, std::vector<WorldCell*>, std::function<bool(WorldCell*, WorldCell*)>> smart_scout_path(SmartComp);
- */
-
-bool ran = false;
 void ArmyManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
-    // Find a scout if we have none
-    if (kurt->scouts.empty()){
-        if(ArmyManager::TryGetScout()) {
-            //std::cout << "Number of scouts: " + kurt->scouts.size() << std::endl;
-            // kommentar branch stuffu
-        }
-    }
-
-    
-    /*ImageData pathing_grid = kurt->Observation()->GetGameInfo().pathing_grid;
-    std::cout << pathing_grid.height << std::endl;
-    std::cout << pathing_grid.width << std::endl;*/
-    if (!ran) {
-        //ArmyManager::PlanScoutPath();
-        ArmyManager::PlanSmartScoutPath();
-        ran = true;
+    if (kurt->scouts.empty()) {
+        ArmyManager::TryGetScout();
     }
     
     ArmyManager::ScoutSmartPath();
@@ -60,37 +32,11 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
             break;
     }
 }
+
 void ArmyManager::PlanSmartScoutPath(){
     
     
 }
-
-/*
-void ArmyManager::PlanScoutPath() {
-    // TODO: implement pathplanning for scout
-    //scout_path = kurt->Observation()->GetGameInfo().enemy_start_locations;
-    const Unit* scout = kurt->scouts.front();
-    float longest_euk_dist = -INFINITY;
-    float scout_x = scout->pos.x;
-    float scout_y = scout->pos.y;
-    
-    for (const Unit* check_point: kurt->Observation()->GetUnits(Unit::Alliance::Neutral)) {
-        float x_distance = abs(check_point->pos.x - scout_x);
-        float y_distance = abs(check_point->pos.y - scout_y);
-        float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
-        if (euk_distance_to_unit > longest_euk_dist) {
-            longest_euk_dist = euk_distance_to_unit;
-        }
-        scout_path.push(check_point->pos);
-    }
-    while (!scout_path.empty()) {
-        Point2D point = scout_path.top();
-        std::cout << point.x << std::endl;
-        std::cout << point.y << std::endl;
-        scout_path.pop();
-    }
-}
-*/
 
 void ArmyManager::ScoutSmartPath(){
     const Unit* scout = kurt->scouts.front();
@@ -105,24 +51,6 @@ void ArmyManager::ScoutSmartPath(){
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
         if(euk_distance_to_unit < 10) {
             //cellPriorityQueue->queue
-        }
-        return;
-    }
-}
-
-void ArmyManager::ScoutPath(){
-    const Unit* scout = kurt->scouts.front();
-    float scout_x = scout->pos.x;
-    float scout_y = scout->pos.y;
-    
-    while (!scout_path.empty()){
-        Point2D point_to_visit = scout_path.top();
-        float x_distance = abs(point_to_visit.x - scout_x);
-        float y_distance = abs(point_to_visit.y - scout_y);
-        float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
-        kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        if(euk_distance_to_unit < 10) {
-            scout_path.pop();
         }
         return;
     }
