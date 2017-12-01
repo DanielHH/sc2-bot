@@ -18,7 +18,6 @@
 #define TEST(s)
 #endif // DEBUG
 
-
 using namespace sc2;
 
 ArmyManager* army_manager;
