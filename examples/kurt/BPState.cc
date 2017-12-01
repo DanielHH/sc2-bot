@@ -92,9 +92,11 @@ void BPState::SimpleUpdate(double delta_time) {
 }
 
 bool BPState::CanExecuteNow(BPAction const) const {
+    return false; // TODO
 }
 
 bool BPState::CanExecuteNowOrSoon(BPAction const) const {
+    return false; // TODO
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
