@@ -4,30 +4,25 @@
 #include <vector>
 #include "sc2api/sc2_api.h"
 
-struct UnitReq {
+struct UnitAmount {
     sc2::UNIT_TYPEID type;
-    bool mustnt_be_busy;
     int amount;
 };
 
 class ActionRepr {
 public:
-    ActionRepr(int, int, int, std::vector<struct UnitReq> const &, std::vector<struct UnitReq> const &, int, int, int, int, std::vector<struct UnitReq> const &);
+    ActionRepr( std::vector<struct UnitAmount> const &,
+                std::vector<struct UnitAmount> const &,
+                std::vector<struct UnitAmount> const &,
+                std::vector<struct UnitAmount> const &);
 
-    int mineral_cost;
-    int gas_cost;
-    int food_cost;
+    std::vector<struct UnitAmount> required;
+    std::vector<struct UnitAmount> consumed;
+    std::vector<struct UnitAmount> borrowed;
+    std::vector<struct UnitAmount> produced;
 
-    std::vector<struct UnitReq> non_busy_unit_costs;
-    std::vector<struct UnitReq> maybe_busy_unit_reqs;
+    double time_required;
 
-    int time_required;
-
-    int mineral_reward;
-    int gas_reward;
-    int food_reward;
-
-    std::vector<struct UnitReq> unit_rewards;
 
     enum class ACTION {
         //Resource gathering
