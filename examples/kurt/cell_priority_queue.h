@@ -9,5 +9,8 @@ class CellPriorityQueue {
 public:
     CellPriorityQueue(Kurt* kurt);
     std::vector<WorldCell*> queue;
-    CellPriorityQueue(WorldRepresentation* world_representation);
+    void Update();
+    
+private:
+    Kurt* kurt;
 };

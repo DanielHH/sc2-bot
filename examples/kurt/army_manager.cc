@@ -49,8 +49,9 @@ void ArmyManager::ScoutSmartPath(){
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        if(euk_distance_to_unit < 10) {
-            //cellPriorityQueue->queue
+        if(euk_distance_to_unit < 5) {
+            cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
+            cellPriorityQueue->Update();
         }
         return;
     }
