@@ -128,7 +128,7 @@ float BPPlan::TimeRequired() const {
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {
     int i;
-    for (i = 0; i < vector::size(); ++i) {
+    for (i = 0; i < min(1, vector::size()); ++i) {
         BPAction action = vector::operator[](i);
         PRINT("Try to exec action " << action)
         if (! action.Execute(kurt, kurt->Actions(), kurt->Query(), kurt->Observation())) {
