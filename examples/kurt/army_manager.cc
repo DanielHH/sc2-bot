@@ -73,6 +73,12 @@ void ArmyManager::Defend() {
 
 void ArmyManager::Attack() {
     // TODO: implement Attack
+    for(const Unit* unit: kurt->army){
+        if (unit->orders.size() == 0) {
+            sc2::Point2D target = kurt->Observation()->GetGameInfo().enemy_start_locations[0];
+            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK,target);
+        }
+    }
 }
 
 void ArmyManager::Harass() {
