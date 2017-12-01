@@ -30,13 +30,14 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     // Build order of 3 marines
     BPState* test_build = new BPState();
     test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
-    current_plan->AddBuildOrderNode(test_build);
+    current_plan->AddStatBuildOrderNode(test_build);
+    current_plan->AddDynBuildOrderNode();
 
     // Attack order
-    current_plan->AddCombatNode(Kurt::ATTACK);
+    current_plan->AddStatCombatNode(Kurt::ATTACK);
 
     // Harass order
-    current_plan->AddCombatNode(Kurt::HARASS);
+    current_plan->AddDynCombatNode();
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -173,7 +174,7 @@ void StrategyManager::SetBuildGoal() {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
 
-    current_plan->AddBuildOrderNode(new_goal_state);
+    //current_plan->AddBuildOrderNode(new_goal_state);
 };
 
 

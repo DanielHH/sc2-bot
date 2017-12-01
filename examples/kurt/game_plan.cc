@@ -1,6 +1,6 @@
 #include "game_plan.h";
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -20,13 +20,24 @@ GamePlan::~GamePlan() {
     this->Clear();
 }
 
-void GamePlan::AddCombatNode(Kurt::CombatMode combat_order) {
-    CombatNode* new_node = new CombatNode(kurt);
+void GamePlan::AddStatCombatNode(Kurt::CombatMode combat_order) {
+    StatCombatNode* new_node = new StatCombatNode(kurt, combat_order);
     AddNode(new_node);
 }
 
-void GamePlan::AddBuildOrderNode(BPState* build_order) {
-    BuildOrderNode* new_node = new BuildOrderNode(kurt, build_order);
+void GamePlan::AddDynCombatNode() {
+    DynCombatNode* new_node = new DynCombatNode(kurt);
+    AddNode(new_node);
+}
+
+void GamePlan::AddStatBuildOrderNode(BPState* build_order) {
+    StatBuildOrderNode* new_node = new StatBuildOrderNode(kurt, build_order);
+
+    AddNode(new_node);
+}
+
+void GamePlan::AddDynBuildOrderNode() {
+    DynBuildOrderNode* new_node = new DynBuildOrderNode(kurt);
 
     AddNode(new_node);
 }
@@ -82,3 +93,7 @@ void GamePlan::AddNode(Node* new_node) {
         current_node->next = new_node;
     }
 }
+
+#undef DEBUG // Stop debug prints from leaking
+#undef TEST
+#undef PRINT

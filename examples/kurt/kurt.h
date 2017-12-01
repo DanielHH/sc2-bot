@@ -40,8 +40,11 @@ public:
     /* Sets combat mode */
     void SetCombatMode(CombatMode new_combat_mode);
 
-    /* Calculates wich combat mode is best to be in in the moment */
+    /* Calculates which combat mode is best to be in in the moment */
     void CalculateCombatMode();
+
+    /* Calculates what is best to build in the moment */
+    void CalculateBuildOrder();
 
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,
