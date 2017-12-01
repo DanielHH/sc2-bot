@@ -38,4 +38,6 @@ public:
     const sc2::Unit* SetScout(const sc2::Unit* unit);
     bool operator < (WorldCell* rhs);
     bool SmartComp(WorldCell* a, WorldCell* b);
+    void AddBuilding(const sc2::Unit* building);
+    void AddTrooper(const sc2::Unit* trooper);
 };

@@ -55,6 +55,18 @@ sc2::Point2D WorldCell::GetCellLocationAs2DPoint(int chunk_size) {
     return sc2::Point2D(real_world_x-chunk_size/2,real_world_y-chunk_size/2);
 }
 
+void WorldCell::AddBuilding(const sc2::Unit* building) {
+    if (std::find(buildings.begin(), buildings.end(), building) == buildings.end()) {
+        buildings.push_back(building);
+    }
+}
+
+void WorldCell::AddTrooper(const sc2::Unit* trooper) {
+    if (std::find(troops.begin(), troops.end(), trooper) == troops.end()) {
+        troops.push_back(trooper);
+    }
+}
+
 sc2::Units WorldCell::GetTroops(){return troops;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}

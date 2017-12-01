@@ -38,6 +38,7 @@ void Kurt::OnGameStart() {
 
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
+    world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
@@ -78,6 +79,28 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     army.remove(destroyed_unit);
 }
 
+bool Kurt::IsArmyUnit(const Unit* unit) {
+    if (IsStructure(unit)) {
+        return false;
+    }
+    switch (unit->unit_type.ToType()) {
+        case UNIT_TYPEID::TERRAN_SCV: return false;
+        case UNIT_TYPEID::TERRAN_MULE: return false;
+        case UNIT_TYPEID::TERRAN_NUKE: return false;
+        default: return true;
+    }
+}
+
+bool Kurt::IsStructure(const Unit* unit) {
+    bool is_structure = false;
+    auto& attributes = Observation()->GetUnitTypeData().at(unit->unit_type).attributes;
+    for (const auto& attribute : attributes) {
+        if (attribute == Attribute::Structure) {
+            is_structure = true;
+        }
+    }
+    return is_structure;
+}
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
     return std::find(list.begin(), list.end(), unit) != list.end();

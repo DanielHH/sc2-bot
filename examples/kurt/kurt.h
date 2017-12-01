@@ -68,6 +68,8 @@ public:
     sc2::Point2D randomLocationNearUnit(const sc2::Unit* unit);
     bool TryBuildSupplyDepot();
     bool TryBuildRefinary();
+    bool IsArmyUnit(const sc2::Unit* unit);
+    bool IsStructure(const sc2::Unit* unit);
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
 
@@ -76,7 +78,7 @@ public:
 
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
-
+    
 
 private:
     CombatMode current_combat_mode;
