@@ -144,7 +144,7 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     }
 };
 
-Kurt::CombatMode StrategyManager::CalculateCombatMode() {
+void StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
         //attack
     }
@@ -154,7 +154,6 @@ Kurt::CombatMode StrategyManager::CalculateCombatMode() {
     else {
        //harrass
     }
-    return Kurt::ATTACK;
 };
 
 void StrategyManager::SetGamePlan() {

@@ -1,5 +1,15 @@
 #include "game_plan.h";
 
+#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;
     head_node = nullptr;
@@ -11,7 +21,7 @@ GamePlan::~GamePlan() {
 }
 
 void GamePlan::AddCombatNode(Kurt::CombatMode combat_order) {
-    CombatNode* new_node = new CombatNode(kurt, combat_order);
+    CombatNode* new_node = new CombatNode(kurt);
     AddNode(new_node);
 }
 
@@ -25,9 +35,16 @@ void GamePlan::ExecuteNextNode() {
     if (head_node != nullptr) {
         Node* next_node = head_node->next;
 
+        bool nextecute = head_node->Nextecute();
+        PRINT(nextecute)
+
         head_node->Execute();
         delete head_node;
         head_node = next_node;
+
+        if (nextecute) {
+            ExecuteNextNode();
+        }
     }
     else {
         // TODO: ask for new plan

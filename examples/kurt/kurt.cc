@@ -94,6 +94,10 @@ void Kurt::SetCombatMode(CombatMode new_combat_mode) {
     current_combat_mode = new_combat_mode;
 }
 
+void Kurt::CalculateCombatMode() {
+    strategy_manager->CalculateCombatMode();
+}
+
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
     Point2D location,
     const Unit* unit) {

@@ -25,6 +25,11 @@ private:
     public:
         Node* next;
 
+        /* If this node executes directly, return true to execute the next node aswell */
+        virtual bool Nextecute() {
+            return false;
+        }
+
         /* Execute the part of the plan this node represents */
         virtual void Execute() {
             return;
@@ -33,11 +38,14 @@ private:
 
     /* Switches the combat mode of the army manager when executed */
     class CombatNode : public Node {
-        Kurt::CombatMode combat_order;
 
     public:
-        CombatNode(Kurt* kurt, Kurt::CombatMode _combat_order) : Node(kurt) {
-            combat_order = _combat_order;
+        CombatNode(Kurt* kurt) : Node(kurt) {
+    
+        }
+
+        bool Nextecute() {
+            return true;
         }
 
         void Execute() {
