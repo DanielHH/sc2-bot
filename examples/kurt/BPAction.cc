@@ -182,14 +182,6 @@ bool BPAction::CanExecute() const {
     return false; // TODO
 }
 
-bool BPAction::CanExecuteInStateNow(BPState const * const state) const {
-    return false; // TODO
-}
-
-bool BPAction::CanExecuteInStateNowOrSoon(BPState const * const state) const {
-    return false; // TODO
-}
-
 BPAction BPAction::CreatesUnit(sc2::UNIT_TYPEID unit_type) {
     return BPAction(Kurt::GetUnitType(unit_type)->ability_id);
 }

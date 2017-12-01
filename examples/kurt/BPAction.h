@@ -35,18 +35,6 @@ public:
     /* Checks if this action can be executed from the current gamestate */
     bool CanExecute() const;
 
-    /* Checks if this action can be executed from the given BPState,
-     * without needing to wait for more resources or
-     * other ongoing actions to finish.
-     */
-    bool CanExecuteInStateNow(BPState const * const) const;
-
-    /* Checks if this action can be executed from the given BPState,
-     * may require waiting for more resources or/and
-     * other ongoing actions to finish but not creating other new actions.
-     */
-    bool CanExecuteInStateNowOrSoon(BPState const * const) const;
-
     /* Creates a new BPAction that can be used to create given unit. */
     static BPAction CreatesUnit(sc2::UNIT_TYPEID unit_type);
 
