@@ -9,7 +9,7 @@ public:
 
     GamePlan* RushPlan(Kurt* kurt);
 
-    GamePlan* Plans::CruiserPlan(Kurt* kurt);
+    GamePlan* CruiserPlan(Kurt* kurt);
 
     GamePlan* DynamicGamePlan(Kurt* kurt);
 };
