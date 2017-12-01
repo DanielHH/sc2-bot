@@ -1,6 +1,8 @@
 #include "BPState.h"
 
 #include "constants.h"
+#include "action_enum.h"
+#include "action_repr.h"
 #include "kurt.h"
 
 #include <sc2api/sc2_api.h>
@@ -29,6 +31,9 @@ BPState::BPState() {
 BPState::BPState(BPState * const state) {
     for (auto it = state->UnitsBegin(); it != state->UnitsEnd(); ++it) {
         SetUnitAmount(it->first, it->second);
+    }
+    for (auto it = state->UnitsProdBegin(); it != state->UnitsProdEnd(); ++it){
+        SetUnitProdAmount(it->first, it->second);
     }
     time = state->GetTime();
 }
@@ -91,10 +96,32 @@ void BPState::SimpleUpdate(double delta_time) {
     time += delta_time;
 }
 
-bool BPState::CanExecuteNow(BPAction const) const {
+bool BPState::CanExecuteNow(ACTION action) const {
+    for (UnitAmount unit_amount : ActionRepr::values.at(action).required) {
+        if (unit_amount.amount > GetUnitAmount(unit_amount.type)) {
+            return false;
+        }
+    }
+    return true;
 }
 
-bool BPState::CanExecuteNowOrSoon(BPAction const) const {
+bool BPState::CanExecuteNowOrSoon(ACTION action) const {
+    for (UnitAmount unit_amount : ActionRepr::values.at(action).required) {
+        UNIT_TYPEID type = unit_amount.type;
+        if (unit_amount.amount >
+                GetUnitAmount(type) + GetUnitProdAmount(type)) {
+            if (type == UNIT_FAKEID::MINERALS &&
+                    GetMineralRate() > 0) {
+                continue;
+            }
+            if (type == UNIT_FAKEID::VESPENE &&
+                    GetVespeneRate() > 0) {
+                continue;
+            }
+            return false;
+        }
+    }
+    return true;
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
@@ -127,12 +154,33 @@ void BPState::SetUnitAmount(UNIT_TYPEID type, int amount) {
     unit_amount[type] = amount;
 }
 
+int BPState::GetUnitProdAmount(UNIT_TYPEID type) const {
+    // Need to test if element exist to prevent allocating more values
+    if (unit_being_produced.count(type) == 0) {
+        return 0;
+    } else {
+        return unit_being_produced.at(type);
+    }
+}
+
+void BPState::SetUnitProdAmount(UNIT_TYPEID type, int amount) {
+    unit_being_produced[type] = amount;
+}
+
 std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsBegin() {
     return unit_amount.begin();
 }
 
 std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsEnd() {
     return unit_amount.end();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsProdBegin() {
+    return unit_being_produced.begin();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsProdEnd() {
+    return unit_being_produced.end();
 }
 
 int BPState::GetTime() const {
@@ -143,8 +191,18 @@ int BPState::GetMinerals() const {
     return GetUnitAmount(UNIT_FAKEID::MINERALS);
 }
 
+double BPState::GetMineralRate() const {
+    return GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS) *
+        MINERALS_PER_SEC_PER_SCV;
+}
+
 int BPState::GetVespene() const {
     return GetUnitAmount(UNIT_FAKEID::VESPENE);
+}
+
+double BPState::GetVespeneRate() const {
+    return GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE) *
+        VESPENE_PER_SEC_PER_SCV;
 }
 
 int BPState::GetFoodCap() const {
