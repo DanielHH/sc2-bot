@@ -36,13 +36,12 @@ private:
         Kurt::CombatMode combat_order;
 
     public:
-        CombatNode(Kurt* kurt, Kurt::CombatMode _combat_order) : Node(kurt) {
-            combat_order = _combat_order;
+        CombatNode(Kurt* kurt) : Node(kurt) {
+
         }
 
         void Execute() {
-            kurt->SetCombatMode(combat_order);
-            // Execute next node here?
+            kurt->CalculateCombatMode();
         }
     };
 

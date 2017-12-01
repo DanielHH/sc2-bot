@@ -44,3 +44,13 @@ GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
 
     return plan;
 }
+
+GamePlan* DynamicGamePlan(Kurt* kurt) {
+    GamePlan* plan;
+
+    plan->AddBuildOrderNode();
+    plan->AddCombatNode(kurt);
+
+    return plan; 
+
+}

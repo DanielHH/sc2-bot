@@ -15,6 +15,7 @@
 using namespace sc2;
 using namespace std;
 
+
 Units our_units;
 Units enemy_units;
 
@@ -24,12 +25,7 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
 
-    // Create a test plan
-   // current_plan = new GamePlan(kurt);
-
-    current_plan = CreateDefaultGamePlan(kurt);
-
-    
+    current_plan = CreateDefaultGamePlan(kurt);  
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -153,46 +149,26 @@ void StrategyManager::CalculateCombatMode() {
 
 void StrategyManager::SetGamePlan() {
 
-
-
 }
 
 void StrategyManager::SetBuildGoal() {
-
     BPState* new_goal_state = new BPState();
 
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
     }
     else if (our_cp.a2a < 50) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
-
-    current_plan->AddBuildOrderNode(new_goal_state);
+    else if (our_cp.a2a < enemy_cp.a2a || our_cp.g2a < enemy_cp.g2a) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
+    }
+    else if (our_cp.g2g < enemy_cp.g2g || our_cp.a2g < enemy_cp.a2g) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
+    }
+    kurt->SendBuildOrder(new_goal_state);
 };
-
-
-//NOT CURRENTLY USED!
-/*
-void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
-    //GroundToGround
-    if (!unit->is_flying && unit->is_alive) {
-        map["g2g"].push_back(unit);
-    }
-    //GroundToAir
-    if (!unit->is_flying && unit->is_alive) {
-        map["g2a"].push_back(unit);
-    }
-    //AirToGround
-    if (unit->is_flying && unit->is_alive) {
-        map["a2g"].push_back(unit);
-    }
-    //AirToAir
-    if (unit->is_flying && unit->is_alive) {
-        map["a2a"].push_back(unit);
-    }
-};
-*/
 
 
 
