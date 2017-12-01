@@ -68,6 +68,3 @@ void WorldCell::SetMineralAmount(float amount) {mineral_amount = amount;}
 void WorldCell::SetGasAmount(float amount) {gas_amount = amount;}
 void WorldCell::SetEnemyDps(float dps) {enemy_dps = dps;}
 void WorldCell::SetSeenOnGameStep(float step) {seen_on_game_step = step;}
-const sc2::Unit* WorldCell::SetScout(const sc2::Unit* unit) {
-    scout = unit;
-}
