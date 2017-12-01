@@ -94,8 +94,8 @@ void Kurt::ExecuteSubplan() {
     strategy_manager->ExecuteSubplan();
 }
 
-void Kurt::SendBuildOrder(const BPState* build_order) {
-    //build_manager->SetGoal(build_order);
+void Kurt::SendBuildOrder(BPState* const build_order) {
+    build_manager->SetGoal(build_order);
     std::cout << "Build something!" << std::endl;
 }
 

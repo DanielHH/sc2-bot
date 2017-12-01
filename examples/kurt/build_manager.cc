@@ -104,7 +104,8 @@ void BuildManager::GroupAndSaveUnits(const Unit* unit) {
 
 void BuildManager::SetGoal(BPState * const goal_) {
     goal = goal_;
-    
+    // Reset the current plan
+    current_plan.resize(0);
 }
 
 void BuildManager::InitNewPlan(const ObservationInterface* observation) {

@@ -54,3 +54,12 @@ enum class ACTION {
 
     // Other
 };
+
+class ActiveAction {
+public:
+    ActiveAction(ACTION);
+    ACTION action;
+    double time_left;
+};
+
+bool operator<(ActiveAction const & lhs, ActiveAction const & rhs);
