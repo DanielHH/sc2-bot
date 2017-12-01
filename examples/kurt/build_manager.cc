@@ -58,15 +58,15 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
 void BuildManager::OnStep(const ObservationInterface* observation) {
     if (current_plan.empty() && goal != nullptr) {
         InitNewPlan(observation);
-        if (current_plan.empty()) {
-            goal = nullptr;
-            std::cout << "goal is reached" << std::endl;
-            agent->ExecuteSubplan();
-            // Goal is reached, need a better goal checker
-            // when multiple goals can be active at the same time.
-        }
     }
     current_plan.ExecuteStep(agent);
+    if (current_plan.empty()) {
+        goal = nullptr;
+        std::cout << "goal is reached" << std::endl;
+        agent->ExecuteSubplan();
+        // Goal is reached, need a better goal checker
+        // when multiple goals can be active at the same time.
+    }
 
     // TESTING
     TEST(for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
