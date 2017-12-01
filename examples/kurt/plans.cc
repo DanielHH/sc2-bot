@@ -3,7 +3,7 @@
 using namespace sc2;
 using namespace std;
 
-GamePlan* Plans::CreateDefaultGamePlan(Kurt* kurt) {
+GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
     GamePlan* plan;
     // Build order of 3 marines
     BPState* first_build_order= new BPState();
@@ -42,7 +42,7 @@ GamePlan* Plans::CreateDefaultGamePlan(Kurt* kurt) {
     return plan;
 }
 
-GamePlan* Plans::RushPlan(Kurt* kurt) {
+GamePlan* RushPlan(Kurt* kurt) {
     GamePlan* plan = new GamePlan(kurt);
     // Build order of 3 marines
     BPState* first_build_order = new BPState();
@@ -68,7 +68,7 @@ GamePlan* Plans::RushPlan(Kurt* kurt) {
     return plan;
 }
 
-GamePlan* Plans::CruiserPlan(Kurt* kurt) {
+GamePlan* CruiserPlan(Kurt* kurt) {
     GamePlan* plan = new GamePlan(kurt);
 
     BPState* first_build_order = new BPState();
@@ -94,7 +94,7 @@ GamePlan* Plans::CruiserPlan(Kurt* kurt) {
     return plan;
 }
 
-GamePlan* Plans::DynamicGamePlan(Kurt* kurt) {
+GamePlan* DynamicGamePlan(Kurt* kurt) {
     GamePlan* plan;
 
     plan->AddDynBuildOrderNode();
