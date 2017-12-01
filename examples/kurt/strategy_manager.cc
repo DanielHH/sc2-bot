@@ -55,6 +55,7 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
 
 void StrategyManager::ExecuteSubplan() {
     std::cout << "SM exec" << std::endl;
+    current_plan->ExecuteNextNode();
 }
 
 /*
