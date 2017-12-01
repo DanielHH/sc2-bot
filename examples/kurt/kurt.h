@@ -8,6 +8,8 @@ class Kurt : public sc2::Agent {
 
 public:
     std::list<const sc2::Unit*> workers;
+    std::list<const sc2::Unit*> scv_minerals;
+    std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
     std::list<const sc2::Unit*> army;
 
@@ -27,6 +29,15 @@ public:
 
     /* Called when a unit is destroyes */
     virtual void OnUnitDestroyed(const sc2::Unit* unit);
+
+    /* Test if given unit exist in given list. */
+    bool UnitInList(std::list<const sc2::Unit*>& list, const sc2::Unit* unit);
+
+    /* Test if given unit is in the list scv_minerals. */
+    bool UnitInScvMinerals(const sc2::Unit* unit);
+
+    /* Test if given unit is in the list scv_vespene. */
+    bool UnitInScvVespene(const sc2::Unit* unit);
 
     /* Executes the next part of the current plan */
     void ExecuteSubplan();

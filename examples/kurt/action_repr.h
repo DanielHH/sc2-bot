@@ -32,12 +32,9 @@ public:
     enum class ACTION {
         //Resource gathering
         SCV_GATHER_MINERALS,
-        SCV_GATHER_GAS,
-        SCV_STOP_GATHER_MINERALS,
+        SCV_GATHER_VESPENE,
         MULE_GATHER_MINERALS,
-        MULE_GATHER_GAS,
-        MULE_STOP_GATHER_MINERALS,
-        MULE_STOP_GATHER_GAS,
+        MULE_GATHER_VESPENE,
 
         // Building construction
         BUILD_COMMAND_CENTER,

@@ -45,6 +45,7 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
     strategy_manager->SaveOurUnits(unit);
+    build_manager->GroupAndSaveUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
@@ -55,6 +56,9 @@ void Kurt::OnUnitIdle(const Unit* unit) {
             break;
         }
         Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+        if (! UnitInScvMinerals(unit)) {
+            scv_minerals.push_back(unit);
+        }
         break;
     }
     default: {
@@ -65,15 +69,24 @@ void Kurt::OnUnitIdle(const Unit* unit) {
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
-    bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
-    if (found) {
-        scouts.remove(destroyed_unit);
-        std::cout << found + "found in scouts" << std::endl;
-        return;
-    }
-
-    found = (std::find(army.begin(), army.end(), destroyed_unit) != army.end());
+    workers.remove(destroyed_unit);
+    scv_minerals.remove(destroyed_unit);
+    scv_vespene.remove(destroyed_unit);
+    scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
+}
+
+
+bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
+    return std::find(list.begin(), list.end(), unit) != list.end();
+}
+
+bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {
+    return UnitInList(scv_minerals, unit);
+}
+
+bool Kurt::UnitInScvVespene(const sc2::Unit* unit) {
+    return UnitInList(scv_vespene, unit);
 }
 
 void Kurt::ExecuteSubplan() {
@@ -203,6 +216,7 @@ const Unit* Kurt::FindNearestVespeneGeyser() {
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
 std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;
+
 void Kurt::SetUpDataMaps(const sc2::ObservationInterface *observation) {
     for (auto unit : observation->GetUnitTypeData()) {
         unit_types[(sc2::UNIT_TYPEID) unit.unit_type_id] = unit;

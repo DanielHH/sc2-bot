@@ -1,11 +1,15 @@
 #include "BPState.h"
 
+#include "constants.h"
+#include "kurt.h"
+
 #include <sc2api/sc2_api.h>
 
 #include <iostream>
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <vector>
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -32,15 +36,36 @@ BPState::BPState(BPState * const state) {
     food_used = state->GetFoodUsed();
 }
 
-BPState::BPState(const ObservationInterface* observation) {
+BPState::BPState(Kurt * const kurt) {
+    const ObservationInterface* observation = kurt->Observation();
+    std::vector<const Unit*> commandcenters;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
         SetUnitAmount(type, GetUnitAmount(type) + 1);
+        if (type == UNIT_TYPEID::TERRAN_COMMANDCENTER) {
+            commandcenters.push_back(unit);
+        }
     }
+    for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
+        UNIT_TYPEID type = neutral->unit_type.ToType();
+        for (auto center : commandcenters) {
+            if (DistanceSquared3D(center->pos, neutral->pos) <
+                    BASE_RESOURCE_TEST_RANGE2) {
+                SetUnitAmount(type, GetUnitAmount(type) + 1);
+                break;
+            }
+        }
+    }
+    int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+    geyser_amount -= GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
+    SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     minerals = observation->GetMinerals();
     vespene = observation->GetVespene();
     food_cap = observation->GetFoodCap();
     food_used = observation->GetFoodUsed();
+    time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
 BPState::BPState(BPState const * const initial, BPAction const * const step) {
@@ -49,6 +74,20 @@ BPState::BPState(BPState const * const initial, BPAction const * const step) {
 
 BPState::~BPState() {
     // TODO
+}
+
+void BPState::Update(double delta_time) {
+}
+
+void BPState::UpdateUntilAvailable(BPAction action) {
+}
+
+void BPState::SimpleUpdate(double delta_time) {
+    minerals += delta_time * MINERALS_PER_SEC_PER_SCV *
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+    vespene += delta_time * VESPENE_PER_SEC_PER_SCV *
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE);
+    time += delta_time;
 }
 
 std::vector<BPAction *> BPState::AvailableActions() const {
@@ -107,6 +146,7 @@ int BPState::GetFoodUsed() const {
 
 void BPState::Print() {
     std::cout << ">>> BPState" << std::endl;
+    std::cout << "Gametime: " << time << std::endl;
     std::cout << "Minerals: " << GetMinerals();
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
@@ -114,7 +154,15 @@ void BPState::Print() {
     for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
         UNIT_TYPEID type = it->first;
         int amount = it->second;
-        std::cout << UnitTypeToName(type) << ": " << amount << std::endl;
+        std::string name;
+        if (type == UNIT_FAKEID::TERRAN_SCV_MINERALS) {
+            name = "TERRAN_SCV_MINERALS";
+        } else if (type == UNIT_FAKEID::TERRAN_SCV_VESPENE) {
+            name = "TERRAN_SCV_VESPENE";
+        } else {
+            name = UnitTypeToName(type);
+        }
+        std::cout << name << ": " << amount << std::endl;
     }
     std::cout << "BPState <<<" << std::endl;
 }

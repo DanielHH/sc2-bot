@@ -35,12 +35,9 @@ unit_rewards(unit_rewards)
 std::map<ActionRepr::ACTION, ActionRepr> ActionRepr::values = {
     //Resource gathering
     { ACTION::SCV_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::SCV_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::SCV_STOP_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
+    { ACTION::SCV_GATHER_VESPENE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
     { ACTION::MULE_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_STOP_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_STOP_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
+    { ACTION::MULE_GATHER_VESPENE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
 
     // Building construction
     { ACTION::BUILD_COMMAND_CENTER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
