@@ -8,7 +8,6 @@
 
 //using namespace sc2;
 
-enum CombatMode { DEFEND, ATTACK, HARASS };
 
 class ArmyManager {
 
@@ -20,12 +19,7 @@ public:
 
     void GroupNewUnit(const sc2::Unit* unit, const sc2::ObservationInterface* observation);
 
-    CombatMode GetCombatMode();
-
-    void SetCombatMode(CombatMode new_combat_mode);
-
 private:
-    CombatMode current_combat_mode;
     Kurt* kurt;
     CellPriorityQueue* cellPriorityQueue;
     

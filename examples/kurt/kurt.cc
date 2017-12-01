@@ -1,6 +1,5 @@
 #include "kurt.h"
 
-#include <iostream>
 #include <list>
 #include <algorithm>
 
@@ -8,6 +7,17 @@
 #include "build_manager.h"
 #include "strategy_manager.h"
 #include "world_representation.h"
+
+#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 
 using namespace sc2;
 
@@ -22,7 +32,7 @@ void Kurt::OnGameStart() {
     army_manager = new ArmyManager(this);
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
-    strategy_manager = new StrategyManager();
+    strategy_manager = new StrategyManager(this);
     world_rep->PrintWorld();
 }
 
@@ -32,9 +42,12 @@ void Kurt::OnStep() {
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
 }
+
 void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
+    strategy_manager->SaveOurUnits(unit);
+    build_manager->GroupAndSaveUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
@@ -45,6 +58,9 @@ void Kurt::OnUnitIdle(const Unit* unit) {
             break;
         }
         Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+        if (! UnitInScvMinerals(unit)) {
+            scv_minerals.push_back(unit);
+        }
         break;
     }
     default: {
@@ -54,15 +70,43 @@ void Kurt::OnUnitIdle(const Unit* unit) {
     }
 }
 
-void Kurt::OnUnitDestroyed(const Unit *destroyed_unit){
-    bool found = (std::find(scouts.begin(), scouts.end(), destroyed_unit) != scouts.end());
-    if (found) {
-        scouts.remove(destroyed_unit);
-        return;
-    }
-    
-    found = (std::find(army.begin(), army.end(), destroyed_unit) !=army.end());
+void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
+    workers.remove(destroyed_unit);
+    scv_minerals.remove(destroyed_unit);
+    scv_vespene.remove(destroyed_unit);
+    scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
+}
+
+
+bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
+    return std::find(list.begin(), list.end(), unit) != list.end();
+}
+
+bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {
+    return UnitInList(scv_minerals, unit);
+}
+
+bool Kurt::UnitInScvVespene(const sc2::Unit* unit) {
+    return UnitInList(scv_vespene, unit);
+}
+
+void Kurt::ExecuteSubplan() {
+    std::cout << "Kurt exec" << std::endl;
+    strategy_manager->ExecuteSubplan();
+}
+
+void Kurt::SendBuildOrder(const BPState* build_order) {
+    //build_manager->SetGoal(build_order);
+    std::cout << "Build something!" << std::endl;
+}
+
+Kurt::CombatMode Kurt::GetCombatMode() {
+    return current_combat_mode;
+}
+
+void Kurt::SetCombatMode(CombatMode new_combat_mode) {
+    current_combat_mode = new_combat_mode;
 }
 
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
@@ -173,6 +217,8 @@ const Unit* Kurt::FindNearestVespeneGeyser() {
 
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
+std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;
+
 void Kurt::SetUpDataMaps(const sc2::ObservationInterface *observation) {
     for (auto unit : observation->GetUnitTypeData()) {
         unit_types[(sc2::UNIT_TYPEID) unit.unit_type_id] = unit;
@@ -189,3 +235,7 @@ AbilityData *Kurt::GetAbility(ABILITY_ID id) {
 UnitTypeData *Kurt::GetUnitType(UNIT_TYPEID id) {
     return &unit_types.at(id);
 }
+
+#undef DEBUG // Stop debug prints from leaking
+#undef TEST
+#undef PRINT

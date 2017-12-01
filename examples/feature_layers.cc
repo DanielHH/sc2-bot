@@ -196,11 +196,9 @@ int main(int argc, char* argv[]) {
                     return 0;
                 }
                 case SDL_KEYDOWN: {
-                    std::cout << "KEYDOWN " << event.key.keysym.sym << std::endl;
                     break;
                 }
                 case SDL_KEYUP: {
-                    std::cout << "KEYUP " << event.key.keysym.sym << std::endl;
                     break;
                 }
                 default: {

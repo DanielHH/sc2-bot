@@ -3,6 +3,7 @@
 #include <sc2api/sc2_api.h>
 #include <iostream>
 
+class Kurt;
 class BPState;
 
 class BPAction {
@@ -25,22 +26,14 @@ public:
     /* Executes this action.
      * Returns true if this action was executed (start) in game, false otherwise.
      */
-    bool Execute(sc2::ActionInterface *, sc2::QueryInterface *, sc2::ObservationInterface const *);
+    bool Execute(
+            Kurt * const,
+            sc2::ActionInterface *,
+            sc2::QueryInterface *,
+            sc2::ObservationInterface const *);
 
     /* Checks if this action can be executed from the current gamestate */
     bool CanExecute() const;
-
-    /* Checks if this action can be executed from the given BPState,
-     * without needing to wait for more resources or
-     * other ongoing actions to finish.
-     */
-    bool CanExecuteInStateNow(BPState const * const) const;
-
-    /* Checks if this action can be executed from the given BPState,
-     * may require waiting for more resources or/and
-     * other ongoing actions to finish but not creating other new actions.
-     */
-    bool CanExecuteInStateNowOrSoon(BPState const * const) const;
 
     /* Creates a new BPAction that can be used to create given unit. */
     static BPAction CreatesUnit(sc2::UNIT_TYPEID unit_type);

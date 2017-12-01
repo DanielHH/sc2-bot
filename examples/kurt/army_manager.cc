@@ -4,6 +4,16 @@
 #include "BPAction.h"
 #include "world_cell.h"
 
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 using namespace sc2;
 Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
@@ -19,14 +29,14 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
     
     ArmyManager::ScoutSmartPath();
-    switch (current_combat_mode) {
-        case DEFEND:
+    switch (kurt->GetCombatMode()) {
+        case Kurt::DEFEND:
             ArmyManager::Defend();
             break;
-        case ATTACK:
+        case Kurt::ATTACK:
             ArmyManager::Attack();
             break;
-        case HARASS:
+        case Kurt::HARASS:
         default:
             ArmyManager::Harass();
             break;
@@ -89,17 +99,11 @@ bool ArmyManager::TryGetScout() {
     
     // if no reaper or marine is found look for a SCV.
     if (!scout_found) {
-        for(const Unit* unit : kurt->workers) { // check scv order so we dont take a scv thats buidling
-            // Find a SCV which is acceptable to interrupt, remove it from workers and put it in scouts.
-            for(UnitOrder order : unit->orders) {
-                std::set<sc2::ABILITY_ID> acceptable_to_interrupt = BPAction::acceptable_to_interrupt;
-                if(acceptable_to_interrupt.find(order.ability_id) != acceptable_to_interrupt.end()) {
-                    kurt->scouts.push_back(unit);
-                    kurt->workers.remove(unit);
-                    scout_found = true;
-                    return true;
-                }
-            }
+        for(const Unit* unit : kurt->scv_minerals) {
+            kurt->scouts.push_back(unit);
+            kurt->scv_minerals.remove(unit);
+            scout_found = true;
+            return true;
         }
         // no SCV:s exists that are allowed to be interrupted.
         return false;
@@ -122,14 +126,6 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
     else if (IsArmyUnit(unit, observation)) {
         kurt->army.push_back(unit);
     }
-}
-
-CombatMode ArmyManager::GetCombatMode() {
-    return current_combat_mode;
-}
-
-void ArmyManager::SetCombatMode(CombatMode new_combat_mode) {
-    current_combat_mode = new_combat_mode;
 }
 
 bool ArmyManager::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
@@ -163,3 +159,7 @@ bool ArmyManager::IsStructure(const Unit* unit, const ObservationInterface* obse
     }
     return is_structure;
 }
+
+#undef DEBUG
+#undef TEST
+#undef PRINT

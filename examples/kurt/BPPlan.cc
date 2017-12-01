@@ -7,9 +7,19 @@
 
 #include "sc2api/sc2_api.h"
 
-#include <iostream>
 #include <queue>
 #include <stack>
+#include <vector>
+
+//#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
 
 using namespace sc2;
 
@@ -17,7 +27,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
         BPState * const goal) {
     // TODO Remove duplicated code?
     BPState built(start);
-    std::stack<BPAction> add_to_plan;
+    // add_to_plan is almost a queue of stacks
+    std::vector<std::stack<BPAction> > add_to_plan;
     std::queue<UNIT_TYPEID> need_to_build;
     int mineral_cost = 0;
     int vespene_cost = 0;
@@ -25,7 +36,10 @@ void BPPlan::AddBasicPlan(BPState * const start,
     /*
      * Add buildings directly from the goal.
      */
+    int add_i = 0;
     for (auto it = goal->UnitsBegin(); it != goal->UnitsEnd(); ++it) {
+        ++add_i;
+        add_to_plan.resize(add_i + 1);
         UNIT_TYPEID type = it->first;
         int amount = it->second;
         if (built.GetUnitAmount(type) >= amount) {
@@ -33,7 +47,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
         }
         need_to_build.push(type);
         for (int i = start->GetUnitAmount(type); i < amount; ++i) {
-            add_to_plan.push(BPAction::CreatesUnit(type));
+            add_to_plan[add_i].push(BPAction::CreatesUnit(type));
         }
         built.SetUnitAmount(type, amount);
         UnitTypeData * t_data = Kurt::GetUnitType(type);
@@ -41,28 +55,29 @@ void BPPlan::AddBasicPlan(BPState * const start,
         vespene_cost += t_data->vespene_cost * amount;
         food_required += t_data->food_required * amount;
         food_required -= t_data->food_provided * amount;
-    }
-    /*
-     * Add buildings required for to reach the goal.
-     */
-    // TODO Chech if alias exist, should be barracks tech lab > barracks and NOT !=
-    while (! need_to_build.empty()) {
-        UNIT_TYPEID curr = need_to_build.front();
-        need_to_build.pop();
-        for (UNIT_TYPEID req : BuildManager::GetRequirements(curr)) {
-            if (built.GetUnitAmount(req) > 0) {
-                continue;
+        /*
+         * Add buildings required for to reach the goal.
+         */
+        // TODO Chech if alias exist, should be barracks tech lab > barracks and NOT !=
+        while (! need_to_build.empty()) {
+            UNIT_TYPEID curr = need_to_build.front();
+            need_to_build.pop();
+            for (UNIT_TYPEID req : BuildManager::GetRequirements(curr)) {
+                if (built.GetUnitAmount(req) > 0) {
+                    continue;
+                }
+                need_to_build.push(req);
+                add_to_plan[add_i].push(BPAction::CreatesUnit(req));
+                built.SetUnitAmount(req, 1);
+                UnitTypeData * t_data = Kurt::GetUnitType(req);
+                mineral_cost += t_data->mineral_cost;
+                vespene_cost += t_data->vespene_cost;
+                food_required += t_data->food_required;
+                food_required -= t_data->food_provided;
             }
-            need_to_build.push(req);
-            add_to_plan.push(BPAction::CreatesUnit(req));
-            built.SetUnitAmount(req, 1);
-            UnitTypeData * t_data = Kurt::GetUnitType(req);
-            mineral_cost += t_data->mineral_cost;
-            vespene_cost += t_data->vespene_cost;
-            food_required += t_data->food_required;
-            food_required -= t_data->food_provided;
         }
     }
+    add_i = 0;
     /*
      * Add supplydepots if there is not enough food.
      */
@@ -70,7 +85,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
     while (food_required > food_in_store) {
         UNIT_TYPEID supplydepot = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
         built.SetUnitAmount(supplydepot, built.GetUnitAmount(supplydepot) + 1);
-        add_to_plan.push(BPAction::CreatesUnit(supplydepot));
+        add_to_plan[add_i].push(BPAction::CreatesUnit(supplydepot));
         UnitTypeData * t_data = Kurt::GetUnitType(supplydepot);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
@@ -87,9 +102,9 @@ void BPPlan::AddBasicPlan(BPState * const start,
             built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
         built.SetUnitAmount(refinery, 1);
-        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan.push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan.push(BPAction::CreatesUnit(refinery));
+        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
+        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
+        add_to_plan[add_i].push(BPAction::CreatesUnit(refinery));
         UnitTypeData * t_data = Kurt::GetUnitType(refinery);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
@@ -99,9 +114,11 @@ void BPPlan::AddBasicPlan(BPState * const start,
     /*
      * Add all actions in reverse.
      */
-    while (! add_to_plan.empty()) {
-        push_back(add_to_plan.top());
-        add_to_plan.pop();
+    for (int i = 0; i < add_to_plan.size(); ++i) {
+        while (! add_to_plan[i].empty()) {
+            push_back(add_to_plan[i].top());
+            add_to_plan[i].pop();
+        }
     }
 }
 
@@ -113,8 +130,8 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
     int i;
     for (i = 0; i < vector::size(); ++i) {
         BPAction action = vector::operator[](i);
-        std::cout << "Try to exec action " << action << std::endl;
-        if (! action.Execute(kurt->Actions(), kurt->Query(), kurt->Observation())) {
+        PRINT("Try to exec action " << action)
+        if (! action.Execute(kurt, kurt->Actions(), kurt->Query(), kurt->Observation())) {
             break;
         }
     }
@@ -138,3 +155,7 @@ std::string BPPlan::ToString() const {
 std::ostream& operator<<(std::ostream& os, const BPPlan & plan) {
     return os << plan.ToString();
 }
+
+#undef DEBUG
+#undef TEST
+#undef PRINT

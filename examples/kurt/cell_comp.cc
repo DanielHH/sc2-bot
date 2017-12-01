@@ -1,5 +1,6 @@
 #include "kurt.h"
 #include <iostream>
+#include "world_cell.h"
 
 struct CellComp {
     Kurt* kurt;
@@ -21,7 +22,6 @@ struct CellComp {
     }
     
     bool operator()(WorldCell* lhs, WorldCell* rhs) {
-        std::cout << "wordcell less then" << std::endl;
         return SmartComp(lhs, rhs);
     }
 };
