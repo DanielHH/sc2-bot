@@ -93,16 +93,6 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     SetGoal(goal);
 }
 
-void BuildManager::GroupAndSaveUnits(const Unit* unit) {
-    if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        if (! agent->UnitInScvMinerals(unit)) {
-            agent->scv_minerals.push_back(unit);
-        }
-    } else {
-        // Maybe add to workers list?
-    }
-}
-
 void BuildManager::SetGoal(BPState * const goal_) {
     goal = goal_;
     // Reset the current plan

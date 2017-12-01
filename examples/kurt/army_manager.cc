@@ -127,7 +127,9 @@ void ArmyManager::PutUnitInGroup(const Unit* unit) {
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
     if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        kurt->workers.push_back(unit);
+        if (! kurt->UnitInScvMinerals(unit)) {
+            kurt->scv_minerals.push_back(unit);
+        }
     }
     else if (IsArmyUnit(unit, observation)) {
         kurt->army.push_back(unit);
