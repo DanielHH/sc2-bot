@@ -10,3 +10,6 @@
 [submodule "protocol"]
 	path = protocol
 	url = https://github.com/Blizzard/s2client-proto
+[submodule "examples/kurt/sc2-gamedata"]
+	path = examples/kurt/sc2-gamedata
+	url = https://github.com/noorus/sc2-gamedata.git
