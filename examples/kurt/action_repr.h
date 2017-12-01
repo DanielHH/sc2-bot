@@ -15,7 +15,8 @@ public:
     ActionRepr( std::vector<struct UnitAmount> const &,
                 std::vector<struct UnitAmount> const &,
                 std::vector<struct UnitAmount> const &,
-                std::vector<struct UnitAmount> const &);
+                std::vector<struct UnitAmount> const &,
+                float time);
 
     std::vector<struct UnitAmount> required;
     std::vector<struct UnitAmount> consumed;
