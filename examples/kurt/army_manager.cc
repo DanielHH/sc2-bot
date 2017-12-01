@@ -1,6 +1,8 @@
 #include "army_manager.h"
 #include <iostream>
 #include <sc2api/sc2_map_info.h>
+#include "BPAction.h"
+#include "world_cell.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -13,41 +15,20 @@
 #endif // DEBUG
 
 using namespace sc2;
-
+Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
+    comp_kurt = parent_kurt;
+    cellPriorityQueue = new CellPriorityQueue(kurt);
 }
 
-bool DistanceComp(Point2D a, Point2D b){
-    Point2D bottom_left(0,0);
-    float a_distance_from = Distance2D(bottom_left, a);
-    float b_distance_from = Distance2D(bottom_left, b);
-    return a_distance_from < b_distance_from;
-}
-
-std::priority_queue<sc2::Point2D, std::vector<sc2::Point2D>, std::function<bool(Point2D, Point2D)>> scout_path(DistanceComp);
-
-bool ran = false;
 void ArmyManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
-    // Find a scout if we have none
-    if (kurt->scouts.empty()){
-        if(ArmyManager::TryGetScout()) {
-            //std::cout << "Number of scouts: " + kurt->scouts.size() << std::endl;
-            // kommentar branch stuffu
-        }
-    }
-
-    
-    /*ImageData pathing_grid = kurt->Observation()->GetGameInfo().pathing_grid;
-    std::cout << pathing_grid.height << std::endl;
-    std::cout << pathing_grid.width << std::endl;*/
-    if (!ran) {
-        ArmyManager::PlanScoutPath();
-        ran = true;
+    if (kurt->scouts.empty()) {
+        ArmyManager::TryGetScout();
     }
     
-    ArmyManager::ScoutPath();
+    ArmyManager::ScoutSmartPath();
     switch (kurt->GetCombatMode()) {
         case Kurt::DEFEND:
             ArmyManager::Defend();
@@ -62,44 +43,25 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 
-void ArmyManager::PlanScoutPath() {
-    // TODO: implement pathplanning for scout
-    //scout_path = kurt->Observation()->GetGameInfo().enemy_start_locations;
-    const Unit* scout = kurt->scouts.front();
-    float longest_euk_dist = -INFINITY;
-    float scout_x = scout->pos.x;
-    float scout_y = scout->pos.y;
+void ArmyManager::PlanSmartScoutPath(){
     
-    for (const Unit* check_point: kurt->Observation()->GetUnits(Unit::Alliance::Neutral)) {
-        float x_distance = abs(check_point->pos.x - scout_x);
-        float y_distance = abs(check_point->pos.y - scout_y);
-        float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
-        if (euk_distance_to_unit > longest_euk_dist) {
-            longest_euk_dist = euk_distance_to_unit;
-        }
-        scout_path.push(check_point->pos);
-    }
-    /*while (!scout_path.empty()) {
-        Point2D point = scout_path.top();
-        std::cout << point.x << std::endl;
-        std::cout << point.y << std::endl;
-        scout_path.pop();
-    }*/
+    
 }
 
-void ArmyManager::ScoutPath(){
+void ArmyManager::ScoutSmartPath(){
     const Unit* scout = kurt->scouts.front();
     float scout_x = scout->pos.x;
     float scout_y = scout->pos.y;
     
-    while (!scout_path.empty()){
-        Point2D point_to_visit = scout_path.top();
+    for (int i = 0; i < cellPriorityQueue->queue.size(); i++){
+        Point2D point_to_visit = (cellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        if(euk_distance_to_unit < 10) {
-            scout_path.pop();
+        if(euk_distance_to_unit < 5) {
+            cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
+            cellPriorityQueue->Update();
         }
         return;
     }
@@ -111,6 +73,12 @@ void ArmyManager::Defend() {
 
 void ArmyManager::Attack() {
     // TODO: implement Attack
+    for(const Unit* unit: kurt->army){
+        if (unit->orders.size() == 0) {
+            sc2::Point2D target = kurt->Observation()->GetGameInfo().enemy_start_locations[0];
+            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK,target);
+        }
+    }
 }
 
 void ArmyManager::Harass() {
@@ -137,14 +105,13 @@ bool ArmyManager::TryGetScout() {
     
     // if no reaper or marine is found look for a SCV.
     if (!scout_found) {
-        for(const Unit* unit : kurt->workers) { // check scv order so we dont take a scv thats buidling
-            // Find a SCV, remove it from workers and put it in scouts.
+        for(const Unit* unit : kurt->scv_minerals) {
             kurt->scouts.push_back(unit);
-            kurt->workers.remove(unit);
+            kurt->scv_minerals.remove(unit);
             scout_found = true;
             return true;
         }
-        // If we have no SCV:s
+        // no SCV:s exists that are allowed to be interrupted.
         return false;
     } else {
         // Add the marine in scouts and remove it from army

@@ -1,5 +1,5 @@
 #include "strategy_manager.h"
-#include "plans.cc"
+#include "plans.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -14,6 +14,7 @@
 using namespace sc2;
 using namespace std;
 
+
 Units our_units;
 Units enemy_units;
 
@@ -22,21 +23,13 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
+    Plans* plan = new Plans();
 
-    // Create a test plan
-    current_plan = new GamePlan(parent_kurt);
+    //current_plan = CreateDefaultGamePlan(kurt);
+    current_plan = plan->RushPlan(kurt);
+    //current_plan = DynamicGamePlan(kurt);
+    current_plan->ExecuteNextNode();
 
-    // Build order of 3 marines
-    BPState* test_build = new BPState();
-    test_build->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
-    current_plan->AddStatBuildOrderNode(test_build);
-    current_plan->AddDynBuildOrderNode();
-
-    // Attack order
-    current_plan->AddStatCombatNode(Kurt::ATTACK);
-
-    // Harass order
-    current_plan->AddDynCombatNode();
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -44,17 +37,16 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     SaveSpottedEnemyUnits(observation);
 
-    if (current_game_loop % 1000 == 0) {
-        current_plan->ExecuteNextNode();
-    }
+
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
     our_units.push_back(unit);
+    //update combatpower. TODO: Make more efficient.
+    CalculateCombatPower(&our_cp);
 }
 
 void StrategyManager::ExecuteSubplan() {
-    std::cout << "SM exec" << std::endl;
     current_plan->ExecuteNextNode();
 }
 
@@ -81,6 +73,9 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     }
     // Save the observed units that didn't get filtered out as already seen.
     enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
+
+    //Update combatpower. TODO: Make more efficient.
+    CalculateCombatPower(&enemy_cp);
 };
 
 void StrategyManager::CalculateCombatPower(CombatPower *cp) {
@@ -146,34 +141,35 @@ void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
 
 void StrategyManager::CalculateCombatMode() {
     if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
-        //attack
+        kurt->SetCombatMode(Kurt::ATTACK);
     }
     else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
-        //defend
+        kurt->SetCombatMode(Kurt::DEFEND);
     }
     else {
-       //harrass
+        kurt->SetCombatMode(Kurt::HARASS);
     }
 };
 
 void StrategyManager::SetGamePlan() {
 
-
-
 }
 
 void StrategyManager::SetBuildGoal() {
-
     BPState* new_goal_state = new BPState();
 
     if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
     }
     else if (our_cp.a2a < 50) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
+    else if (our_cp.a2a < enemy_cp.a2a || our_cp.g2a < enemy_cp.g2a) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
+    }
 
-    //current_plan->AddBuildOrderNode(new_goal_state);
+    kurt->SendBuildOrder(new_goal_state);
 };
 
 
@@ -183,24 +179,16 @@ void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map)
     //GroundToGround
     if (!unit->is_flying && unit->is_alive) {
         map["g2g"].push_back(unit);
+>>>>>>> 81559c0b9f8398d5db4a9ca3346fc67c32e49833
     }
-    //GroundToAir
-    if (!unit->is_flying && unit->is_alive) {
-        map["g2a"].push_back(unit);
+    else if (our_cp.g2g < enemy_cp.g2g || our_cp.a2g < enemy_cp.a2g) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
-    //AirToGround
-    if (unit->is_flying && unit->is_alive) {
-        map["a2g"].push_back(unit);
-    }
-    //AirToAir
-    if (unit->is_flying && unit->is_alive) {
-        map["a2a"].push_back(unit);
-    }
+    kurt->SendBuildOrder(new_goal_state);
 };
+
+
 */
-
-
-
 
 #undef DEBUG
 #undef PRINT

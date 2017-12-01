@@ -48,6 +48,7 @@ private:
 
     void CalculateCPHelp(CombatPower *cp, sc2::Units alliance);
 
+
     //
     void SetGamePlan();
 

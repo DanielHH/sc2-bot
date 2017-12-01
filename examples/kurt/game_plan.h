@@ -41,6 +41,7 @@ private:
         Kurt::CombatMode combat_order;
 
     public:
+
         StatCombatNode(Kurt* kurt, Kurt::CombatMode _combat_order) : Node(kurt) {
             combat_order = _combat_order;
         }

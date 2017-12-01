@@ -1,6 +1,7 @@
 #include "action_repr.h"
 #include <map>
 #include <vector>
+#include "constants.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -12,77 +13,75 @@
 #define TEST(s)
 #endif // DEBUG
 
-ActionRepr::ActionRepr(int mineral_cost, int gas_cost, int food_cost,
-    std::vector<struct UnitReq> const &non_busy_unit_costs,
-    std::vector<struct UnitReq> const &maybe_busy_unit_costs,
-    int time_required,
-    int mineral_reward, int gas_reward, int food_reward,
-    std::vector<struct UnitReq> const &unit_rewards) :
-mineral_cost(mineral_cost),
-gas_cost(gas_cost),
-food_cost(food_cost),
-non_busy_unit_costs(non_busy_unit_costs),
-maybe_busy_unit_reqs(maybe_busy_unit_costs),
-time_required(time_required),
-mineral_reward(mineral_reward),
-gas_reward(gas_reward),
-food_reward(food_reward),
-unit_rewards(unit_rewards)
+using sc2::UNIT_TYPEID;
+
+ActionRepr::ActionRepr(
+    std::map<sc2::UNIT_TYPEID, int> const & required_,
+    std::map<sc2::UNIT_TYPEID, int> const & consumed_,
+    std::map<sc2::UNIT_TYPEID, int> const & borrowed_,
+    std::map<sc2::UNIT_TYPEID, int> const & produced_,
+    float time_) :
+    required(required_),
+    consumed(consumed_),
+    borrowed(borrowed_),
+    produced(produced_),
+    time_required(time_)
 {
 
 }
 
-std::map<ActionRepr::ACTION, ActionRepr> ActionRepr::values = {
+std::map<ACTION, ActionRepr> ActionRepr::values = {
     //Resource gathering
-    { ACTION::SCV_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::SCV_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::SCV_STOP_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_STOP_GATHER_MINERALS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::MULE_STOP_GATHER_GAS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
+    { ACTION::SCV_GATHER_MINERALS, ActionRepr({}, {{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}}, {}, {{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1 }}, 0) },
+    { ACTION::SCV_GATHER_VESPENE, ActionRepr({},{{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1 }},{},{{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}}, 0) },
+    { ACTION::MULE_GATHER_MINERALS, ActionRepr({},{{UNIT_FAKEID::TERRAN_MULE_VESPENE, 1}},{},{{UNIT_FAKEID::TERRAN_MULE_MINERALS, 1}}, 0) },
+    { ACTION::MULE_GATHER_VESPENE, ActionRepr({},{{UNIT_FAKEID::TERRAN_MULE_MINERALS, 1}},{},{{UNIT_FAKEID::TERRAN_MULE_VESPENE, 1}}, 0) },
 
     // Building construction
-    { ACTION::BUILD_COMMAND_CENTER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_PLANETARY_FORTRESS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_ORBITAL_COMMAND, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_SUPPLY_DEPOT, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_REFINERY, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_BARRACKS, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_ENGINEERING_BAY, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_BUNKER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_SENSOR_TOWER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_MISSILE_TURRET, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_FACTORY, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_GHOST_ACADEMY, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_STARPORT, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_ARMORY, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_FUSION_CORE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_TECH_LAB, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::BUILD_REACTOR, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-
-    // Unit training
-    { ACTION::TRAIN_SCV, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_MULE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_MARINE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_REAPER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_MARAUDER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_GHOST, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_HELLION, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_HELLBAT, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_WIDOW_MINE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_SIEGE_TANK, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_CYCLONE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_THOR, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_VIKING, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_MEDIVAC, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_LIBERATOR, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_RAVEN, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_BANSHEE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_BATTLECRUISER, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_POINT_DEFENSE_DRONE, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) },
-    { ACTION::TRAIN_AUTO_TURRET, ActionRepr(0, 0, 0,{},{}, 0, 0, 0, 0,{}) }
+    { ACTION::BUILD_COMMAND_CENTER, ActionRepr({}, { { UNIT_FAKEID::MINERALS, 400 } }, { {UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, { {sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}}, 71) },
+    { ACTION::BUILD_PLANETARY_FORTRESS, ActionRepr({{UNIT_TYPEID::TERRAN_ENGINEERINGBAY, 1}},{{sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 150}},{},{{sc2::UNIT_TYPEID::TERRAN_PLANETARYFORTRESS, 1}}, 36) },
+    { ACTION::BUILD_ORBITAL_COMMAND, ActionRepr({{UNIT_TYPEID::TERRAN_BARRACKS, 1}},{{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::MINERALS, 150}},{},{{sc2::UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1}}, 25) },
+    { ACTION::BUILD_SUPPLY_DEPOT, ActionRepr({},{{UNIT_FAKEID::MINERALS, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1}}, 21) },
+    { ACTION::BUILD_REFINERY, ActionRepr({},{{UNIT_FAKEID::MINERALS, 75}, {UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, 1}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_REFINERY, 1}}, 21) },
+    { ACTION::BUILD_BARRACKS, ActionRepr({{UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1}},{{UNIT_FAKEID::MINERALS, 150}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_BARRACKS, 1}}, 46) },
+    { ACTION::BUILD_ENGINEERING_BAY, ActionRepr({{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}},{{UNIT_FAKEID::MINERALS, 125}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_ENGINEERINGBAY, 1}}, 25) },
+    { ACTION::BUILD_BUNKER, ActionRepr({},{{UNIT_FAKEID::MINERALS, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_BUNKER, 1}}, 29) },
+    { ACTION::BUILD_SENSOR_TOWER, ActionRepr({{UNIT_TYPEID::TERRAN_ENGINEERINGBAY, 1}},{{UNIT_FAKEID::MINERALS, 125}, {UNIT_FAKEID::VESPENE, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, { {UNIT_TYPEID::TERRAN_SENSORTOWER, 1}}, 18) },
+    { ACTION::BUILD_MISSILE_TURRET, ActionRepr({{UNIT_TYPEID::TERRAN_ENGINEERINGBAY, 1}},{{UNIT_FAKEID::MINERALS, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_MISSILETURRET, 1}}, 18) },
+    { ACTION::BUILD_FACTORY, ActionRepr({{UNIT_TYPEID::TERRAN_BARRACKS, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_FACTORY, 1}}, 43) },
+    { ACTION::BUILD_GHOST_ACADEMY, ActionRepr({{UNIT_TYPEID::TERRAN_BARRACKS, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 50}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_GHOSTACADEMY, 1}}, 29) },
+    { ACTION::BUILD_STARPORT, ActionRepr({{UNIT_TYPEID::TERRAN_FACTORY, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_STARPORT, 1}}, 36) },
+    { ACTION::BUILD_ARMORY, ActionRepr({{UNIT_TYPEID::TERRAN_FACTORY, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_ARMORY, 1}}, 46) },
+    { ACTION::BUILD_FUSION_CORE, ActionRepr({{UNIT_TYPEID::TERRAN_STARPORT, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 150}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_FUSIONCORE, 1}}, 46) },
+    { ACTION::BUILD_BARRACKS_TECH_LAB, ActionRepr({},{{UNIT_FAKEID::MINERALS, 50}, {UNIT_FAKEID::VESPENE, 25}, {UNIT_TYPEID::TERRAN_BARRACKS, 1}},{},{{UNIT_TYPEID::TERRAN_BARRACKSTECHLAB, 1}}, 18) },
+    { ACTION::BUILD_FACTORY_TECH_LAB, ActionRepr({},{{UNIT_FAKEID::MINERALS, 50}, {UNIT_FAKEID::VESPENE, 25}, {UNIT_TYPEID::TERRAN_FACTORY, 1}},{},{{UNIT_TYPEID::TERRAN_FACTORYTECHLAB, 1}}, 18) },
+    { ACTION::BUILD_STARPORT_TECH_LAB, ActionRepr({},{ { UNIT_FAKEID::MINERALS, 50 },{ UNIT_FAKEID::VESPENE, 25 },{ UNIT_TYPEID::TERRAN_STARPORT, 1 } },{},{ { UNIT_TYPEID::TERRAN_STARPORTTECHLAB, 1 } }, 18) },
+    { ACTION::BUILD_BARRACKS_REACTOR, ActionRepr({},{{UNIT_FAKEID::MINERALS, 50}, {UNIT_FAKEID::VESPENE, 50}, {UNIT_TYPEID::TERRAN_BARRACKS, 1}},{},{{UNIT_TYPEID::TERRAN_BARRACKSREACTOR, 2}}, 36) },
+    { ACTION::BUILD_FACTORY_REACTOR, ActionRepr({},{ { UNIT_FAKEID::MINERALS, 50 },{ UNIT_FAKEID::VESPENE, 50 },{ UNIT_TYPEID::TERRAN_FACTORY, 1 } },{},{ { UNIT_TYPEID::TERRAN_FACTORYREACTOR, 2 } }, 36) },
+    { ACTION::BUILD_STARPORT_REACTOR, ActionRepr({},{ { UNIT_FAKEID::MINERALS, 50 },{ UNIT_FAKEID::VESPENE, 50 },{ UNIT_TYPEID::TERRAN_STARPORT, 1 } },{},{ { UNIT_TYPEID::TERRAN_STARPORTREACTOR, 2 } }, 36) },
     
+    // Unit training
+    { ACTION::TRAIN_SCV, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_MULE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_MARINE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_REAPER, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_MARAUDER, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_GHOST, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_HELLION, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_HELLBAT, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_WIDOW_MINE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_SIEGE_TANK, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_CYCLONE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_THOR, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_VIKING, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_MEDIVAC, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_LIBERATOR, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_RAVEN, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_BANSHEE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_BATTLECRUISER, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_POINT_DEFENSE_DRONE, ActionRepr({},{},{},{}, 0) },
+    { ACTION::TRAIN_AUTO_TURRET, ActionRepr({},{},{},{}, 0) }
+
     // Other
 };
 

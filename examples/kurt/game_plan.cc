@@ -1,4 +1,4 @@
-#include "game_plan.h";
+#include "game_plan.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -9,6 +9,7 @@
 #define PRINT(s)
 #define TEST(s)
 #endif // DEBUG
+
 
 GamePlan::GamePlan(Kurt* _kurt) {
     kurt = _kurt;

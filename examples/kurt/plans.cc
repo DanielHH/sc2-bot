@@ -49,6 +49,7 @@ GamePlan* Plans::RushPlan(Kurt* kurt) {
     BPState* second_build_order = new BPState();
     BPState* third_build_order = new BPState();
 
+<<<<<<< HEAD
     // Increase production with some more scvs
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 16);
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
@@ -90,6 +91,25 @@ GamePlan* Plans::CruiserPlan(Kurt* kurt) {
     plan->AddStatBuildOrderNode(second_build_order);
     plan->AddStatBuildOrderNode(third_build_order);
     plan->AddStatCombatNode(Kurt::ATTACK); //ATTACK!
+=======
+    //first_build
+    
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 4);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+    
+    //second_build
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);
+    //third_build
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 20);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 20);
+
+
+    plan->AddStatBuildOrderNode(first_build_order);
+    plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddStatCombatNode(Kurt::ATTACK);
+    plan->AddStatBuildOrderNode(third_build_order);
+
+>>>>>>> 97eb4dff63047c9f7455a6af25251aaa8948dd98
 
     return plan;
 }
