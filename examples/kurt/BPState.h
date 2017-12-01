@@ -35,7 +35,10 @@ public:
     /* Updates this state until given action can be executed in this state.
      * If the action can be executed now, this update does nothing.
      */
-    void UpdateUntilAvailable(BPAction);
+    void UpdateUntilAvailable(ACTION);
+
+    /* Updates this state and add the action. */
+    void AddAction(ACTION);
 
     /* Checks if given action can be executed from this state,
      * without needing to wait for more resources or
