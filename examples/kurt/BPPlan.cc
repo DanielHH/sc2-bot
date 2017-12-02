@@ -53,8 +53,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
         UnitTypeData * t_data = Kurt::GetUnitType(type);
         mineral_cost += t_data->mineral_cost * amount;
         vespene_cost += t_data->vespene_cost * amount;
-        food_required += t_data->food_required * amount;
-        food_required -= t_data->food_provided * amount;
+        food_required += (int) t_data->food_required * amount;
+        food_required -= (int) t_data->food_provided * amount;
         /*
          * Add buildings required for to reach the goal.
          */
@@ -72,8 +72,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
                 UnitTypeData * t_data = Kurt::GetUnitType(req);
                 mineral_cost += t_data->mineral_cost;
                 vespene_cost += t_data->vespene_cost;
-                food_required += t_data->food_required;
-                food_required -= t_data->food_provided;
+                food_required += (int) t_data->food_required;
+                food_required -= (int) t_data->food_provided;
             }
         }
     }
@@ -89,8 +89,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
         UnitTypeData * t_data = Kurt::GetUnitType(supplydepot);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
-        food_required += t_data->food_required;
-        food_required -= t_data->food_provided;
+        food_required += (int) t_data->food_required;
+        food_required -= (int) t_data->food_provided;
     }
     /*
      * Add refinery if plan requires more vespene than we got
@@ -108,8 +108,8 @@ void BPPlan::AddBasicPlan(BPState * const start,
         UnitTypeData * t_data = Kurt::GetUnitType(refinery);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
-        food_required += t_data->food_required;
-        food_required -= t_data->food_provided;
+        food_required += (int) t_data->food_required;
+        food_required -= (int) t_data->food_provided;
     }
     /*
      * Add all actions in reverse.
