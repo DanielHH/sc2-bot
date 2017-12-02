@@ -50,7 +50,12 @@ public:
     /* Returns a list of actions that can be performed
      * from this state.
      */
-    std::vector<BPAction *> AvailableActions() const;
+    std::vector<ACTION> AvailableActions() const;
+
+    /* Returns a list of actions that can be performed
+     * from this state.
+     */
+    std::vector<BPAction *> AvailableActionsOld() const;
 
     /* Returns the amount of given units in this BPState */
     int GetUnitAmount(sc2::UNIT_TYPEID) const;
@@ -94,6 +99,32 @@ public:
     void Print();
 
     bool operator<(BPState const &other) const;
+
+
+    /* USED BY MCTS, empty by default.
+     * List containing all available actions from this state.
+     */
+    std::vector<ACTION> available_actions;
+
+    /* USED BY MCTS, empty by default.
+     * List containing all states reached from this state
+     * when preforming an action (with same index in available_actions).
+     */
+    std::vector<BPState* > children;
+
+    /* USED BY MCTS */
+    BPState * parent;
+
+    /* USED BY MCTS
+     * The reward is the score for how good this state is, range [0, 1].
+     * 1 is the best, 0 is the worst.
+     */
+    double reward;
+
+    /* USED BY MCTS
+     * The amount of times a search iteration has passed through this state.
+     */
+    int iter_amount;
 
 private:
     /* Updates this state given time (in seconds)

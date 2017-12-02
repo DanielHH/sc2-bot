@@ -74,7 +74,9 @@ BPState::BPState(Kurt * const kurt) {
 }
 
 BPState::~BPState() {
-    // TODO
+    for (int i = 0; i < children.size(); ++i) {
+        delete children[i];
+    }
 }
 
 void BPState::UpdateUntilAvailable(ACTION action) {
@@ -215,7 +217,18 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
     return true;
 }
 
-std::vector<BPAction *> BPState::AvailableActions() const {
+std::vector<ACTION> BPState::AvailableActions() const {
+    std::vector<ACTION> aa;
+    for (auto pair : ActionRepr::values) {
+        ACTION action = pair.first;
+        if (CanExecuteNowOrSoon(action)) {
+            aa.push_back(action);
+        }
+    }
+    return aa;
+}
+
+std::vector<BPAction *> BPState::AvailableActionsOld() const {
     std::vector<BPAction *> tmp;
     std::ifstream abilities_file;
     TEST(( abilities_file.open("sc2-gamedata/v3.19.1.58600/units.json");
