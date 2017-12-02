@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 enum class ACTION {
     //Resource gathering
     SCV_GATHER_MINERALS,
@@ -54,6 +56,10 @@ enum class ACTION {
 
     // Other
 };
+
+std::string ActionToName(ACTION action);
+
+std::ostream& operator<<(std::ostream& os, const ACTION & action);
 
 class ActiveAction {
 public:
