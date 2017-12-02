@@ -27,7 +27,7 @@ void MCTS::Search(int num_iterations) {
 
     while (current) { // TODO: exit loop sometimes
         for (auto action : current->AvailableActions()) {
-            tree[current].push_back(BPState(current, action));
+//            tree[current].push_back(BPState(current, action));
         }
         // TODO: More stuff.
     }

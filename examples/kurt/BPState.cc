@@ -35,6 +35,9 @@ BPState::BPState(BPState * const state) {
     for (auto it = state->UnitsProdBegin(); it != state->UnitsProdEnd(); ++it){
         SetUnitProdAmount(it->first, it->second);
     }
+    for (auto it = state->actions.begin(); it != state->actions.end(); ++it){
+        actions.push_back(*it);
+    }
     time = state->GetTime();
 }
 
@@ -70,18 +73,26 @@ BPState::BPState(Kurt * const kurt) {
     time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
-BPState::BPState(BPState const * const initial, BPAction const * const step) {
-    // TODO
-}
-
 BPState::~BPState() {
     // TODO
 }
 
-void BPState::Update(double delta_time) {
-}
-
 void BPState::UpdateUntilAvailable(ACTION action) {
+    ActionRepr ar = ActionRepr::values.at(action);
+    UNIT_TYPEID minerals = UNIT_FAKEID::MINERALS;
+    UNIT_TYPEID vespene = UNIT_FAKEID::VESPENE;
+    while (! CanExecuteNow(action)) {
+        double minerals_time = GetMineralRate() *
+            std::max(0, ar.consumed[minerals] - GetUnitAmount(minerals));
+        double vespene_time = GetVespeneRate() *
+            std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
+        double delta_time = std::max(minerals_time, vespene_time);
+        if (! actions.empty() && actions.front().time_left <= delta_time) {
+            CompleteFirstAction();
+        } else {
+            SimpleUpdate(delta_time);
+        }
+    }
 }
 
 void BPState::SimpleUpdate(double delta_time) {
@@ -126,11 +137,48 @@ void BPState::AddAction(ACTION action) {
     actions.push_back(aa);
 }
 
-bool BPState::CanExecuteNow(ACTION action) const {
-    for (auto pair : ActionRepr::values.at(action).required) {
+void BPState::CompleteAllActions() {
+    while (CompleteFirstAction()) {}
+}
+
+bool BPState::CompleteFirstAction() {
+    if (actions.empty()) {
+        return false;
+    }
+    ActiveAction aa = actions.front();
+    ACTION action = aa.action;
+    actions.pop_front();
+    SimpleUpdate(aa.time_left);
+    ActionRepr ar = ActionRepr::values.at(action);
+    for (auto pair : ar.borrowed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        if (amount > GetUnitAmount(type)) {
+        SetUnitAmount(type, GetUnitAmount(type) + amount);
+        SetUnitProdAmount(type, GetUnitProdAmount(type) - amount);
+    }
+    for (auto pair : ar.produced) {
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        SetUnitAmount(type, GetUnitAmount(type) + amount);
+        SetUnitProdAmount(type, GetUnitProdAmount(type) - amount);
+    }
+    return true;
+}
+
+bool BPState::CanExecuteNow(ACTION action) const {
+    ActionRepr ar = ActionRepr::values.at(action);
+    for (auto pair : ar.required) {
+        if (pair.second > GetUnitAmount(pair.first)) {
+            return false;
+        }
+    }
+    for (auto pair : ar.consumed) {
+        if (pair.second > GetUnitAmount(pair.first)) {
+            return false;
+        }
+    }
+    for (auto pair : ar.borrowed) {
+        if (pair.second > GetUnitAmount(pair.first)) {
             return false;
         }
     }
@@ -138,7 +186,13 @@ bool BPState::CanExecuteNow(ACTION action) const {
 }
 
 bool BPState::CanExecuteNowOrSoon(ACTION action) const {
-    for (auto pair : ActionRepr::values.at(action).required) {
+    ActionRepr ar = ActionRepr::values.at(action);
+    for (auto p : ar.required) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
+            return false;
+        }
+    }
+    for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
         if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
@@ -150,6 +204,11 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
                     GetVespeneRate() > 0) {
                 continue;
             }
+            return false;
+        }
+    }
+    for (auto p : ar.borrowed) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }

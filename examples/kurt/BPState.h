@@ -21,16 +21,8 @@ public:
     /* Creates a copy of given BPState */
     BPState(BPState * const);
 
-    /* Calculates the state obtained after performing
-     * a given action when in a given state.
-     */
-    BPState(BPState const * const, BPAction const * const);
-
     /* Destructors */
     ~BPState();
-
-    /* Updates this state given time (in seconds). */
-    void Update(double);
 
     /* Updates this state until given action can be executed in this state.
      * If the action can be executed now, this update does nothing.
@@ -39,6 +31,9 @@ public:
 
     /* Updates this state and add the action. */
     void AddAction(ACTION);
+
+    /* Updates this state with completing all active actions. */
+    void CompleteAllActions();
 
     /* Checks if given action can be executed from this state,
      * without needing to wait for more resources or
@@ -92,6 +87,7 @@ public:
     int GetFoodCap() const;
     int GetFoodUsed() const;
 
+    /* Returns the time since the game started. */
     int GetTime() const;
 
     /* Prints this BPState to std::cout */
@@ -105,10 +101,22 @@ private:
      */
     void SimpleUpdate(double);
 
+    /* Update this state with the first action to be completed and
+     * removes it from the list of actions, if there is any active actions.
+     * Returns true if some action was finished and false if no actions exist.
+     */
+    bool CompleteFirstAction();
+
+    /* The amount of units per type. */
     std::map<sc2::UNIT_TYPEID, int> unit_amount;
+    /* The amount of units being produced per type.
+     * This map is used to know if an action is soon available.
+     */
     std::map<sc2::UNIT_TYPEID, int> unit_being_produced;
 
+    /* All active/ongoing actions, sorted with "first to finish" first. */
     std::list<ActiveAction> actions;
 
+    /* The time since the game started. */
     double time;
 };
