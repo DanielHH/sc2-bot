@@ -23,6 +23,12 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     root->parent = nullptr;
     root->iter_amount = 1;
+
+    BPPlan basic_plan;
+    basic_plan.AddBasicPlan(root, goal);
+    BPState tmp(root);
+    tmp.SimulatePlan(basic_plan);
+    basic_time = tmp.GetTime() - root->GetTime();
 }
 
 MCTS::~MCTS() {
@@ -37,6 +43,7 @@ void MCTS::Search(int num_iterations) {
 }
 
 void MCTS::SearchOnce() {
+    BPPlan plan;
     /*
      * Select phase.
      */
@@ -51,25 +58,26 @@ void MCTS::SearchOnce() {
             }
             break;
         }
-        int index = leaf->iter_amount - 1;
-        if (index < leaf->available_actions.size()) {
+        if (leaf->iter_amount - 1 < leaf->available_actions.size()) {
             break;
         }
-        BPState * best_state = nullptr;
+        int best_index = -1;
         double best_score = -1;
-        for (BPState * child : leaf->children) {
+        for (int i = 0; i < leaf->children.size(); ++i) {
+            BPState * child = leaf->children[i];
             double score = child->reward + EXPLORATION_SCALE *
                 std::sqrt(std::log(leaf->iter_amount) / child->iter_amount);
             if (score > best_score) {
                 best_score = score;
-                best_state = child;
+                best_index = i;
             }
         }
         if (best_score == -1) {
             std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
             return;
         }
-        leaf = best_state;
+        leaf = leaf->children[best_index];
+        plan.push_back(leaf->available_actions[best_index]);
     }
     /*
      * Expansion phase.
@@ -78,6 +86,7 @@ void MCTS::SearchOnce() {
     {
         int index = leaf->iter_amount - 1;
         ACTION action = leaf->available_actions[index];
+        plan.push_back(action);
         new_state = new BPState(leaf);
         new_state->AddAction(action);
         new_state->iter_amount = 0;
@@ -87,8 +96,15 @@ void MCTS::SearchOnce() {
     /*
      * Simulation phase.
      */
-    double reward = 0.5;
-    //TODO Need basic plan to work with new action....
+    plan.AddBasicPlan(new_state, goal);
+    BPState tmp(root);
+    tmp.SimulatePlan(plan);
+    double time = tmp.GetTime() - root->GetTime();
+    double reward = 0;
+    if (time <= basic_time) {
+        reward = REWARD_START + (1 - REWARD_START) *
+            (basic_time - time) / basic_time;
+    }
     /*
      * Backpropagation phase.
      */
@@ -101,7 +117,35 @@ void MCTS::SearchOnce() {
 }
 
 BPPlan MCTS::BestPlan() {
-    return BPPlan(); // TODO
+    BPPlan plan;
+    BPState * curr = root;
+    double curr_score = -1;
+    while (true) {
+        if (curr->iter_amount - 1 < curr->available_actions.size()) {
+            break;
+        }
+        int best_index = -1;
+        double best_score = -1;
+        for (int i = 0; i < curr->children.size(); ++i) {
+            BPState * child = curr->children[i];
+            double score = child->reward;
+            if (score > best_score) {
+                best_score = score;
+                best_index = i;
+            }
+        }
+        if (best_score == -1) {
+            std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
+            break;
+        }
+        if (curr_score > best_score) {
+            break;
+        }
+        curr = curr->children[best_index];
+        plan.push_back(curr->available_actions[best_index]);
+    }
+    plan.AddBasicPlan(curr, goal);
+    return plan;
 }
 
 #undef DEBUG

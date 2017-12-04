@@ -29,6 +29,16 @@ private:
     /* The goal node/state. */
     BPState * goal;
 
+    double basic_time;
+    int basic_minerals;
+    int basic_vespene;
+
     /* The scale of exploration versus exploitation in the selection phase. */
     const double EXPLORATION_SCALE = 0.2;
+
+    /* The minimum reward for a state that gives a plan
+     * that is faster or equaly fast as the basic plan.
+     * Should be in range [0, 1].
+     */
+    const double REWARD_START = 0.2;
 };
