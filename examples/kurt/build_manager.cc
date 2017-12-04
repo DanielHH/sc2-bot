@@ -6,7 +6,6 @@
 #include "action_repr.h"
 #include "action_enum.h"
 #include "BPState.h"
-#include "BPAction.h"
 #include "BPPlan.h"
 #include "MCTS.h"
 
