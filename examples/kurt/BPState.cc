@@ -487,7 +487,8 @@ void BPState::Print() {
             name = UnitTypeToName(type);
             break;
         }
-        std::cout << name << ": " << state->GetUnitAmount(type) << " ("
+        std::cout << name << ": " << state->GetUnitAmount(type) << "/"
+            << state->GetUnitAvailableAmount(type) << " ("
             << state->GetUnitProdAmount(type) << ")" << std::endl;
     };
     for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
@@ -497,6 +498,12 @@ void BPState::Print() {
     for (auto it = UnitsProdBegin(); it != UnitsProdEnd(); ++it) {
         UNIT_TYPEID type = it->first;
         if (unit_amount.count(type) == 0) {
+            PrintUnit(this, type);
+        }
+    }
+    for (auto it = UnitsAvailableBegin(); it != UnitsAvailableEnd(); ++it) {
+        UNIT_TYPEID type = it->first;
+        if (unit_amount.count(type) == 0 && unit_being_produced.count(type) == 0) {
             PrintUnit(this, type);
         }
     }
