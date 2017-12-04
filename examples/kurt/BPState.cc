@@ -46,9 +46,38 @@ BPState::BPState(Kurt * const kurt) {
     std::vector<const Unit*> commandcenters;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
-        SetUnitAmount(type, GetUnitAmount(type) + 1);
-        if (type == UNIT_TYPEID::TERRAN_COMMANDCENTER) {
+        IncreaseUnitAmount(type, 1);
+        switch (type) {
+        case UNIT_TYPEID::TERRAN_COMMANDCENTER:
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
+        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
+            break;
+        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
+            IncreaseUnitAmount(type, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_BARRACKS:
+        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
+            IncreaseUnitAmount(type, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_FACTORY:
+        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
+            IncreaseUnitAmount(type, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_STARPORT:
+        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            break;
         }
     }
     for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
@@ -56,7 +85,7 @@ BPState::BPState(Kurt * const kurt) {
         for (auto center : commandcenters) {
             if (DistanceSquared3D(center->pos, neutral->pos) <
                     BASE_RESOURCE_TEST_RANGE2) {
-                SetUnitAmount(type, GetUnitAmount(type) + 1);
+                IncreaseUnitAmount(type, 1);
                 break;
             }
         }
@@ -127,18 +156,18 @@ void BPState::AddAction(ACTION action) {
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        SetUnitAmount(type, GetUnitAmount(type) - amount);
+        IncreaseUnitAmount(type, -amount);
     }
     for (auto pair : ar.borrowed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        SetUnitAmount(type, GetUnitAmount(type) - amount);
-        SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
+        IncreaseUnitAmount(type, -amount);
+        IncreaseUnitProdAmount(type, amount);
     }
     for (auto pair : ar.produced) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
+        IncreaseUnitProdAmount(type, amount);
     }
     ActiveAction aa(action);
     for (auto it = actions.begin(); it != actions.end(); ++it) {
@@ -167,14 +196,14 @@ bool BPState::CompleteFirstAction() {
     for (auto pair : ar.borrowed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        SetUnitAmount(type, GetUnitAmount(type) + amount);
-        SetUnitProdAmount(type, GetUnitProdAmount(type) - amount);
+        IncreaseUnitAmount(type, amount);
+        IncreaseUnitProdAmount(type, -amount);
     }
     for (auto pair : ar.produced) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        SetUnitAmount(type, GetUnitAmount(type) + amount);
-        SetUnitProdAmount(type, GetUnitProdAmount(type) - amount);
+        IncreaseUnitAmount(type, amount);
+        IncreaseUnitProdAmount(type, -amount);
     }
     return true;
 }
@@ -252,12 +281,20 @@ void BPState::SetUnitAmount(UNIT_TYPEID type, int amount) {
     unit_amount[type] = amount;
 }
 
+void BPState::IncreaseUnitAmount(UNIT_TYPEID type, int amount) {
+    SetUnitAmount(type, GetUnitAmount(type) + amount);
+}
+
 int BPState::GetUnitProdAmount(UNIT_TYPEID type) const {
     if (unit_being_produced.count(type) == 0) {
         return 0;
     } else {
         return unit_being_produced.at(type);
     }
+}
+
+void BPState::IncreaseUnitProdAmount(UNIT_TYPEID type, int amount) {
+    SetUnitProdAmount(type, GetUnitProdAmount(type) + amount);
 }
 
 void BPState::SetUnitProdAmount(UNIT_TYPEID type, int amount) {
