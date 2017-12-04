@@ -84,27 +84,39 @@ void BPState::UpdateUntilAvailable(ACTION action) {
     UNIT_TYPEID minerals = UNIT_FAKEID::MINERALS;
     UNIT_TYPEID vespene = UNIT_FAKEID::VESPENE;
     while (! CanExecuteNow(action)) {
-        double minerals_time = GetMineralRate() *
-            std::max(0, ar.consumed[minerals] - GetUnitAmount(minerals));
-        double vespene_time = GetVespeneRate() *
-            std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
+        double minerals_time = 0;
+        if (ar.consumed.count(minerals) != 0) {
+            minerals_time = 1 / GetMineralRate() *
+                std::max(0, ar.consumed[minerals] - GetUnitAmount(minerals));
+        }
+        double vespene_time = 0;
+        if (ar.consumed.count(minerals) != 0) {
+            vespene_time = 1 / GetVespeneRate() *
+                std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
+        }
         double delta_time = std::max(minerals_time, vespene_time);
-        if (! actions.empty() && actions.front().time_left <= delta_time) {
+        if (! actions.empty() && (actions.front().time_left <= delta_time
+                    || delta_time == 0)) {
             CompleteFirstAction();
         } else {
+            if (delta_time == 0) {
+                std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
+                    "Action never available, action: " << action << std::endl;
+            }
             SimpleUpdate(delta_time);
         }
     }
 }
 
 void BPState::SimpleUpdate(double delta_time) {
+    for (auto it = actions.begin(); it != actions.end(); ++it) {
+        it->time_left -= delta_time;
+    }
     int minerals = GetMinerals() +
-        delta_time * MINERALS_PER_SEC_PER_SCV *
-        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+        delta_time * GetMineralRate();
     SetUnitAmount(UNIT_FAKEID::MINERALS, minerals);
     int vespene = GetVespene() +
-        delta_time * VESPENE_PER_SEC_PER_SCV *
-        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE);
+        delta_time * GetVespeneRate();
     SetUnitAmount(UNIT_FAKEID::VESPENE, vespene);
     time += delta_time;
 }
@@ -228,25 +240,7 @@ std::vector<ACTION> BPState::AvailableActions() const {
     return aa;
 }
 
-std::vector<BPAction *> BPState::AvailableActionsOld() const {
-    std::vector<BPAction *> tmp;
-    std::ifstream abilities_file;
-    TEST(( abilities_file.open("sc2-gamedata/v3.19.1.58600/units.json");
-
-
-    std::map<UNIT_TYPEID, std::vector<ABILITY_ID>> ability_map;
-
-    for (std::string line; abilities_file >> line;) {
-
-    } ))
-    
-
-    
-    return tmp;
-}
-
 int BPState::GetUnitAmount(UNIT_TYPEID type) const {
-    // Need to test if element exist to prevent allocating more values
     if (unit_amount.count(type) == 0) {
         return 0;
     } else {
@@ -259,7 +253,6 @@ void BPState::SetUnitAmount(UNIT_TYPEID type, int amount) {
 }
 
 int BPState::GetUnitProdAmount(UNIT_TYPEID type) const {
-    // Need to test if element exist to prevent allocating more values
     if (unit_being_produced.count(type) == 0) {
         return 0;
     } else {
@@ -342,6 +335,12 @@ void BPState::Print() {
             name = UnitTypeToName(type);
         }
         std::cout << name << ": " << amount << std::endl;
+    }
+    if (! actions.empty()) {
+        std::cout << "Active actions:" << std::endl;
+        for (ActiveAction aa : actions) {
+            std::cout << aa.action << ", time left: " << aa.time_left << std::endl;
+        }
     }
     std::cout << "BPState <<<" << std::endl;
 }

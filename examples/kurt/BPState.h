@@ -139,11 +139,11 @@ private:
     bool CompleteFirstAction();
 
     /* The amount of units per type. */
-    std::map<sc2::UNIT_TYPEID, int> unit_amount;
+    std::unordered_map<sc2::UNIT_TYPEID, int> unit_amount;
     /* The amount of units being produced per type.
      * This map is used to know if an action is soon available.
      */
-    std::map<sc2::UNIT_TYPEID, int> unit_being_produced;
+    std::unordered_map<sc2::UNIT_TYPEID, int> unit_being_produced;
 
     /* All active/ongoing actions, sorted with "first to finish" first. */
     std::list<ActiveAction> actions;
