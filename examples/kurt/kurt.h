@@ -70,9 +70,11 @@ public:
     bool TryBuildRefinary();
     bool IsArmyUnit(const sc2::Unit* unit);
     bool IsStructure(const sc2::Unit* unit);
+    bool IsArmyUnitType(const sc2::UNIT_TYPEID &);
+    bool IsStructureType(const sc2::UNIT_TYPEID &);
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
-
+    
     /* Returns data about an ability */
     static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
 

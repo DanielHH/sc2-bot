@@ -10,6 +10,7 @@ class BPState;
 class Kurt;
 
 class BuildManager {
+    friend class Kurt;
 public:
     BuildManager(Kurt *const);
     static std::vector<sc2::UnitTypeData*> GetRequirements(sc2::UnitTypeData* unit);
@@ -18,6 +19,8 @@ public:
     void OnGameStart(const sc2::ObservationInterface* observation);
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
+
+    bool replan = true;
 
 private:
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > tech_tree_2;
