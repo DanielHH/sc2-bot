@@ -123,8 +123,10 @@ void BPPlan::AddBasicPlan(BPState * const start,
     }
 }
 
-float BPPlan::TimeRequired() const {
-    return INFINITY; // TODO
+float BPPlan::TimeRequired(BPState * const from) {
+    BPState tmp(from);
+    tmp.SimulatePlan(this);
+    return tmp.GetTime() - from->GetTime();
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {

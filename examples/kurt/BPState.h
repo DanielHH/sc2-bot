@@ -33,6 +33,7 @@ public:
      * and run CompleteAllActions.
      */
     void SimulatePlan(BPPlan &);
+    void SimulatePlan(BPPlan * const);
 
     /* Updates this state and add the action. */
     void AddAction(ACTION);

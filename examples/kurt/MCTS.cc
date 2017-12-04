@@ -27,9 +27,7 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
-    BPState tmp(root);
-    tmp.SimulatePlan(basic_plan);
-    basic_time = tmp.GetTime() - root->GetTime();
+    basic_time = basic_plan.TimeRequired(root);
 }
 
 MCTS::~MCTS() {
@@ -101,9 +99,7 @@ void MCTS::SearchOnce() {
      */
     PRINT("Simulation phase.")
     plan.AddBasicPlan(new_state, goal);
-    BPState tmp(root);
-    tmp.SimulatePlan(plan);
-    double time = tmp.GetTime() - root->GetTime();
+    double time = plan.TimeRequired(root);
     double reward = 0;
     if (time <= basic_time) {
         reward = REWARD_START + (1 - REWARD_START) *

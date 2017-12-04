@@ -13,8 +13,8 @@ public:
     /* Apends a basic plan for going from a given state to some goal state */
     void AddBasicPlan(BPState * const, BPState * const);
 
-    /* Returns the time required to execute this plan */
-    float TimeRequired() const;
+    /* Returns the time required to execute this plan from given state. */
+    float TimeRequired(BPState * const);
 
     /* Executes as much of this plan as possible during one game tick */
     void ExecuteStep(Kurt * const);
