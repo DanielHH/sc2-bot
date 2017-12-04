@@ -76,6 +76,7 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
+    build_manager->replan = true; // TODO: We might not care
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {

@@ -19,6 +19,8 @@ public:
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
 
+    bool replan = true;
+
 private:
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > tech_tree_2;
     static std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> unit_types;
