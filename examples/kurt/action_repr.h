@@ -22,6 +22,8 @@ public:
     static std::map<sc2::ABILITY_ID, ACTION> convert_api_our;
     static void InitConvertMap();
 
+    static ACTION CreatesUnit(sc2::UNIT_TYPEID unit);
+
 private:
     ActionRepr(std::map<sc2::UNIT_TYPEID, int> const &,
         std::map<sc2::UNIT_TYPEID, int> const &,
