@@ -487,8 +487,8 @@ void BPState::Print() {
             name = UnitTypeToName(type);
             break;
         }
-        std::cout << name << ": " << state->GetUnitAmount(type) << "/"
-            << state->GetUnitAvailableAmount(type) << " ("
+        std::cout << name << ": " << state->GetUnitAvailableAmount(type) << "/"
+            << state->GetUnitAmount(type) << " ("
             << state->GetUnitProdAmount(type) << ")" << std::endl;
     };
     for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
