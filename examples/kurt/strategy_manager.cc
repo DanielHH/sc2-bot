@@ -1,5 +1,6 @@
 #include "strategy_manager.h"
 #include "plans.h"
+#include "countertable.h"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -194,6 +195,17 @@ void StrategyManager::SetBuildGoal() {
     kurt->SendBuildOrder(new_goal_state);
 };
 
+void StrategyManager::CounterEnemyUnits() {
+    Units tmp = our_units;
+    tuple<UNIT_TYPEID> counter_units;
+    for (auto unit : enemy_units) {
+        counter_units = zerg_countertable.at(unit->unit_type);
+        for (int i = 0; sizeof(counter_units), ++i) {
+            counter_units.get
+        }
+       
+    }
+}
 
 //NOT CURRENTLY USED!
 /*

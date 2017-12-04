@@ -57,6 +57,8 @@ private:
     //
     void SetGamePlan();
 
+    void CounterEnemyUnits();
+
     //UNUSED FUNCTIONS
     // Returns true if Enemy structure is observed.
     bool FindEnemyStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
