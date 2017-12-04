@@ -68,10 +68,13 @@ void WorldCell::AddTrooper(const sc2::Unit* trooper) {
 }
 
 sc2::Units WorldCell::GetTroops(){return troops;}
+sc2::Units WorldCell::GetBuildings(){return buildings;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}
 float WorldCell::GetEnemyDps() {return enemy_dps;}
 float WorldCell::GetSeenOnGameStep() {return seen_on_game_step;}
+int WorldCell::GetCellRealX(){return real_world_x;}
+int WorldCell::GetCellRealY(){return real_world_y;}
 const sc2::Unit* WorldCell::GetScout() {
     return scout;
 }

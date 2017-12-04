@@ -25,8 +25,11 @@ public:
     float GetEnemyDps();
     float GetSeenOnGameStep();
     float GetScoutPriority();
+    int GetCellRealX();
+    int GetCellRealY();
     sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);
     sc2::Units GetTroops();
+    sc2::Units GetBuildings();
     float GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt);
     const sc2::Unit* GetScout();
     

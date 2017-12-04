@@ -2,7 +2,7 @@
 
 using namespace sc2;
 
-WorldRepresentation::WorldRepresentation(Kurt* parent_kurt){
+WorldRepresentation::WorldRepresentation(Kurt* parent_kurt) {
     kurt = parent_kurt;
     ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
     int rest_height = actual_world.height % chunk_size;
@@ -44,7 +44,12 @@ void WorldRepresentation::UpdateWorldRep() {
             }
         }
     }
-    
+    sc2::Units visible_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Ally);
+    for (const Unit* ally : visible_allied_units){
+        int ally_cell_x_pos = ally->pos.x / chunk_size;
+        int ally_cell_y_pos = ally -> pos.y / chunk_size;
+        world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos)->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
+    }
     PopulateNeutralUnits();
 }
 

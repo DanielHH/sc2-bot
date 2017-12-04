@@ -14,7 +14,7 @@ private:
 public:
     WorldRepresentation(Kurt* kurt);
     std::vector<std::vector<WorldCell*>> world_representation;
-    int chunk_size = 16;
+    const static int chunk_size = 4;
     void PrintWorld();
     void UpdateWorldRep();
 };
