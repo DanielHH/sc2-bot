@@ -42,6 +42,10 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
         PRINT(enemy_units.ToString())
         PRINT("------Enemy structures-------")
         PRINT(enemy_structures.ToString())
+        PRINT("------Our units--------------")
+        PRINT(our_units.ToString())
+        PRINT("------Our structures---------")
+        PRINT(our_structures.ToString())
         PRINT("-----------------------------")
     }
 }
