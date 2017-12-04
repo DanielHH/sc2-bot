@@ -24,6 +24,8 @@ ArmyManager::ArmyManager(Kurt* parent_kurt) {
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
+    
+    cellPriorityQueue->Update();
     if (kurt->scouts.empty()) {
         ArmyManager::TryGetScout();
     } else {
@@ -44,7 +46,7 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
 }
 
 void ArmyManager::PlanSmartScoutPath(){
-    
+    // THREAT MAP
     
 }
 
@@ -59,10 +61,10 @@ void ArmyManager::ScoutSmartPath(){
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        if(euk_distance_to_unit < 5) {
+        /*if(euk_distance_to_unit < 5) {
             cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
             cellPriorityQueue->Update();
-        }
+        }*/
         return;
     }
 }

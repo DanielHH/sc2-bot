@@ -16,4 +16,3 @@ GamePlan* CruiserPlan(Kurt* kurt);
 /* Automatically decides what units to build, and then decides
 whether to attack, defend or harass with the new units */
 GamePlan* DynamicGamePlan(Kurt* kurt);
-

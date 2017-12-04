@@ -81,7 +81,7 @@ public:
 
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
-
+    
 
 private:
     CombatMode current_combat_mode;

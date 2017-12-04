@@ -18,7 +18,6 @@
 #define TEST(s)
 #endif // DEBUG
 
-
 using namespace sc2;
 
 ArmyManager* army_manager;
@@ -38,6 +37,7 @@ void Kurt::OnGameStart() {
 
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
+    world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
@@ -76,7 +76,6 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
 }
-
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
     return std::find(list.begin(), list.end(), unit) != list.end();
@@ -131,7 +130,7 @@ bool Kurt::IsArmyUnit(const Unit* unit) {
 
 bool Kurt::IsStructure(const Unit* unit) {
     bool is_structure = false;
-    auto& attributes = GetUnitType(unit->unit_type)->attributes; //observation->GetUnitTypeData().at(unit->unit_type).attributes;
+    auto& attributes = GetUnitType(unit->unit_type)->attributes;
 
     for (const auto& attribute : attributes) {
         if (attribute == Attribute::Structure) {
