@@ -61,10 +61,10 @@ public:
     void CalculateBuildOrder();
 
     /* Returns true if unit is an terran army unit */
-    bool IsArmyUnit(const sc2::Unit* unit);
+    static bool IsArmyUnit(const sc2::Unit* unit);
 
     /* Returns true if unit is a structure */
-    bool IsStructure(const sc2::Unit* unit);
+    static bool IsStructure(const sc2::Unit* unit);
 
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,

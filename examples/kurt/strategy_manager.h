@@ -27,6 +27,9 @@ public:
     // New unit is saved in vector Units. (Call this function whenever a new unit is created)
     void SaveOurUnits(const sc2::Unit* unit);
 
+    /* Removes a dead unit from the correct list of saved units */
+    void RemoveDeadUnit(const sc2::Unit* unit);
+
     /* Executes the next step in the current plan */
     void ExecuteSubplan();
 

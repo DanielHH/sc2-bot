@@ -70,6 +70,9 @@ void Kurt::OnUnitIdle(const Unit* unit) {
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
+
+    strategy_manager->RemoveDeadUnit(destroyed_unit);
+
     workers.remove(destroyed_unit);
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);

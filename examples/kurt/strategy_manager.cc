@@ -1,6 +1,8 @@
 #include "strategy_manager.h"
 #include "plans.h"
 #include "countertable.h"
+#include <algorithm>
+#include "observed_units.h"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -15,10 +17,10 @@
 using namespace sc2;
 using namespace std;
 
-Units our_units;
-Units our_structures;
-Units enemy_units;
-Units enemy_structures;
+ObservedUnits our_units;
+ObservedUnits our_structures;
+ObservedUnits enemy_units;
+ObservedUnits enemy_structures;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -37,22 +39,51 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     SaveSpottedEnemyUnits(observation);
 
     if (current_game_loop % 500 == 0) {
-        PRINT("------Enemy units-------")
-        for (int i = 0; i < enemy_units.size(); ++i) {
-            PRINT(kurt->GetUnitType(enemy_units[i]->unit_type)->name)
-        }
+        PRINT("------Enemy units-----------")
+        PRINT(enemy_units.ToString())
         PRINT("------Enemy structures-------")
-        for (int i = 0; i < enemy_structures.size(); ++i) {
-            PRINT(kurt->GetUnitType(enemy_structures[i]->unit_type)->name)
-        }
-        PRINT("------------------------")
+        PRINT(enemy_structures.ToString())
+        PRINT("------Our units--------------")
+        PRINT(our_units.ToString())
+        PRINT("------Our structures---------")
+        PRINT(our_structures.ToString())
+        PRINT("-----------------------------")
     }
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
-    our_units.push_back(unit);
+    if (kurt->IsStructure(unit)) {
+        our_structures.AddUnit(unit);
+    }
+    else {
+        our_units.AddUnit(unit);
+    }
+
     //update combatpower. TODO: Make more efficient.
     CalculateCombatPower(&our_cp);
+}
+
+void StrategyManager::RemoveDeadUnit(const Unit* unit) {
+    if (unit->alliance == Unit::Alliance::Enemy) {
+        if (kurt->IsStructure(unit)) {
+            PRINT("ENEMY BUILDING DESTROYED")
+            enemy_structures.RemoveUnit(unit);
+        }
+        else {
+            PRINT("ENEMY UNIT KILLED")
+            enemy_units.RemoveUnit(unit);
+        }
+    }
+    else if (unit->alliance == Unit::Alliance::Self) {
+        if (kurt->IsStructure(unit)) {
+            PRINT("OUR BUILDING DESTROYED")
+            our_structures.RemoveUnit(unit);
+        }
+        else {
+            PRINT("OUR UNIT KILLED")
+            our_units.RemoveUnit(unit);
+        }
+    }
 }
 
 void StrategyManager::ExecuteSubplan() {
@@ -75,15 +106,18 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     }
 
     // Save any newly observed structures
-    SaveSpottedEnemyUnitsHelper(&observed_structures, &enemy_structures);
+    enemy_structures.AddUnits(&observed_structures);
+    //SaveSpottedEnemyUnitsHelper(&observed_structures, &enemy_structures);
 
     //Save any newly observed units
-    SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
+    enemy_units.AddUnits(&observed_units);
+    //SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
 
     //Update combatpower. TODO: Make more efficient.
     CalculateCombatPower(&enemy_cp);
 };
 
+//TODO: Not needed anny more?
 void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved_units) {
     // For every observed enemy, check if a unit of the same type is already saved in saved_units.
     // If there is, count the new unit as already seen and don't add it to the saved_units vector.
@@ -107,11 +141,12 @@ void StrategyManager::CalculateCombatPower(CombatPower *cp) {
     cp->a2g = 0;
     cp->a2a = 0;
 
+    //TODO: Implement function in ObservedUnits to calculate cp?
     if (cp->alliance == "our_cp") {
-        CalculateCPHelp(cp, our_units);
+        //CalculateCPHelp(cp, our_units);
     }
     else if (cp->alliance == "enemy_cp") {
-        CalculateCPHelp(cp, enemy_units);
+        //CalculateCPHelp(cp, enemy_units);
     }
 };
 
@@ -194,9 +229,9 @@ void StrategyManager::SetBuildGoal() {
 
     kurt->SendBuildOrder(new_goal_state);
 };
-
+/*
 void StrategyManager::CounterEnemyUnits() {
-    Units tmp = our_units;
+    ObservedUnits tmp = our_units;
     tuple<UNIT_TYPEID> counter_units;
     for (auto unit : enemy_units) {
         counter_units = zerg_countertable.at(unit->unit_type);
@@ -205,7 +240,41 @@ void StrategyManager::CounterEnemyUnits() {
         }
        
     }
-}
+}*/
+
+/* PSEUDO-CODE
+void StrategyManager::CounterEnemyUnits() {
+    BPState* new_goal_state = new BPState();
+    Unit unit_to_create;
+    int number_of_units;
+
+    ObservedUnits tmp = our_units;
+
+    float Enemy_max_health;
+    float Enemy_dps;
+    float our_health;
+    float our_dps;
+    
+    For unit in enemy_units:
+        int number_of_units = enemy_units.at(unit);
+        enemy_dps = Calculate total dps of unit(s);
+        enemy_max_health = unit.health * number_of_units;
+
+        counter_units = countertable.at(unit->unit_type);
+        our_dps = Calculate total dps of (our) counter_units;
+        remove units, used to calculate our_dps, from tmp;
+
+        decide which units are most suitable to be created;
+
+        while(our_health/enemy_dps < (1.1 * enemy_max_health/our_dps)) {
+            number_of_units += 1;
+            our_health += counter_unit.health;
+            our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
+        }
+        new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);
+
+}*/
+
 
 //NOT CURRENTLY USED!
 /*
