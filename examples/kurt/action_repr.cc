@@ -1,6 +1,9 @@
 #include "action_repr.h"
 
 #include "sc2api/sc2_api.h"
+
+#include "kurt.h"
+
 #include <map>
 #include <vector>
 #include "constants.h"
@@ -134,6 +137,15 @@ void ActionRepr::InitConvertMap() {
 
     for (auto it = convert_api_our.begin(); it != convert_api_our.end(); ++it){
         convert_our_api[it->second] = it->first;
+    }
+}
+
+ACTION ActionRepr::CreatesUnit(UNIT_TYPEID unit) {
+    ABILITY_ID ability = Kurt::GetUnitType(unit)->ability_id;
+    if (convert_api_our.count(ability) == 0) {
+        return ACTION::INVALID;
+    } else {
+        return convert_api_our.at(ability);
     }
 }
 
