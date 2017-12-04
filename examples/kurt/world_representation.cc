@@ -44,12 +44,14 @@ void WorldRepresentation::UpdateWorldRep() {
             }
         }
     }
-    sc2::Units visible_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Ally);
+    sc2::Units visible_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Self);
     for (const Unit* ally : visible_allied_units){
-        int ally_cell_x_pos = ally->pos.x / chunk_size;
-        int ally_cell_y_pos = ally -> pos.y / chunk_size;
+        int ally_cell_x_pos = (int)ally->pos.x / chunk_size;
+        int ally_cell_y_pos = (int)ally->pos.y / chunk_size;
         world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos)->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
     }
+    
+    
     PopulateNeutralUnits();
 }
 
@@ -89,14 +91,14 @@ void WorldRepresentation::PopulateNeutralUnits() {
                 break;
             default:
                 // what todo with these?
-                std::cout << "Unknown type: " << neutral_unit->unit_type << std::endl;
+                //std::cout << "Unknown type: " << neutral_unit->unit_type << std::endl;
                 break;
         }
     }
 }
 
 void WorldRepresentation::PrintWorld() {
-    std::cout << "world_rep Width " << (world_representation.back()).size() << std::endl;
+    /*std::cout << "world_rep Width " << (world_representation.back()).size() << std::endl;
     std::cout << "world_rep height " << world_representation.size() << std::endl;
     for (int y = 0; y < world_representation.size(); y++) {
         for (int x = 0; x < world_representation.at(y).size(); x++) {
@@ -104,5 +106,5 @@ void WorldRepresentation::PrintWorld() {
             std::cout << "Minerals: " << world_representation.at(y).at(x)->GetMineralAmount() << std::endl;
             std::cout << "Gas: " << world_representation.at(y).at(x)->GetGasAmount() << std::endl;
         }
-    }
+    }*/
 }
