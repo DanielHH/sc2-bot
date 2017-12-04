@@ -171,6 +171,13 @@ void BPState::SimulatePlan(BPPlan & plan) {
     CompleteAllActions();
 }
 
+void BPState::SimulatePlan(BPPlan * plan) {
+    for (auto it = plan->begin(); it != plan->end(); ++it) {
+        AddAction(*it);
+    }
+    CompleteAllActions();
+}
+
 void BPState::AddAction(ACTION action) {
     UpdateUntilAvailable(action);
     ActionRepr ar = ActionRepr::values.at(action);
