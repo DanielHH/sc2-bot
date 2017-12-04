@@ -18,6 +18,10 @@ public:
 
     static std::map<ACTION, ActionRepr> values;
 
+    static std::map<ACTION, sc2::ABILITY_ID> convert_our_api;
+    static std::map<sc2::ABILITY_ID, ACTION> convert_api_our;
+    static void InitConvertMap();
+
 private:
     ActionRepr(std::map<sc2::UNIT_TYPEID, int> const &,
         std::map<sc2::UNIT_TYPEID, int> const &,

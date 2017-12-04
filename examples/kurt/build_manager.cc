@@ -1,8 +1,10 @@
 #include "build_manager.h"
 
 #include <vector>
-#include "kurt.h"
 
+#include "kurt.h"
+#include "action_repr.h"
+#include "action_enum.h"
 #include "BPState.h"
 #include "BPAction.h"
 #include "BPPlan.h"
@@ -82,6 +84,7 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     // Set up build tree
     std::cout << (int)(Kurt::GetAbility(ABILITY_ID::BUILD_TECHLAB_STARPORT)->target) << std::endl;
     SetUpTechTree(observation);
+    ActionRepr::InitConvertMap();
     setup_finished = true;
 
     // Set some test goal

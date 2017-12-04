@@ -1,4 +1,6 @@
 #include "action_repr.h"
+
+#include "sc2api/sc2_api.h"
 #include <map>
 #include <vector>
 #include "constants.h"
@@ -14,6 +16,7 @@
 #endif // DEBUG
 
 using sc2::UNIT_TYPEID;
+using sc2::ABILITY_ID;
 
 ActionRepr::ActionRepr(
     std::map<sc2::UNIT_TYPEID, int> const & required_,
@@ -84,6 +87,11 @@ std::map<ACTION, ActionRepr> ActionRepr::values = {
     // Other
 };
 
+std::map<ACTION, ABILITY_ID> ActionRepr::convert_our_api = {};
+std::map<ABILITY_ID, ACTION> ActionRepr::convert_api_our = {};
+
+void ActionRepr::InitConvertMap() {
+}
 
 #undef DEBUG
 #undef PRINT
