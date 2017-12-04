@@ -63,11 +63,17 @@ public:
     /* Set this BPState to contain given amount of given unit */
     void SetUnitAmount(sc2::UNIT_TYPEID, int);
 
+    /* Increases the number of a certain unit this BPState contains */
+    void IncreaseUnitAmount(sc2::UNIT_TYPEID, int);
+
     /* Returns the amount of given units begining produced in this BPState */
     int GetUnitProdAmount(sc2::UNIT_TYPEID) const;
 
     /* Set this BPState to think that is produces given amount of given unit */
     void SetUnitProdAmount(sc2::UNIT_TYPEID, int);
+
+    /* Increases the number of a certain unit being produced in this BPState */
+    void IncreaseUnitProdAmount(sc2::UNIT_TYPEID, int);
 
     /* Returns an iterator to the begining of all Units in this state */
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsBegin();
