@@ -99,7 +99,7 @@ void MCTS::SearchOnce() {
      */
     PRINT("Simulation phase.")
     plan.AddBasicPlan(new_state, goal);
-    double time = plan.TimeRequired(new_state);
+    double time = plan.TimeRequired(root);
     double reward = 0;
     if (time <= basic_time) {
         reward = REWARD_START + (1 - REWARD_START) *
