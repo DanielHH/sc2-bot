@@ -383,13 +383,12 @@ void BPState::Print() {
 }
 
 bool BPState::operator<(BPState const &other) const {
-    if (GetTime() < other.GetTime()) return true;
     for (auto pair : unit_amount) {
         if (other.unit_amount.find(pair.first) != other.unit_amount.cend()) {
             if (pair.second < other.unit_amount.at(pair.first)) return true;
         }
     }
-    return false;
+    return GetTime() > other.GetTime();
 }
 
 #undef DEBUG

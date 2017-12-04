@@ -25,8 +25,11 @@ public:
     float GetEnemyDps();
     float GetSeenOnGameStep();
     float GetScoutPriority();
+    int GetCellRealX();
+    int GetCellRealY();
     sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);
     sc2::Units GetTroops();
+    sc2::Units GetBuildings();
     float GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt);
     const sc2::Unit* GetScout();
     
@@ -38,4 +41,6 @@ public:
     const sc2::Unit* SetScout(const sc2::Unit* unit);
     bool operator < (WorldCell* rhs);
     bool SmartComp(WorldCell* a, WorldCell* b);
+    void AddBuilding(const sc2::Unit* building);
+    void AddTrooper(const sc2::Unit* trooper);
 };

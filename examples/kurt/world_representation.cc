@@ -2,9 +2,9 @@
 
 using namespace sc2;
 
-WorldRepresentation::WorldRepresentation(Kurt* kurt){
+WorldRepresentation::WorldRepresentation(Kurt* parent_kurt) {
+    kurt = parent_kurt;
     ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
-    
     int rest_height = actual_world.height % chunk_size;
     int rest_width = actual_world.width % chunk_size;
     
@@ -27,10 +27,43 @@ WorldRepresentation::WorldRepresentation(Kurt* kurt){
             }
         }
     }
-    WorldRepresentation::PopulateNeutralUnits(kurt);
 }
 
-void WorldRepresentation::PopulateNeutralUnits(Kurt* kurt) {
+void WorldRepresentation::UpdateWorldRep() {
+    sc2::Units visible_enemy_units = kurt->Observation()->GetUnits(Unit::Alliance::Enemy);
+    for (const Unit* enemy : visible_enemy_units) {
+        if(enemy->display_type == Unit::Visible) {
+            int unit_world_rep_x_pos = (enemy->pos.x) / (kurt->world_rep->chunk_size);
+            int unit_world_rep_y_pos = (enemy->pos.y) / (kurt->world_rep->chunk_size);
+            WorldCell* cell = kurt->world_rep->world_representation[unit_world_rep_y_pos][unit_world_rep_x_pos];
+            cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
+            if (kurt->IsStructure(enemy)) {
+                cell->AddBuilding(enemy);
+            } else if(kurt->IsArmyUnit(enemy)) {
+                cell->AddTrooper(enemy);
+            }
+        }
+    }
+    sc2::Units visible_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Self);
+    for (const Unit* ally : visible_allied_units){
+        int ally_cell_x_pos = (int)ally->pos.x / chunk_size;
+        int ally_cell_y_pos = (int)ally->pos.y / chunk_size;
+        world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos)->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
+    }
+    
+    
+    PopulateNeutralUnits();
+}
+
+void WorldRepresentation::PopulateNeutralUnits() {
+    // zero all cells mineral and gas ammount
+    for (int y  = 0; y < world_representation.size(); ++y) {
+        for (int x = 0; x < world_representation.at(y).size(); ++x) {
+            world_representation.at(y).at(x)->SetMineralAmount(0);
+            world_representation.at(y).at(x)->SetGasAmount(0);
+        }
+    }
+    
     // put in all neutral units
     for (const Unit* neutral_unit: kurt->Observation()->GetUnits(Unit::Alliance::Neutral)) {
         int x_pos = neutral_unit->pos.x / chunk_size;
@@ -58,14 +91,14 @@ void WorldRepresentation::PopulateNeutralUnits(Kurt* kurt) {
                 break;
             default:
                 // what todo with these?
-                std::cout << "Unknown type: " << neutral_unit->unit_type << std::endl;
+                //std::cout << "Unknown type: " << neutral_unit->unit_type << std::endl;
                 break;
         }
     }
 }
 
 void WorldRepresentation::PrintWorld() {
-    std::cout << "world_rep Width " << (world_representation.back()).size() << std::endl;
+    /*std::cout << "world_rep Width " << (world_representation.back()).size() << std::endl;
     std::cout << "world_rep height " << world_representation.size() << std::endl;
     for (int y = 0; y < world_representation.size(); y++) {
         for (int x = 0; x < world_representation.at(y).size(); x++) {
@@ -73,5 +106,5 @@ void WorldRepresentation::PrintWorld() {
             std::cout << "Minerals: " << world_representation.at(y).at(x)->GetMineralAmount() << std::endl;
             std::cout << "Gas: " << world_representation.at(y).at(x)->GetGasAmount() << std::endl;
         }
-    }
+    }*/
 }
