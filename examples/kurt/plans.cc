@@ -55,7 +55,6 @@ GamePlan* Plans::RushPlan(Kurt* kurt) {
     
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 4);
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 11);
     
     //second_build
     second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);

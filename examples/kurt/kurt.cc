@@ -48,7 +48,6 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
     strategy_manager->SaveOurUnits(unit);
-    build_manager->GroupAndSaveUnits(unit);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
