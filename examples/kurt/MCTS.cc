@@ -6,8 +6,9 @@
 
 #include <math.h>
 #include <vector>
+#include <iostream>
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -26,6 +27,7 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
+    PRINT(basic_plan)
     BPState tmp(root);
     tmp.SimulatePlan(basic_plan);
     basic_time = tmp.GetTime() - root->GetTime();
@@ -47,6 +49,7 @@ void MCTS::SearchOnce() {
     /*
      * Select phase.
      */
+    PRINT("Select phase.")
     BPState * leaf = root;
     while (true) {
         if (leaf->available_actions.empty()) {
@@ -72,16 +75,17 @@ void MCTS::SearchOnce() {
                 best_index = i;
             }
         }
-        if (best_score == -1) {
+        if (best_index == -1) {
             std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
             return;
         }
-        leaf = leaf->children[best_index];
         plan.push_back(leaf->available_actions[best_index]);
+        leaf = leaf->children[best_index];
     }
     /*
      * Expansion phase.
      */
+    PRINT("Expansion phase.")
     BPState * new_state = nullptr;
     {
         int index = leaf->iter_amount - 1;
@@ -96,6 +100,7 @@ void MCTS::SearchOnce() {
     /*
      * Simulation phase.
      */
+    PRINT("Simulation phase.")
     plan.AddBasicPlan(new_state, goal);
     BPState tmp(root);
     tmp.SimulatePlan(plan);
@@ -108,6 +113,7 @@ void MCTS::SearchOnce() {
     /*
      * Backpropagation phase.
      */
+    PRINT("Backpropagation phase.")
     BPState * curr = new_state;
     while (curr != nullptr) {
         curr->reward = std::max(curr->reward, reward);

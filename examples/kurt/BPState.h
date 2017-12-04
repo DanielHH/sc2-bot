@@ -99,7 +99,7 @@ public:
     int GetFoodUsed() const;
 
     /* Returns the time since the game started. */
-    int GetTime() const;
+    double GetTime() const;
 
     /* Prints this BPState to std::cout */
     void Print();

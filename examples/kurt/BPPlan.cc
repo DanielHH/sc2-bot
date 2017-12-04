@@ -29,6 +29,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
         BPState * const goal) {
     // TODO Remove duplicated code?
     BPState built(start);
+    built.CompleteAllActions();
     // add_to_plan is almost a queue of stacks
     std::vector<std::stack<ACTION> > add_to_plan;
     std::queue<UNIT_TYPEID> need_to_build;
@@ -100,18 +101,16 @@ void BPPlan::AddBasicPlan(BPState * const start,
      *
      * TODO Is this bad for MCTS?
      */
-    if (vespene_cost > built.GetVespene() &&
-            built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
-        UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
-        built.SetUnitAmount(refinery, 1);
-        add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
-        add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
-        add_to_plan[add_i].push(ActionRepr::CreatesUnit(refinery));
-        UnitTypeData * t_data = Kurt::GetUnitType(refinery);
-        mineral_cost += t_data->mineral_cost;
-        vespene_cost += t_data->vespene_cost;
-        food_required += (int) t_data->food_required;
-        food_required -= (int) t_data->food_provided;
+    if (vespene_cost > built.GetVespene()) {
+        if (built.GetVespeneRate() == 0) {
+            add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+            add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+        }
+        if (built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+            UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
+            built.SetUnitAmount(refinery, 1);
+            add_to_plan[add_i].push(ActionRepr::CreatesUnit(refinery));
+        }
     }
     /*
      * Add all actions in reverse.

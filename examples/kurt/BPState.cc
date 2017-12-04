@@ -119,16 +119,23 @@ void BPState::UpdateUntilAvailable(ACTION action) {
                 std::max(0, ar.consumed[minerals] - GetUnitAmount(minerals));
         }
         double vespene_time = 0;
-        if (ar.consumed.count(minerals) != 0) {
+        if (ar.consumed.count(vespene) != 0) {
             vespene_time = 1 / GetVespeneRate() *
                 std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
+        if (delta_time == INFINITY) {
+            Print();
+            std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
+                "infinity, action: " << action << std::endl;
+            throw std::runtime_error("BPPlan: INFINITY time");
+        }
         if (! actions.empty() && (actions.front().time_left <= delta_time
                     || delta_time == 0)) {
             CompleteFirstAction();
         } else {
             if (delta_time == 0) {
+                Print();
                 std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
                     "Action never available, action: " << action << std::endl;
             }
@@ -138,6 +145,11 @@ void BPState::UpdateUntilAvailable(ACTION action) {
 }
 
 void BPState::SimpleUpdate(double delta_time) {
+    if (delta_time < 0) {
+        std::cout << "Warning: BPState: SimpleUpdate: delta_time: "
+            << delta_time << std::endl;
+        delta_time = 0;
+    }
     for (auto it = actions.begin(); it != actions.end(); ++it) {
         it->time_left -= delta_time;
     }
@@ -324,7 +336,7 @@ std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsProdEnd() {
     return unit_being_produced.end();
 }
 
-int BPState::GetTime() const {
+double BPState::GetTime() const {
     return time;
 }
 

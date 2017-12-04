@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "kurt.h"
+#include "constants.h"
 #include "action_repr.h"
 #include "action_enum.h"
 #include "BPState.h"
@@ -93,6 +94,16 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 2);
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
     SetGoal(goal);
+
+    std::cout << "----------------------------" << std::endl;
+    BPState curr(agent);
+    curr.SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 11);
+    MCTS mcts(&curr, goal);
+    std::cout << "-------" << std::endl;
+    mcts.Search(5000);
+    std::cout << "-------" << std::endl;
+    std::cout << mcts.BestPlan() << std::endl;
+    std::cout << "----------------------------" << std::endl;
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {
