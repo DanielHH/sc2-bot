@@ -56,8 +56,6 @@ std::string ActionToName(ACTION action) {
         return "BUILD_STARPORT_REACTOR";
     case ACTION::TRAIN_SCV:
         return "TRAIN_SCV";
-    case ACTION::TRAIN_MULE:
-        return "TRAIN_MULE";
     case ACTION::TRAIN_MARINE:
         return "TRAIN_MARINE";
     case ACTION::TRAIN_REAPER:

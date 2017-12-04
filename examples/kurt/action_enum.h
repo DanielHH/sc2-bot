@@ -34,7 +34,6 @@ enum class ACTION {
 
     // Unit training
     TRAIN_SCV,
-    TRAIN_MULE,
     TRAIN_MARINE,
     TRAIN_REAPER,
     TRAIN_MARAUDER,

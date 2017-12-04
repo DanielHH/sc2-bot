@@ -32,10 +32,10 @@ ActionRepr::ActionRepr(
 
 std::map<ACTION, ActionRepr> ActionRepr::values = {
     //Resource gathering
-    { ACTION::SCV_GATHER_MINERALS, ActionRepr({}, {{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}}, {}, {{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1 }}, 0) },
-    { ACTION::SCV_GATHER_VESPENE, ActionRepr({},{{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1 }},{},{{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}}, 0) },
-    { ACTION::MULE_GATHER_MINERALS, ActionRepr({},{{UNIT_FAKEID::TERRAN_MULE_VESPENE, 1}},{},{{UNIT_FAKEID::TERRAN_MULE_MINERALS, 1}}, 0) },
-    { ACTION::MULE_GATHER_VESPENE, ActionRepr({},{{UNIT_FAKEID::TERRAN_MULE_MINERALS, 1}},{},{{UNIT_FAKEID::TERRAN_MULE_VESPENE, 1}}, 0) },
+    { ACTION::SCV_GATHER_MINERALS, ActionRepr({}, {{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}},{},{{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, 1.5) },
+    { ACTION::SCV_GATHER_VESPENE, ActionRepr({{UNIT_TYPEID::TERRAN_REFINERY, 1}},{{ UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{},{{UNIT_FAKEID::TERRAN_SCV_VESPENE, 1}}, 1.5) },
+    { ACTION::MULE_GATHER_MINERALS, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1},{UNIT_FAKEID::TERRAN_MULE_VESPENE, -1}},{}, 64) },
+    { ACTION::MULE_GATHER_VESPENE, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1},{UNIT_FAKEID::TERRAN_MULE_MINERALS, -1}},{}, 64) },
 
     // Building construction
     { ACTION::BUILD_COMMAND_CENTER, ActionRepr({}, { { UNIT_FAKEID::MINERALS, 400 } }, { {UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, { {sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}}, 71) },
@@ -62,7 +62,6 @@ std::map<ACTION, ActionRepr> ActionRepr::values = {
     
     // Unit training
     { ACTION::TRAIN_SCV, ActionRepr({},{},{},{}, 0) },
-    { ACTION::TRAIN_MULE, ActionRepr({},{},{},{}, 0) },
     { ACTION::TRAIN_MARINE, ActionRepr({},{},{},{}, 0) },
     { ACTION::TRAIN_REAPER, ActionRepr({},{},{},{}, 0) },
     { ACTION::TRAIN_MARAUDER, ActionRepr({},{},{},{}, 0) },
