@@ -371,12 +371,34 @@ void BPState::Print() {
             continue;
         }
         std::string name;
-        if (type == UNIT_FAKEID::TERRAN_SCV_MINERALS) {
+        switch (type) {
+        case UNIT_FAKEID::TERRAN_SCV_MINERALS:
             name = "TERRAN_SCV_MINERALS";
-        } else if (type == UNIT_FAKEID::TERRAN_SCV_VESPENE) {
+            break;
+        case UNIT_FAKEID::TERRAN_SCV_VESPENE:
             name = "TERRAN_SCV_VESPENE";
-        } else {
+            break;
+        case UNIT_FAKEID::TERRAN_MULE_MINERALS:
+            name = "TERRAN_MULE_MINERALS";
+            break;
+        case UNIT_FAKEID::TERRAN_MULE_VESPENE:
+            name = "TERRAN_MULE_VESPENE";
+            break;
+        case UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER:
+            name = "TERRAN_ANY_COMMANDCENTER";
+            break;
+        case UNIT_FAKEID::TERRAN_ANY_BARRACKS:
+            name = "TERRAN_ANY_BARRACKS";
+            break;
+        case UNIT_FAKEID::TERRAN_ANY_FACTORY:
+            name = "TERRAN_ANY_FACTORY";
+            break;
+        case UNIT_FAKEID::TERRAN_ANY_STARPORT:
+            name = "TERRAN_ANY_STARPORT";
+            break;
+        default:
             name = UnitTypeToName(type);
+            break;
         }
         std::cout << name << ": " << amount << std::endl;
     }
