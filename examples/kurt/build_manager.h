@@ -10,6 +10,7 @@ class BPState;
 class Kurt;
 
 class BuildManager {
+    friend class Kurt;
 public:
     BuildManager(Kurt *const);
     static std::vector<sc2::UnitTypeData*> GetRequirements(sc2::UnitTypeData* unit);

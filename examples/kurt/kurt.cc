@@ -8,7 +8,7 @@
 #include "strategy_manager.h"
 #include "world_representation.h"
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -71,35 +71,50 @@ void Kurt::OnUnitIdle(const Unit* unit) {
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
+    if (destroyed_unit->alliance != Unit::Alliance::Self) return;
     workers.remove(destroyed_unit);
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
     army.remove(destroyed_unit);
-    build_manager->replan = true; // TODO: We might not care
+
+    
+    for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
+        if ((*it).first == destroyed_unit->unit_type.ToType() || IsStructureType(it->first)) {
+            build_manager->replan = true;
+            break;
+        }
+    }
+    
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {
-    if (IsStructure(unit)) {
+    return IsArmyUnitType(unit->unit_type.ToType());
+}
+
+bool Kurt::IsArmyUnitType(const UNIT_TYPEID &type) {
+    if (IsStructureType(type)) {
         return false;
     }
-    switch (unit->unit_type.ToType()) {
-        case UNIT_TYPEID::TERRAN_SCV: return false;
-        case UNIT_TYPEID::TERRAN_MULE: return false;
-        case UNIT_TYPEID::TERRAN_NUKE: return false;
-        default: return true;
+    switch (type) {
+    default: return true;
+    case UNIT_TYPEID::TERRAN_SCV:
+    case UNIT_TYPEID::TERRAN_MULE:
+    case UNIT_TYPEID::TERRAN_NUKE:
+        return false;
     }
 }
 
 bool Kurt::IsStructure(const Unit* unit) {
+    return IsStructureType(unit->unit_type.ToType());
+}
+
+bool Kurt::IsStructureType(const UNIT_TYPEID &type) {
     bool is_structure = false;
-    auto& attributes = Observation()->GetUnitTypeData().at(unit->unit_type).attributes;
-    for (const auto& attribute : attributes) {
-        if (attribute == Attribute::Structure) {
-            is_structure = true;
-        }
+    for (const auto &attr : GetUnitType(type)->attributes) {
+        if (attr == Attribute::Structure) return true;
     }
-    return is_structure;
+    return false;
 }
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
