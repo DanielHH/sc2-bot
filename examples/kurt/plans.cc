@@ -95,7 +95,7 @@ GamePlan* CruiserPlan(Kurt* kurt) {
 }
 
 GamePlan* DynamicGamePlan(Kurt* kurt) {
-    GamePlan* plan;
+    GamePlan* plan = new GamePlan(kurt);
 
     plan->AddDynBuildOrderNode();
     plan->AddDynCombatNode();

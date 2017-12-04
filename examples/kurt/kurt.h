@@ -4,7 +4,6 @@
 #include <list>
 #include "BPState.h"
 
-
 class WorldRepresentation;
 
 class Kurt : public sc2::Agent {
@@ -60,6 +59,12 @@ public:
 
     /* Calculates what is best to build in the moment */
     void CalculateBuildOrder();
+
+    /* Returns true if unit is an terran army unit */
+    bool IsArmyUnit(const sc2::Unit* unit);
+
+    /* Returns true if unit is a structure */
+    bool IsStructure(const sc2::Unit* unit);
 
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,

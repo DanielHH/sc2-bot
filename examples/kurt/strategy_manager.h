@@ -40,14 +40,19 @@ private:
     Kurt* kurt;
     GamePlan* current_plan;
 
-    //Save enemy units
+    /*
+    Splits up observed enemy units into enemy_structures and enemy_units vectors. This saves the minimal
+    amount of units that we know the enemy has, but the enemy might have more units in the fog of war.
+    */
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
+
+    /* Saves the minimal amount of units we know the enemy have */
+    void SaveSpottedEnemyUnitsHelper(sc2::Units* new_units, sc2::Units* saved_units);
 
     // calculates combatpower for given combatstyle
     void  CalculateCombatPower(CombatPower *cp);
 
     void CalculateCPHelp(CombatPower *cp, sc2::Units alliance);
-
 
     //
     void SetGamePlan();
