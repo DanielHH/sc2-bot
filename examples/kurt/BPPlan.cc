@@ -2,8 +2,9 @@
 
 #include "kurt.h"
 #include "build_manager.h"
+#include "action_enum.h"
+#include "action_repr.h"
 #include "BPState.h"
-#include "BPAction.h"
 
 #include "sc2api/sc2_api.h"
 
@@ -28,7 +29,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
     // TODO Remove duplicated code?
     BPState built(start);
     // add_to_plan is almost a queue of stacks
-    std::vector<std::stack<BPAction> > add_to_plan;
+    std::vector<std::stack<ACTION> > add_to_plan;
     std::queue<UNIT_TYPEID> need_to_build;
     int mineral_cost = 0;
     int vespene_cost = 0;
@@ -47,7 +48,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
         }
         need_to_build.push(type);
         for (int i = start->GetUnitAmount(type); i < amount; ++i) {
-            add_to_plan[add_i].push(BPAction::CreatesUnit(type));
+            add_to_plan[add_i].push(ActionRepr::CreatesUnit(type));
         }
         built.SetUnitAmount(type, amount);
         UnitTypeData * t_data = Kurt::GetUnitType(type);
@@ -67,7 +68,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
                     continue;
                 }
                 need_to_build.push(req);
-                add_to_plan[add_i].push(BPAction::CreatesUnit(req));
+                add_to_plan[add_i].push(ActionRepr::CreatesUnit(req));
                 built.SetUnitAmount(req, 1);
                 UnitTypeData * t_data = Kurt::GetUnitType(req);
                 mineral_cost += t_data->mineral_cost;
@@ -85,7 +86,7 @@ void BPPlan::AddBasicPlan(BPState * const start,
     while (food_required > food_in_store) {
         UNIT_TYPEID supplydepot = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
         built.SetUnitAmount(supplydepot, built.GetUnitAmount(supplydepot) + 1);
-        add_to_plan[add_i].push(BPAction::CreatesUnit(supplydepot));
+        add_to_plan[add_i].push(ActionRepr::CreatesUnit(supplydepot));
         UnitTypeData * t_data = Kurt::GetUnitType(supplydepot);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
@@ -102,9 +103,9 @@ void BPPlan::AddBasicPlan(BPState * const start,
             built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
         built.SetUnitAmount(refinery, 1);
-        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan[add_i].push(BPAction::CreatesUnit(refinery));
+        add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+        add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+        add_to_plan[add_i].push(ActionRepr::CreatesUnit(refinery));
         UnitTypeData * t_data = Kurt::GetUnitType(refinery);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
@@ -127,6 +128,7 @@ float BPPlan::TimeRequired() const {
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {
+    /*
     int i;
     for (i = 0; i < std::min(1, (int) vector::size()); ++i) {
         BPAction action = vector::operator[](i);
@@ -137,13 +139,14 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
     }
     auto beg = vector::begin();
     vector::erase(beg, beg + i);
+    */
 }
 
 std::string BPPlan::ToString() const {
     std::string val = "BPPlan(";
     for (int i = 0; i < vector::size(); ++i) {
-        BPAction action = vector::operator[](i);
-        val += action.ToString();
+        ACTION action = vector::operator[](i);
+        val += ActionToName(action);
         if (i + 1 < vector::size()) {
             val += ", ";
         }

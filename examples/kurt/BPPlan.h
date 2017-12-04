@@ -1,12 +1,14 @@
 #pragma once
+
+#include "action_enum.h"
+
 #include <iostream>
 #include <vector>
 
-class BPAction;
 class BPState;
 class Kurt;
 
-class BPPlan : public std::vector<BPAction> {
+class BPPlan : public std::vector<ACTION> {
 public:
     /* Apends a basic plan for going from a given state to some goal state */
     void AddBasicPlan(BPState * const, BPState * const);
