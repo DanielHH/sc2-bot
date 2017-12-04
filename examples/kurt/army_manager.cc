@@ -24,6 +24,8 @@ ArmyManager::ArmyManager(Kurt* parent_kurt) {
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
     // DO ALL DE ARMY STUFF
+    
+    cellPriorityQueue->Update();
     if (kurt->scouts.empty()) {
         ArmyManager::TryGetScout();
     } else {
@@ -44,7 +46,7 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
 }
 
 void ArmyManager::PlanSmartScoutPath(){
-    
+    // THREAT MAP
     
 }
 
@@ -59,10 +61,10 @@ void ArmyManager::ScoutSmartPath(){
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        if(euk_distance_to_unit < 5) {
+        /*if(euk_distance_to_unit < 5) {
             cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
             cellPriorityQueue->Update();
-        }
+        }*/
         return;
     }
 }
@@ -131,7 +133,7 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
             kurt->scv_minerals.push_back(unit);
         }
     }
-    else if (IsArmyUnit(unit, observation)) {
+    else if (kurt->IsArmyUnit(unit)) {
         kurt->army.push_back(unit);
     }
 }
@@ -143,29 +145,6 @@ bool ArmyManager::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_
     // Ideally batch up the queries (using PathingDistanceBatched) and do many at once.
     float distance = kurt->Query()->PathingDistance(unit, target_pos);
     return distance > 0.1f;
-}
-
-bool ArmyManager::IsArmyUnit(const Unit* unit, const ObservationInterface* observation) {
-    if (IsStructure(unit, observation)) {
-        return false;
-    }
-    switch (unit->unit_type.ToType()) {
-        case UNIT_TYPEID::TERRAN_SCV: return false;
-        case UNIT_TYPEID::TERRAN_MULE: return false;
-        case UNIT_TYPEID::TERRAN_NUKE: return false;
-        default: return true;
-    }
-}
-
-bool ArmyManager::IsStructure(const Unit* unit, const ObservationInterface* observation) {
-    bool is_structure = false;
-    auto& attributes = observation->GetUnitTypeData().at(unit->unit_type).attributes;
-    for (const auto& attribute : attributes) {
-        if (attribute == Attribute::Structure) {
-            is_structure = true;
-        }
-    }
-    return is_structure;
 }
 
 #undef DEBUG
