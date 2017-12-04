@@ -95,7 +95,7 @@ void StrategyManager::CalculateCombatPower(CombatPower *cp) {
 void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     UnitTypeData* unit_data = new UnitTypeData();
     float weapon_dps;
-
+    
     for (auto unit : team) {
         if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
             unit_data = Kurt::GetUnitType(unit->unit_type);
