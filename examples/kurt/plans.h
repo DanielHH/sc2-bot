@@ -3,11 +3,16 @@
 #include "game_plan.h"
 #include <sc2api/sc2_api.h>
 
-class Plans{
-public:
-    GamePlan* CreateDefaultGamePlan(Kurt* kurt);
+/* The default plan */
+GamePlan* CreateDefaultGamePlan(Kurt* kurt);
 
-    GamePlan* RushPlan(Kurt* kurt);
+/* Creates a small combat force and trires to rush the enemy */
+GamePlan* RushPlan(Kurt* kurt);
 
-    GamePlan* DynamicGamePlan(Kurt* kurt);
-};
+/* Creates a small defence force and
+starts working towards 2 battlecruisers */
+GamePlan* CruiserPlan(Kurt* kurt);
+
+/* Automatically decides what units to build, and then decides
+whether to attack, defend or harass with the new units */
+GamePlan* DynamicGamePlan(Kurt* kurt);
