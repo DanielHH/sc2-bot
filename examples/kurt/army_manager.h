@@ -4,6 +4,8 @@
 #include "kurt.h"
 #include <queue>
 #include "cell_priority_queue.h"
+#include "danger_point.cc"
+#include <list>
 
 
 //using namespace sc2;
@@ -22,6 +24,9 @@ public:
 private:
     Kurt* kurt;
     CellPriorityQueue* cellPriorityQueue;
+    std::vector<DangerPoint*> danger_points;
+    float scout_safe_distance = 15;
+    int danger_time = 10;
     
     void Harass();
     void Attack();

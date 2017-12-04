@@ -4,6 +4,7 @@
 #include "BPAction.h"
 #include "world_cell.h"
 #include <cmath>
+#include <algorithm>
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -16,11 +17,8 @@
 #endif // DEBUG
 
 using namespace sc2;
-float scout_safe_distance = 15;
-Kurt* comp_kurt;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
-    comp_kurt = parent_kurt;
     cellPriorityQueue = new CellPriorityQueue(kurt);
 }
 
@@ -51,17 +49,21 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
 void ArmyManager::PlanSmartScoutPath(){
     // THREAT MAP
     const Unit* scout = kurt->scouts.front();
-    Point2D target;
-    float shortest_distance = INFINITY;
     for (const Unit* enemy: kurt->Observation()->GetUnits(Unit::Alliance::Enemy)) {
         if (kurt->IsArmyUnit(enemy)) {
-            
-            if(Distance2D(scout->pos, enemy->pos) < scout_safe_distance){
+            danger_points.push_back(new DangerPoint(enemy->pos, kurt->Observation()->GetGameLoop()));
+        }
+    }
+    Point2D target;
+    float shortest_distance = INFINITY;
+    for (DangerPoint* point : danger_points) {
+        if (point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()) < danger_time * 24) {
+            if(Distance2D(scout->pos, point->GetPoint()) < scout_safe_distance) {
                 float scout_x = scout->pos.x;
                 float scout_y = scout->pos.y;
                 
-                float enemy_x = enemy->pos.x;
-                float enemy_y = enemy->pos.y;
+                float enemy_x = point->GetPoint().x;
+                float enemy_y = point->GetPoint().y;
                 
                 float delta_x =  scout_x - enemy_x;
                 float delta_y = scout_y - enemy_y;
@@ -72,6 +74,9 @@ void ArmyManager::PlanSmartScoutPath(){
                     shortest_distance = length_normal_enemy;
                 }
             }
+        } else {
+            danger_points.erase(std::find(danger_points.begin(), danger_points.end(), point));
+            delete point;
         }
     }
     if (shortest_distance < INFINITY) {
@@ -91,9 +96,9 @@ void ArmyManager::ScoutSmartPath(){
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
         /*if(euk_distance_to_unit < 5) {
-            cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
-            cellPriorityQueue->Update();
-        }*/
+         cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
+         cellPriorityQueue->Update();
+         }*/
         return;
     }
 }
