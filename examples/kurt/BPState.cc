@@ -391,6 +391,11 @@ bool BPState::operator<(BPState const &other) const {
     return GetTime() > other.GetTime();
 }
 
+bool BPState::ContainsAllUnitsOf(BPState const & const other) const {
+    for (auto p : unit_amount) if (other.GetUnitAmount(p.first) > p.second) return false;
+    return true;
+}
+
 #undef DEBUG
 #undef PRINT
 #undef TEST
