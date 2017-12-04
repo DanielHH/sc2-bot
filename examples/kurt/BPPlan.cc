@@ -4,6 +4,7 @@
 #include "build_manager.h"
 #include "action_enum.h"
 #include "action_repr.h"
+#include "exec_action.h"
 #include "BPState.h"
 
 #include "sc2api/sc2_api.h"
@@ -128,18 +129,16 @@ float BPPlan::TimeRequired() const {
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {
-    /*
     int i;
     for (i = 0; i < std::min(1, (int) vector::size()); ++i) {
-        BPAction action = vector::operator[](i);
+        ACTION action = vector::operator[](i);
         PRINT("Try to exec action " << action)
-        if (! action.Execute(kurt, kurt->Actions(), kurt->Query(), kurt->Observation())) {
+        if (! ExecAction::Exec(kurt, action)) {
             break;
         }
     }
     auto beg = vector::begin();
     vector::erase(beg, beg + i);
-    */
 }
 
 std::string BPPlan::ToString() const {
