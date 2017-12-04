@@ -75,6 +75,15 @@ public:
     /* Increases the number of a certain unit being produced in this BPState */
     void IncreaseUnitProdAmount(sc2::UNIT_TYPEID, int);
 
+    /* Returns the amount of given units begining produced in this BPState */
+    int GetUnitAvailableAmount(sc2::UNIT_TYPEID) const;
+
+    /* Set this BPState to think that is produces given amount of given unit */
+    void SetUnitAvailableAmount(sc2::UNIT_TYPEID, int);
+
+    /* Increases the number of a certain unit being produced in this BPState */
+    void IncreaseUnitAvailableAmount(sc2::UNIT_TYPEID, int);
+
     /* Returns an iterator to the begining of all Units in this state */
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsBegin();
 
@@ -90,6 +99,10 @@ public:
      * all Units begining produced in this state
      */
     std::map<sc2::UNIT_TYPEID, int>::iterator UnitsProdEnd();
+
+    std::map<sc2::UNIT_TYPEID, int>::iterator UnitsAvailableBegin();
+
+    std::map<sc2::UNIT_TYPEID, int>::iterator UnitsAvailableEnd();
 
     int GetMinerals() const;
     double GetMineralRate() const;
@@ -154,6 +167,10 @@ private:
      * This map is used to know if an action is soon available.
      */
     std::map<sc2::UNIT_TYPEID, int> unit_being_produced;
+    /* The amount of each unit currently available and performing
+     * no action.
+     */
+    std::map<sc2::UNIT_TYPEID, int> unit_nonbusy;
 
     /* All active/ongoing actions, sorted with "first to finish" first. */
     std::list<ActiveAction> actions;

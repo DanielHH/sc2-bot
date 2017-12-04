@@ -35,6 +35,9 @@ BPState::BPState(BPState * const state) {
     for (auto it = state->UnitsProdBegin(); it != state->UnitsProdEnd(); ++it){
         SetUnitProdAmount(it->first, it->second);
     }
+    for (auto it = state->UnitsAvailableBegin(); it != state->UnitsAvailableEnd(); ++it) {
+        SetUnitAvailableAmount(it->first, it->second);
+    }
     for (auto it = state->actions.begin(); it != state->actions.end(); ++it){
         actions.push_back(*it);
     }
@@ -47,36 +50,76 @@ BPState::BPState(Kurt * const kurt) {
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
         IncreaseUnitAmount(type, 1);
+        if (unit->orders.empty()) IncreaseUnitAvailableAmount(type, 1);
         switch (type) {
         case UNIT_TYPEID::TERRAN_COMMANDCENTER:
         case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
         case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            if (unit->orders.empty()) {
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            }
             commandcenters.push_back(unit);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
             IncreaseUnitAmount(type, 1);
+            switch (unit->orders.size()) {
+            case 0:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
+                IncreaseUnitAvailableAmount(type, 1);
+                break;
+            case 1:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+                break;
+            }
             break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
         case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            if (unit->orders.empty()) {
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            }
             break;
         case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
             IncreaseUnitAmount(type, 1);
+            switch (unit->orders.size()) {
+            case 0:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
+                IncreaseUnitAvailableAmount(type, 1);
+                break;
+            case 1:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+                break;
+            }
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
         case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            if (unit->orders.empty()) {
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            }
             break;
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
             IncreaseUnitAmount(type, 1);
+            switch (unit->orders.size()) {
+            case 0:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
+                IncreaseUnitAvailableAmount(type, 1);
+                break;
+            case 1:
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+                break;
+            }
             break;
         case UNIT_TYPEID::TERRAN_STARPORT:
         case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            if (unit->orders.empty()) {
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            }
             break;
         }
     }
@@ -178,12 +221,12 @@ void BPState::AddAction(ACTION action) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
         IncreaseUnitAmount(type, -amount);
+        IncreaseUnitAvailableAmount(type, -amount);
     }
     for (auto pair : ar.borrowed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        IncreaseUnitAmount(type, -amount);
-        IncreaseUnitProdAmount(type, amount);
+        IncreaseUnitAvailableAmount(type, -amount);
     }
     for (auto pair : ar.produced) {
         UNIT_TYPEID type = pair.first;
@@ -217,13 +260,13 @@ bool BPState::CompleteFirstAction() {
     for (auto pair : ar.borrowed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        IncreaseUnitAmount(type, amount);
-        IncreaseUnitProdAmount(type, -amount);
+        IncreaseUnitAvailableAmount(type, amount);
     }
     for (auto pair : ar.produced) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
         IncreaseUnitAmount(type, amount);
+        IncreaseUnitAvailableAmount(type, amount);
         IncreaseUnitProdAmount(type, -amount);
     }
     return true;
@@ -242,7 +285,7 @@ bool BPState::CanExecuteNow(ACTION action) const {
         }
     }
     for (auto pair : ar.borrowed) {
-        if (pair.second > GetUnitAmount(pair.first)) {
+        if (pair.second > GetUnitAvailableAmount(pair.first)) {
             return false;
         }
     }
@@ -322,6 +365,22 @@ void BPState::SetUnitProdAmount(UNIT_TYPEID type, int amount) {
     unit_being_produced[type] = amount;
 }
 
+/* Returns the amount of given units begining produced in this BPState */
+int BPState::GetUnitAvailableAmount(sc2::UNIT_TYPEID type) const {
+    if (unit_nonbusy.count(type) == 0) return 0;
+    else return unit_nonbusy.at(type);
+}
+
+/* Set this BPState to think that is produces given amount of given unit */
+void BPState::SetUnitAvailableAmount(sc2::UNIT_TYPEID type, int amount) {
+    unit_nonbusy[type] = amount;
+}
+
+/* Increases the number of a certain unit being produced in this BPState */
+void BPState::IncreaseUnitAvailableAmount(sc2::UNIT_TYPEID type, int amount) {
+    unit_nonbusy[type] += amount;
+}
+
 std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsBegin() {
     return unit_amount.begin();
 }
@@ -336,6 +395,14 @@ std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsProdBegin() {
 
 std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsProdEnd() {
     return unit_being_produced.end();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsAvailableBegin() {
+    return unit_nonbusy.begin();
+}
+
+std::map<sc2::UNIT_TYPEID, int>::iterator BPState::UnitsAvailableEnd() {
+    return unit_nonbusy.end();
 }
 
 double BPState::GetTime() const {
