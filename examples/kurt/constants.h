@@ -19,20 +19,20 @@ const double BASE_RESOURCE_TEST_RANGE2 = 100;
 class UNIT_FAKEID {
 public:
     // Resource gatherers
-    const static sc2::UNIT_TYPEID TERRAN_SCV_MINERALS = sc2::UNIT_TYPEID::ZERG_DRONE;
-    const static sc2::UNIT_TYPEID TERRAN_SCV_VESPENE = sc2::UNIT_TYPEID::ZERG_EGG;
-    const static sc2::UNIT_TYPEID TERRAN_MULE_MINERALS = sc2::UNIT_TYPEID::ZERG_EVOLUTIONCHAMBER;
-    const static sc2::UNIT_TYPEID TERRAN_MULE_VESPENE = sc2::UNIT_TYPEID::ZERG_GREATERSPIRE;
+    const static sc2::UNIT_TYPEID TERRAN_SCV_MINERALS = static_cast<sc2::UNIT_TYPEID>(520);
+    const static sc2::UNIT_TYPEID TERRAN_SCV_VESPENE = static_cast<sc2::UNIT_TYPEID>(521);
+    const static sc2::UNIT_TYPEID TERRAN_MULE_MINERALS = static_cast<sc2::UNIT_TYPEID>(522);
+    const static sc2::UNIT_TYPEID TERRAN_MULE_VESPENE = static_cast<sc2::UNIT_TYPEID>(523);
 
     // Resources
-    const static sc2::UNIT_TYPEID MINERALS = sc2::UNIT_TYPEID::ZERG_BROODLORD;
-    const static sc2::UNIT_TYPEID VESPENE = sc2::UNIT_TYPEID::ZERG_CORRUPTOR;
-    const static sc2::UNIT_TYPEID FOOD_USED = sc2::UNIT_TYPEID::ZERG_CREEPTUMOR;
-    const static sc2::UNIT_TYPEID FOOD_CAP = sc2::UNIT_TYPEID::ZERG_CREEPTUMORQUEEN;
+    const static sc2::UNIT_TYPEID MINERALS = static_cast<sc2::UNIT_TYPEID>(524);
+    const static sc2::UNIT_TYPEID VESPENE = static_cast<sc2::UNIT_TYPEID>(525);
+    const static sc2::UNIT_TYPEID FOOD_USED = static_cast<sc2::UNIT_TYPEID>(525);
+    const static sc2::UNIT_TYPEID FOOD_CAP = static_cast<sc2::UNIT_TYPEID>(526);
 
     // Multi-representation units/structures
-    const static sc2::UNIT_TYPEID TERRAN_ANY_COMMANDCENTER = sc2::UNIT_TYPEID::ZERG_BANELINGCOCOON;
-    const static sc2::UNIT_TYPEID TERRAN_ANY_BARRACKS = sc2::UNIT_TYPEID::ZERG_BANELINGNEST;
-    const static sc2::UNIT_TYPEID TERRAN_ANY_FACTORY = sc2::UNIT_TYPEID::ZERG_BROODLORDCOCOON;
-    const static sc2::UNIT_TYPEID TERRAN_ANY_STARPORT = sc2::UNIT_TYPEID::ZERG_OVERLORDCOCOON;
+    const static sc2::UNIT_TYPEID TERRAN_ANY_COMMANDCENTER = static_cast<sc2::UNIT_TYPEID>(527);
+    const static sc2::UNIT_TYPEID TERRAN_ANY_BARRACKS = static_cast<sc2::UNIT_TYPEID>(528);
+    const static sc2::UNIT_TYPEID TERRAN_ANY_FACTORY = static_cast<sc2::UNIT_TYPEID>(529);
+    const static sc2::UNIT_TYPEID TERRAN_ANY_STARPORT = static_cast<sc2::UNIT_TYPEID>(530);
 };
