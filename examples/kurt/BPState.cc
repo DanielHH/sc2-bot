@@ -124,23 +124,25 @@ void BPState::UpdateUntilAvailable(ACTION action) {
                 std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
+        if (! actions.empty()) {
+            if (actions.front().time_left <= delta_time ||
+                    delta_time == 0 || delta_time == INFINITY) {
+                CompleteFirstAction();
+                continue;
+            }
+        }
         if (delta_time == INFINITY) {
             Print();
             std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
                 "infinity, action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: INFINITY time");
+            throw std::runtime_error("BPPlan: Update INFINITY time");
+        } else if (delta_time == 0) {
+            Print();
+            std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
+                "Action never available, action: " << action << std::endl;
+            throw std::runtime_error("BPPlan: Update zero time");
         }
-        if (! actions.empty() && (actions.front().time_left <= delta_time
-                    || delta_time == 0)) {
-            CompleteFirstAction();
-        } else {
-            if (delta_time == 0) {
-                Print();
-                std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
-                    "Action never available, action: " << action << std::endl;
-            }
-            SimpleUpdate(delta_time);
-        }
+        SimpleUpdate(delta_time);
     }
 }
 
