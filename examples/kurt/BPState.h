@@ -134,7 +134,7 @@ public:
     /* Checks if this state contains all units that the
      * given state contains
      */
-    bool ContainsAllUnitsOf(BPState const & const) const;
+    bool ContainsAllUnitsOf(BPState const &) const;
 
 private:
     /* Updates this state given time (in seconds)
