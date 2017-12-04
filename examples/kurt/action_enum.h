@@ -3,6 +3,8 @@
 #include <iostream>
 
 enum class ACTION {
+    INVALID,
+
     //Resource gathering
     SCV_GATHER_MINERALS,
     SCV_GATHER_VESPENE,

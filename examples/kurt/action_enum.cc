@@ -4,6 +4,8 @@
 
 std::string ActionToName(ACTION action) {
     switch (action) {
+    case ACTION::INVALID:
+        return "INVALID";
     case ACTION::SCV_GATHER_MINERALS:
         return "SCV_GATHER_MINERALS";
     case ACTION::SCV_GATHER_VESPENE:
