@@ -6,7 +6,7 @@
 #include <list>
 
 #include "action_enum.h"
-#include "BPAction.h"
+#include "BPPlan.h"
 
 class Kurt;
 
@@ -28,6 +28,11 @@ public:
      * If the action can be executed now, this update does nothing.
      */
     void UpdateUntilAvailable(ACTION);
+
+    /* Updates this state by adding all actions in given plan
+     * and run CompleteAllActions.
+     */
+    void SimulatePlan(BPPlan &);
 
     /* Updates this state and add the action. */
     void AddAction(ACTION);
@@ -51,11 +56,6 @@ public:
      * from this state.
      */
     std::vector<ACTION> AvailableActions() const;
-
-    /* Returns a list of actions that can be performed
-     * from this state.
-     */
-    std::vector<BPAction *> AvailableActionsOld() const;
 
     /* Returns the amount of given units in this BPState */
     int GetUnitAmount(sc2::UNIT_TYPEID) const;

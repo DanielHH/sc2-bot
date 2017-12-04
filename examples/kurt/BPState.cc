@@ -150,6 +150,13 @@ void BPState::SimpleUpdate(double delta_time) {
     time += delta_time;
 }
 
+void BPState::SimulatePlan(BPPlan & plan) {
+    for (auto it = plan.begin(); it != plan.end(); ++it) {
+        AddAction(*it);
+    }
+    CompleteAllActions();
+}
+
 void BPState::AddAction(ACTION action) {
     UpdateUntilAvailable(action);
     ActionRepr ar = ActionRepr::values.at(action);
