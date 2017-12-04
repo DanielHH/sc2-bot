@@ -382,14 +382,13 @@ void BPState::Print() {
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
     std::cout << "/" << GetFoodCap() << std::endl;
-    for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
-        UNIT_TYPEID type = it->first;
-        int amount = it->second;
+
+    auto PrintUnit = [] (BPState * state, UNIT_TYPEID type) {
         if (    type == UNIT_FAKEID::MINERALS ||
                 type == UNIT_FAKEID::VESPENE ||
                 type == UNIT_FAKEID::FOOD_CAP ||
                 type == UNIT_FAKEID::FOOD_USED) {
-            continue;
+            return;
         }
         std::string name;
         switch (type) {
@@ -421,7 +420,18 @@ void BPState::Print() {
             name = UnitTypeToName(type);
             break;
         }
-        std::cout << name << ": " << amount << std::endl;
+        std::cout << name << ": " << state->GetUnitAmount(type) << " ("
+            << state->GetUnitProdAmount(type) << ")" << std::endl;
+    };
+    for (auto it = UnitsBegin(); it != UnitsEnd(); ++it) {
+        UNIT_TYPEID type = it->first;
+        PrintUnit(this, type);
+    }
+    for (auto it = UnitsProdBegin(); it != UnitsProdEnd(); ++it) {
+        UNIT_TYPEID type = it->first;
+        if (unit_amount.count(type) == 0) {
+            PrintUnit(this, type);
+        }
     }
     if (! actions.empty()) {
         std::cout << "Active actions:" << std::endl;
