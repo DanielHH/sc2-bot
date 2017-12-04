@@ -22,7 +22,7 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     goal = new BPState(goal_);
 
     root->parent = nullptr;
-    root->iter_amount = 0;
+    root->iter_amount = 1;
 }
 
 MCTS::~MCTS() {
@@ -51,7 +51,8 @@ void MCTS::SearchOnce() {
             }
             break;
         }
-        if (leaf->iter_amount < leaf->available_actions.size()) {
+        int index = leaf->iter_amount - 1;
+        if (index < leaf->available_actions.size()) {
             break;
         }
         BPState * best_state = nullptr;
@@ -75,17 +76,18 @@ void MCTS::SearchOnce() {
      */
     BPState * new_state = nullptr;
     {
-        int index = leaf->iter_amount;
+        int index = leaf->iter_amount - 1;
         ACTION action = leaf->available_actions[index];
         new_state = new BPState(leaf);
         new_state->AddAction(action);
+        new_state->iter_amount = 0;
         leaf->children[index] = new_state;
         new_state->parent = leaf;
     }
     /*
      * Simulation phase.
      */
-    double reward;
+    double reward = 0.5;
     //TODO Need basic plan to work with new action....
     /*
      * Backpropagation phase.
