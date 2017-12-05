@@ -76,14 +76,7 @@ void ArmyManager::PlanSmartScoutPath(){
                 }
             }
         } else {
-            auto deleteme = std::find(danger_points.begin(), danger_points.end(), point);
-            TEST(if (deleteme == danger_points.end()){
-                PRINT("Searched for point: " << point->GetPoint().x << ";" << point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()))
-                PRINT("Points that existed:")
-                for (DangerPoint *pt : danger_points) PRINT(pt->GetPoint().x << ";" << pt->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()))
-            })TEST(else)
-            danger_points.erase(deleteme);
-            *point;
+            danger_points.erase(std::find(danger_points.begin(), danger_points.end(), point));
             delete point;
         }
     }
