@@ -24,6 +24,7 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     root->parent = nullptr;
     root->iter_amount = 1;
+    root->reward = 0;
 
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
@@ -90,6 +91,7 @@ void MCTS::SearchOnce() {
         plan.push_back(action);
         new_state = new BPState(leaf);
         new_state->AddAction(action);
+        new_state->reward = 0;
         new_state->iter_amount = 0;
         leaf->children[index] = new_state;
         new_state->parent = leaf;
@@ -135,15 +137,15 @@ BPPlan MCTS::BestPlan() {
                 best_index = i;
             }
         }
-        if (best_score == -1) {
+        if (best_index == -1) {
             std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
             break;
         }
         if (curr_score > best_score) {
             break;
         }
-        curr = curr->children[best_index];
         plan.push_back(curr->available_actions[best_index]);
+        curr = curr->children[best_index];
     }
     plan.AddBasicPlan(curr, goal);
     return plan;

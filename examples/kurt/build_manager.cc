@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "action_repr.h"
 #include "action_enum.h"
+#include "exec_action.h"
 #include "BPState.h"
 #include "BPPlan.h"
 #include "MCTS.h"
@@ -81,29 +82,32 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
-    // Set up build tree
-    std::cout << (int)(Kurt::GetAbility(ABILITY_ID::BUILD_TECHLAB_STARPORT)->target) << std::endl;
     SetUpTechTree(observation);
     ActionRepr::InitConvertMap();
+    ExecAction::Init(agent);
     setup_finished = true;
 
-    // Set some test goal
+    auto test = [] (BPState * const curr, BPState * const goal) {
+        std::cout << "----------------------------" << std::endl;
+        MCTS mcts(curr, goal);
+        mcts.Search(5000);
+        std::cout << mcts.BestPlan() << std::endl;
+        BPPlan plan;
+        plan.AddBasicPlan(curr, goal);
+        std::cout << "time basic:  " << plan.TimeRequired(curr) << std::endl;
+        std::cout << "time better: " << mcts.BestPlan().TimeRequired(curr) << std::endl;
+        std::cout << "----------------------------" << std::endl;
+    };
+
+    BPState * curr = new BPState(agent);
+    curr->SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 11);
+
     BPState * goal = new BPState();
     goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 2);
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 2);
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
-    SetGoal(goal);
-
-    std::cout << "----------------------------" << std::endl;
-    BPState curr(agent);
-    curr.SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 11);
-    MCTS mcts(&curr, goal);
-    std::cout << "-------" << std::endl;
-    mcts.Search(5000);
-    std::cout << "-------" << std::endl;
-    std::cout << mcts.BestPlan() << std::endl;
-    std::cout << "----------------------------" << std::endl;
+    test(curr, goal);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 22);
+    test(curr, goal);
+    delete curr;
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {

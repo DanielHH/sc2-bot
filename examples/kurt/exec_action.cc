@@ -1,5 +1,8 @@
 #include "exec_action.h"
 
+#include "sc2api/sc2_api.h"
+#include "sc2lib/sc2_lib.h"
+
 #include "kurt.h"
 #include "action_repr.h"
 
@@ -176,3 +179,12 @@ Unit const * ExecAction::FindNearestUnitOfType(
     return best;
 }
 
+void ExecAction::Init(Kurt * const kurt) {
+//    std::vector<sc2::Point3D> expansions = search::CalculateExpansionLocations(kurt->Observation(), kurt->Query());
+//    for (Point3D point : expansions) {
+//    }
+}
+
+std::set<Point3D> ExecAction::commandcenter_locations;
+
+std::set<Unit*> ExecAction::vespene_geysers;

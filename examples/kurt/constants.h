@@ -35,4 +35,8 @@ public:
     const static sc2::UNIT_TYPEID TERRAN_ANY_BARRACKS = static_cast<sc2::UNIT_TYPEID>(528);
     const static sc2::UNIT_TYPEID TERRAN_ANY_FACTORY = static_cast<sc2::UNIT_TYPEID>(529);
     const static sc2::UNIT_TYPEID TERRAN_ANY_STARPORT = static_cast<sc2::UNIT_TYPEID>(530);
+
+    // How many new scv that can be produced
+    const static sc2::UNIT_TYPEID TERRAN_TOWNHALL_SCV_MINERALS = static_cast<sc2::UNIT_TYPEID>(531);
+    const static sc2::UNIT_TYPEID TERRAN_TOWNHALL_SCV_VESPENE = static_cast<sc2::UNIT_TYPEID>(532);
 };
