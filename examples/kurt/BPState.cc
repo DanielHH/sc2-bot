@@ -121,14 +121,6 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             }
             break;
-        case UNIT_TYPEID::TERRAN_SCV:
-            if (std::find(kurt->scv_minerals.begin(), kurt->scv_minerals.end(), unit) != kurt->scv_minerals.end()) {
-                IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 1);
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 1);
-            } else if (std::find(kurt->scv_vespene.begin(), kurt->scv_vespene.end(), unit) != kurt->scv_vespene.end()) {
-                IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, 1);
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, 1);
-            }
         }
     }
     for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
