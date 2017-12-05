@@ -33,6 +33,9 @@ public:
     /* Called when a unit is destroyes */
     virtual void OnUnitDestroyed(const sc2::Unit* unit);
 
+    /*  Called when an enemy unit enters vision from out of fog of war */
+    virtual void OnUnitEnterVision(const sc2::Unit* unit);
+
     /* Test if given unit exist in given list. */
     bool UnitInList(std::list<const sc2::Unit*>& list, const sc2::Unit* unit);
 

@@ -20,6 +20,8 @@ public:
 
     ObservedUnits();
 
+    static std::map <sc2::UNIT_TYPEID, float> unit_max_health;
+
     /* Takes a Units (vector) and adds units if more than prevoius are observed */
     void AddUnits(const sc2::Units* units);
 
@@ -34,6 +36,12 @@ public:
 
     /* Returns the current combatpower for the saved units */
     const CombatPower* const GetCombatPower();
+
+    /* Returns the sum of all units' max health */
+    float GetTotalMaxHealth();
+
+    /*  */
+    float CalculateUnitTypeMaxHealth(sc2::UNIT_TYPEID unit_type);
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();

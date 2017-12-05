@@ -15,6 +15,8 @@ public:
 
     void OnStep(const sc2::ObservationInterface* observation);
 
+    void OnUnitEnterVision(const sc2::Unit* unit);
+
     // New unit is saved in vector Units. (Call this function whenever a new unit is created)
     void SaveOurUnits(const sc2::Unit* unit);
 
@@ -45,6 +47,8 @@ private:
 
     //
     void SetGamePlan();
+
+    void CounterEnemyUnits();
 
     //UNUSED FUNCTIONS
     // Returns true if Enemy structure is observed.

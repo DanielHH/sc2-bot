@@ -23,6 +23,8 @@ const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
     UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER
 };
 
+map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
+
 ObservedUnits::ObservedUnits() {}
 
 void ObservedUnits::AddUnits(const Units* units) {
@@ -108,12 +110,30 @@ const ObservedUnits::CombatPower* const ObservedUnits::GetCombatPower() {
     return &cp;
 }
 
+float ObservedUnits::GetTotalMaxHealth() {
+    float total_max_health = 0;
+
+    // Get total max health for all unit types and summerize
+    for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
+        total_max_health += CalculateUnitTypeMaxHealth(unit->first);
+    }
+
+    return total_max_health;
+}
+
+float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
+    int number_of_units = saved_units.at(unit_type);
+    float max_health_per_unit = unit_max_health.at(unit_type);
+    float max_health_for_unit_type = number_of_units * max_health_per_unit;
+    return max_health_for_unit_type;
+}
+
 string ObservedUnits::ToString() {
     string str;
 
-    for (auto unit_id = saved_units.begin(); unit_id != saved_units.end(); ++unit_id) {
-        str += Kurt::GetUnitType(unit_id->first)->name + ": ";
-        str += to_string(unit_id->second);
+    for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
+        str += Kurt::GetUnitType(unit->first)->name + ": ";
+        str += to_string(unit->second);
         str += "\n";
     }
 

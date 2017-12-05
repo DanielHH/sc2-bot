@@ -80,6 +80,10 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     army.remove(destroyed_unit);
 }
 
+void Kurt::OnUnitEnterVision(const Unit* unit) {
+    strategy_manager->OnUnitEnterVision(unit);
+}
+
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
     return std::find(list.begin(), list.end(), unit) != list.end();
 }

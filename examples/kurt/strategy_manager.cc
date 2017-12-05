@@ -1,5 +1,6 @@
 #include "strategy_manager.h"
 #include "plans.h"
+#include "countertable.h"
 #include <algorithm>
 #include "observed_units.h"
 
@@ -37,18 +38,20 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
-            PRINT("|g2g CP: " + to_string(enemy_units.GetCombatPower()->g2g))
-            PRINT("|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a))
-            PRINT("|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g))
-            PRINT("|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a))
+            PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
+            PRINT("\t|g2g CP: " + to_string(enemy_units.GetCombatPower()->g2g) + "\t|")
+            PRINT("\t|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a) + "\t|")
+            PRINT("\t|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g) + "\t|")
+            PRINT("\t|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a) + "\t|")
         PRINT(enemy_units.ToString())
         PRINT("------Enemy structures-------")
         PRINT(enemy_structures.ToString())
         PRINT("------Our units--------------")
-            PRINT("|g2g CP: " + to_string(our_units.GetCombatPower()->g2g))
-            PRINT("|g2a CP: " + to_string(our_units.GetCombatPower()->g2a))
-            PRINT("|a2g CP: " + to_string(our_units.GetCombatPower()->a2g))
-            PRINT("|a2a CP: " + to_string(our_units.GetCombatPower()->a2a))
+            PRINT("\t|Total max health: " + to_string(our_units.GetTotalMaxHealth()))
+            PRINT("\t|g2g CP: " + to_string(our_units.GetCombatPower()->g2g) + "\t|")
+            PRINT("\t|g2a CP: " + to_string(our_units.GetCombatPower()->g2a) + "\t|")
+            PRINT("\t|a2g CP: " + to_string(our_units.GetCombatPower()->a2g) + "\t|")
+            PRINT("\t|a2a CP: " + to_string(our_units.GetCombatPower()->a2a) + "\t|")
         PRINT(our_units.ToString())
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
@@ -56,7 +59,17 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 
+void StrategyManager::OnUnitEnterVision(const Unit* unit) {
+    if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
+        ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
+    }
+}
+
 void StrategyManager::SaveOurUnits(const Unit* unit) {
+    if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
+        ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
+    }
+
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnit(unit);
     }
@@ -172,6 +185,51 @@ void StrategyManager::SetBuildGoal() {
 
     kurt->SendBuildOrder(new_goal_state);
 };
+/*
+void StrategyManager::CounterEnemyUnits() {
+    ObservedUnits tmp = our_units;
+    tuple<UNIT_TYPEID> counter_units;
+    for (auto unit : enemy_units) {
+        counter_units = zerg_countertable.at(unit->unit_type);
+        for (int i = 0; sizeof(counter_units), ++i) {
+            counter_units.get
+        }
+       
+    }
+}*/
+
+/* PSEUDO-CODE
+void StrategyManager::CounterEnemyUnits() {
+    BPState* new_goal_state = new BPState();
+    Unit unit_to_create;
+    int number_of_units;
+
+    ObservedUnits tmp = our_units;
+
+    float Enemy_max_health;
+    float Enemy_dps;
+    float our_health;
+    float our_dps;
+    
+    For unit in enemy_units:
+        int number_of_units = enemy_units.at(unit);
+        enemy_dps = Calculate total dps of unit(s);
+        enemy_max_health = unit.health * number_of_units;
+
+        counter_units = countertable.at(unit->unit_type);
+        our_dps = Calculate total dps of (our) counter_units;
+        remove units, used to calculate our_dps, from tmp;
+
+        decide which units are most suitable to be created;
+
+        while(our_health/enemy_dps < (1.1 * enemy_max_health/our_dps)) {
+            number_of_units += 1;
+            our_health += counter_unit.health;
+            our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
+        }
+        new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);
+
+}*/
 
 
 //NOT CURRENTLY USED!
