@@ -150,6 +150,7 @@ BPPlan MCTS::BestPlan() {
         if (curr_score > best_score) {
             break;
         }
+        curr_score = best_score;
         plan.push_back(curr->available_actions[best_index]);
         curr = curr->children[best_index];
     }
