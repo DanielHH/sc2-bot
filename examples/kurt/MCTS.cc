@@ -54,6 +54,7 @@ void MCTS::SearchOnce() {
             leaf->available_actions = leaf->AvailableActions();
             leaf->children.resize(leaf->available_actions.size());
             if (leaf->available_actions.empty()) {
+                leaf->Print();
                 std::cout << "Warning: MCTS: Leaf node found" << std::endl;
                 return;
             }
@@ -74,7 +75,9 @@ void MCTS::SearchOnce() {
             }
         }
         if (best_index == -1) {
-            std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
+            leaf->Print();
+            std::cout << "Error: MCTS: Search: " <<
+                "State with invalid children." << std::endl;
             return;
         }
         plan.push_back(leaf->available_actions[best_index]);
@@ -124,7 +127,8 @@ BPPlan MCTS::BestPlan() {
     BPState * curr = root;
     double curr_score = -1;
     while (true) {
-        if (curr->iter_amount - 1 < curr->available_actions.size()) {
+        if (curr->available_actions.empty() ||
+                curr->iter_amount - 1 < curr->available_actions.size()) {
             break;
         }
         int best_index = -1;
@@ -138,7 +142,9 @@ BPPlan MCTS::BestPlan() {
             }
         }
         if (best_index == -1) {
-            std::cout<<"Error: MCTS: State with invalid children."<<std::endl;
+            curr->Print();
+            std::cout << "Error: MCTS: BestPlan: " <<
+                "State with invalid children." << std::endl;
             break;
         }
         if (curr_score > best_score) {
