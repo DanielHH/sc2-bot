@@ -3,7 +3,7 @@
 #include "world_cell.h"
 #include "world_representation.h"
 
-struct CellComp {
+struct CellCompScout {
     Kurt* kurt;
     float gas_factor = 1;
     float mineral_factor = 1;
@@ -13,7 +13,7 @@ struct CellComp {
     float neutral_watch_tower_factor = 1;
     bool one_time_bonus = true;
    
-    CellComp(Kurt* parent_kurt) {
+    CellCompScout(Kurt* parent_kurt) {
         kurt = parent_kurt;
     }
     

@@ -5,6 +5,7 @@
 #include "world_cell.h"
 #include <cmath>
 #include <algorithm>
+#include "cell_priority_enum.cc"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -19,13 +20,14 @@
 using namespace sc2;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
-    cellPriorityQueue = new CellPriorityQueue(kurt);
+    scoutCellPriorityQueue = new CellPriorityQueue(kurt, CellPriorityMode::SCOUT);
+    armyCellPriorityQueue = new CellPriorityQueue(kurt, CellPriorityMode::ARMY);
 }
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
-    // DO ALL DE ARMY STUFF
+    scoutCellPriorityQueue->Update();
+    armyCellPriorityQueue->Update();
     
-    cellPriorityQueue->Update();
     if (kurt->scouts.empty()) {
         ArmyManager::TryGetScout();
     } else {
@@ -90,16 +92,12 @@ void ArmyManager::ScoutSmartPath(){
     float scout_x = scout->pos.x;
     float scout_y = scout->pos.y;
     
-    for (int i = 0; i < cellPriorityQueue->queue.size(); i++) {
-        Point2D point_to_visit = (cellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+    for (int i = 0; i < scoutCellPriorityQueue->queue.size(); i++) {
+        Point2D point_to_visit = (scoutCellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        /*if(euk_distance_to_unit < 5) {
-         cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
-         cellPriorityQueue->Update();
-         }*/
         return;
     }
 }
@@ -109,11 +107,12 @@ void ArmyManager::Defend() {
 }
 
 void ArmyManager::Attack() {
-    // TODO: implement Attack
-    for(const Unit* unit: kurt->army){
-        if (unit->orders.size() == 0) {
-            sc2::Point2D target = kurt->Observation()->GetGameInfo().enemy_start_locations[0];
-            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK,target);
+    if (!armyCellPriorityQueue->queue.empty()) {
+        for(const Unit* unit: kurt->army){
+            if (unit->orders.size() == 0) {
+                Point2D point_to_attack = (armyCellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+                kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, point_to_attack);
+            }
         }
     }
 }
