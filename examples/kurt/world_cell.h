@@ -24,7 +24,6 @@ public:
     float GetGasAmount();
     float GetEnemyDps();
     float GetSeenOnGameStep();
-    float GetScoutPriority();
     int GetCellRealX();
     int GetCellRealY();
     sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);

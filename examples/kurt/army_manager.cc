@@ -108,12 +108,22 @@ void ArmyManager::Defend() {
 
 void ArmyManager::Attack() {
     if (!armyCellPriorityQueue->queue.empty()) {
+        WorldCell* cell_to_attack = armyCellPriorityQueue->queue.at(0);
+        Point2D point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         for(const Unit* unit: kurt->army){
-            if (unit->orders.size() == 0) {
-                Point2D point_to_attack = (armyCellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
-                kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, point_to_attack);
+            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, point_to_attack);
+        }
+        if (kurt->Observation()->GetGameLoop() % 240 == 0) {
+            std::cout << "Army Attack at game step: " << kurt->Observation()->GetGameLoop() << std::endl;
+            std::cout << "Cell to attack: X: " << cell_to_attack->GetCellRealX() << ", Y: " << cell_to_attack->GetCellRealY() << std::endl;
+            for (const Unit* unit : cell_to_attack->GetBuildings()) {
+                std::cout << "building: " << unit->unit_type << std::endl;
+            }
+            for (const Unit* unit : cell_to_attack->GetTroops()) {
+                std::cout << "trooper: " << unit->unit_type << std::endl;
             }
         }
+        
     }
 }
 

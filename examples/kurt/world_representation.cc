@@ -30,42 +30,51 @@ WorldRepresentation::WorldRepresentation(Kurt* parent_kurt) {
 }
 
 void WorldRepresentation::UpdateWorldRep() {
-    sc2::Units visible_enemy_units = kurt->Observation()->GetUnits(Unit::Alliance::Enemy);
-    for (const Unit* enemy : visible_enemy_units) {
-        if(enemy->display_type == Unit::Visible) {
-            int unit_world_rep_x_pos = (enemy->pos.x) / (kurt->world_rep->chunk_size);
-            int unit_world_rep_y_pos = (enemy->pos.y) / (kurt->world_rep->chunk_size);
-            WorldCell* cell = kurt->world_rep->world_representation[unit_world_rep_y_pos][unit_world_rep_x_pos];
+    sc2::Units observed_enemy_units = kurt->Observation()->GetUnits(Unit::Alliance::Enemy);
+    sc2::Units observed_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Self);
+    for (int y  = 0; y < world_representation.size(); ++y) {
+        for (int x = 0; x < world_representation.at(y).size(); ++x) {
+            WorldCell* cell = world_representation.at(y).at(x);
+            world_representation.at(y).at(x)->SetMineralAmount(0);
+            world_representation.at(y).at(x)->SetGasAmount(0);
             cell->ClearBuildings();
             cell->ClearTroops();
+        }
+    }
+    for (const Unit* enemy : observed_enemy_units) {
+        int unit_world_rep_x_pos = (enemy->pos.x) / chunk_size;
+        int unit_world_rep_y_pos = (enemy->pos.y) / chunk_size;
+        WorldCell* cell = world_representation.at(unit_world_rep_y_pos).at(unit_world_rep_x_pos);
+        if (kurt->IsStructure(enemy)) {
+            cell->AddBuilding(enemy);
+        } else if(kurt->IsArmyUnit(enemy)) {
+            cell->AddTrooper(enemy);
+        }
+        /*
+        if(enemy->display_type == Unit::Visible) {
             cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
             if (kurt->IsStructure(enemy)) {
                 cell->AddBuilding(enemy);
             } else if(kurt->IsArmyUnit(enemy)) {
                 cell->AddTrooper(enemy);
             }
-        }
+        } else if (enemy->display_type == Unit::Snapshot) {
+            if (kurt->IsStructure(enemy)) {
+                // add building hidden by fog of war
+                cell->AddBuilding(enemy);
+            }
+        }*/
     }
-    sc2::Units visible_allied_units = kurt->Observation()->GetUnits(Unit::Alliance::Self);
-    for (const Unit* ally : visible_allied_units){
-        int ally_cell_x_pos = (int)ally->pos.x / chunk_size;
-        int ally_cell_y_pos = (int)ally->pos.y / chunk_size;
-        world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos)->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
+    for (const Unit* ally : observed_allied_units){
+        int ally_cell_x_pos = ally->pos.x / chunk_size;
+        int ally_cell_y_pos = ally->pos.y / chunk_size;
+        WorldCell* cell = kurt->world_rep->world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos);
+        cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
     }
-    
-    
     PopulateNeutralUnits();
 }
 
 void WorldRepresentation::PopulateNeutralUnits() {
-    // zero all cells mineral and gas ammount
-    for (int y  = 0; y < world_representation.size(); ++y) {
-        for (int x = 0; x < world_representation.at(y).size(); ++x) {
-            world_representation.at(y).at(x)->SetMineralAmount(0);
-            world_representation.at(y).at(x)->SetGasAmount(0);
-        }
-    }
-    
     // put in all neutral units
     for (const Unit* neutral_unit: kurt->Observation()->GetUnits(Unit::Alliance::Neutral)) {
         int x_pos = neutral_unit->pos.x / chunk_size;
