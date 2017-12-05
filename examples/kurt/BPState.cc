@@ -47,7 +47,6 @@ BPState::BPState(BPState * const state) {
 BPState::BPState(Kurt * const kurt) {
     const ObservationInterface* observation = kurt->Observation();
     std::vector<const Unit*> commandcenters;
-    int num_mineral_worker_slots = 0;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
         UNIT_TYPEID type = unit->unit_type.ToType();
         IncreaseUnitAmount(type, 1);
@@ -61,7 +60,6 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             }
             commandcenters.push_back(unit);
-            num_mineral_worker_slots += unit->ideal_harvesters - unit->assigned_harvesters;
             break;
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
@@ -137,7 +135,8 @@ BPState::BPState(Kurt * const kurt) {
         }
     }
     int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
-    geyser_amount -= GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
+    int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
+    geyser_amount -= refinery_amount;
     SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
@@ -145,8 +144,7 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * geyser_amount - kurt->scv_vespene.size());
+    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
@@ -154,8 +152,11 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
+    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
+    int num_mineral_worker_slots = 16 * GetUnitAvailableAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) -
+        GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * geyser_amount - kurt->scv_vespene.size());
     time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
@@ -496,6 +497,12 @@ void BPState::Print() {
             break;
         case UNIT_FAKEID::TERRAN_ANY_STARPORT:
             name = "TERRAN_ANY_STARPORT";
+            break;
+        case UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS:
+            name = "TERRAN_TOWNHALL_SCV_MINERALS";
+            break;
+        case UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE:
+            name = "TERRAN_TOWNHALL_SCV_VESPENE";
             break;
         default:
             name = UnitTypeToName(type);
