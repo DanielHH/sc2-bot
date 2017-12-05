@@ -121,6 +121,14 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             }
             break;
+        case UNIT_TYPEID::TERRAN_SCV:
+            if (std::find(kurt->scv_minerals.begin(), kurt->scv_minerals.end(), unit) != kurt->scv_minerals.end()) {
+                IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 1);
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 1);
+            } else if (std::find(kurt->scv_vespene.begin(), kurt->scv_vespene.end(), unit) != kurt->scv_vespene.end()) {
+                IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, 1);
+                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, 1);
+            }
         }
     }
     for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
@@ -142,6 +150,13 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
+    SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
+    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
+    SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
+    SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
+    SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
+    SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
 }
 
