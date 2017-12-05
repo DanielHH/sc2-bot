@@ -6,7 +6,7 @@
 #include <cmath>
 #include <algorithm>
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -54,7 +54,7 @@ void ArmyManager::PlanSmartScoutPath(){
             danger_points.push_back(new DangerPoint(enemy->pos, kurt->Observation()->GetGameLoop()));
         }
     }
-    Point2D target;
+    sc2::Point2D target;
     float shortest_distance = INFINITY;
     for (int i = danger_points.size()-1; i >= 0; i--) {
         DangerPoint* point = danger_points.at(i);
