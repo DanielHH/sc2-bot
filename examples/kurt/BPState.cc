@@ -131,6 +131,7 @@ BPState::BPState(Kurt * const kurt) {
             if (DistanceSquared3D(center->pos, neutral->pos) <
                     BASE_RESOURCE_TEST_RANGE2) {
                 IncreaseUnitAmount(type, 1);
+                IncreaseUnitAvailableAmount(type, 1);
                 break;
             }
         }
@@ -300,7 +301,7 @@ bool BPState::CanExecuteNow(ACTION action) const {
         }
     }
     for (auto pair : ar.consumed) {
-        if (pair.second > GetUnitAmount(pair.first)) {
+        if (pair.second > GetUnitAvailableAmount(pair.first)) {
             return false;
         }
     }
