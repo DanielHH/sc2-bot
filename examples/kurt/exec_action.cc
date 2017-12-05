@@ -150,7 +150,11 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
             action->UnitCommand(u, ability, pt);*/
             if (u->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
                 kurt->scv_minerals.remove(u);
-                kurt->workers.push_back(u);
+                if (ability == ABILITY_ID::BUILD_REFINERY) {
+                    kurt->scv_vespene.push_back(u);
+                } else {
+                    kurt->workers.push_back(u);
+                }
             }
             return true;
         }
