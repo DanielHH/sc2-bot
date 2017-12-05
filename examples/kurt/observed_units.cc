@@ -14,6 +14,8 @@ using namespace sc2;
 #define TEST(s)
 #endif // DEBUG
 
+map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
+
 ObservedUnits::ObservedUnits() {}
 
 void ObservedUnits::AddUnits(const Units* units) {
@@ -50,6 +52,13 @@ string ObservedUnits::ToString() {
     }
 
     return str;
+}
+
+float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
+    int number_of_units = saved_units.at(unit_type);
+    float max_health_per_unit = unit_max_health.at(unit_type);
+    float max_health_for_unit_type = number_of_units * max_health_per_unit;
+    return max_health_for_unit_type;
 }
 
 #undef DEBUG // Stop debug prints from leaking

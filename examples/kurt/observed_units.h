@@ -9,6 +9,8 @@ class ObservedUnits {
 public:
     ObservedUnits();
 
+    static std::map <sc2::UNIT_TYPEID, float> unit_max_health;
+
     /* Takes a Units (vector) and adds units if more than prevoius are observed */
     void AddUnits(const sc2::Units* units);
 
@@ -20,6 +22,8 @@ public:
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();
+
+    float CalculateUnitTypeMaxHealth(sc2::UNIT_TYPEID unit_type);
 
 private:
     std::map <sc2::UNIT_TYPEID, int> saved_units;

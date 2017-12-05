@@ -51,6 +51,12 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 
+void StrategyManager::OnUnitEnterVision(const Unit* unit) {
+    if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
+        ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
+    }
+}
+
 void StrategyManager::SaveOurUnits(const Unit* unit) {
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnit(unit);
