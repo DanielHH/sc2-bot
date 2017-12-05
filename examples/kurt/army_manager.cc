@@ -6,7 +6,7 @@
 #include <cmath>
 #include <algorithm>
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -54,7 +54,7 @@ void ArmyManager::PlanSmartScoutPath(){
             danger_points.push_back(new DangerPoint(enemy->pos, kurt->Observation()->GetGameLoop()));
         }
     }
-    Point2D target;
+    sc2::Point2D target;
     float shortest_distance = INFINITY;
     for (DangerPoint* point : danger_points) {
         if (point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()) < danger_time * 24) {
@@ -75,7 +75,14 @@ void ArmyManager::PlanSmartScoutPath(){
                 }
             }
         } else {
-            danger_points.erase(std::find(danger_points.begin(), danger_points.end(), point));
+            auto deleteme = std::find(danger_points.begin(), danger_points.end(), point);
+            TEST(if (deleteme == danger_points.end()){
+                PRINT("Searched for point: " << point->GetPoint().x << ";" << point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()))
+                PRINT("Points that existed:")
+                for (DangerPoint *pt : danger_points) PRINT(pt->GetPoint().x << ";" << pt->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()))
+            })TEST(else)
+            danger_points.erase(deleteme);
+            *point;
             delete point;
         }
     }
