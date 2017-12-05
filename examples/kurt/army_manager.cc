@@ -56,7 +56,8 @@ void ArmyManager::PlanSmartScoutPath(){
     }
     sc2::Point2D target;
     float shortest_distance = INFINITY;
-    for (DangerPoint* point : danger_points) {
+    for (int i = danger_points.size()-1; i >= 0; i--) {
+        DangerPoint* point = danger_points.at(i);
         if (point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()) < danger_time * 24) {
             if(Distance2D(scout->pos, point->GetPoint()) < scout_safe_distance) {
                 float scout_x = scout->pos.x;
