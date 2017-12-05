@@ -36,6 +36,7 @@ void WorldRepresentation::UpdateWorldRep() {
             int unit_world_rep_x_pos = (enemy->pos.x) / (kurt->world_rep->chunk_size);
             int unit_world_rep_y_pos = (enemy->pos.y) / (kurt->world_rep->chunk_size);
             WorldCell* cell = kurt->world_rep->world_representation[unit_world_rep_y_pos][unit_world_rep_x_pos];
+            cell->ClearBuildings();
             cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
             if (kurt->IsStructure(enemy)) {
                 cell->AddBuilding(enemy);

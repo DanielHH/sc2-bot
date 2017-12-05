@@ -43,4 +43,5 @@ public:
     bool SmartComp(WorldCell* a, WorldCell* b);
     void AddBuilding(const sc2::Unit* building);
     void AddTrooper(const sc2::Unit* trooper);
+    void ClearBuildings();
 };
