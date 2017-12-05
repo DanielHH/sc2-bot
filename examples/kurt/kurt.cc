@@ -84,7 +84,7 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     
     for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
         if ((*it).first == destroyed_unit->unit_type.ToType() || IsStructureType(it->first)) {
-            build_manager->replan = true;
+            build_manager->InitNewPlan();
             break;
         }
     }

@@ -58,27 +58,78 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
     return requirements;
 }
 
+void TestMCTS(BPState * const start, BPState * const goal) {
+    std::cout << "----------------------------" << std::endl;
+    MCTS mcts(start, goal);
+    mcts.Search(5000);
+    BPPlan best_plan = mcts.BestPlan();
+    BPPlan basic_plan;
+    basic_plan.AddBasicPlan(start, goal);
+    std::cout << best_plan << std::endl;
+    std::cout << "time basic:  " << basic_plan.TimeRequired(start) << std::endl;
+    std::cout << "time better: " << best_plan.TimeRequired(start) << std::endl;
+    std::cout << "----------------------------" << std::endl;
+}
+
 void BuildManager::OnStep(const ObservationInterface* observation) {
-    if (current_plan.empty() && goal != nullptr) {
-        InitNewPlan(observation);
+    // If there is no goal in life, what is the point of living?
+    if (goal == nullptr) {
+        return;
     }
+    BPState current_state(agent);
+    //
+    // Do the searching for a better plan.
+    //
+    if (steps_until_replan <= -1) {
+        if (mcts != nullptr) {
+            delete mcts;
+            mcts = nullptr;
+        }
+    }
+    if (mcts == nullptr) {
+        mcts = new MCTS(&current_state, goal);
+    }
+    mcts->Search(SEARCH_ITER_PER_STEP);
+    if (steps_until_replan <= 0) {
+        current_plan = mcts->BestPlan();
+        delete mcts;
+        mcts = nullptr;
+        steps_until_replan = STEPS_BETWEEN_REPLAN;
+
+        PRINT("--- Created new plan ---")
+        TEST(current_state.Print();)
+        PRINT(current_plan)
+    }
+    --steps_until_replan;
+    //
+    // Execute the current plan
+    //
     current_plan.ExecuteStep(agent);
-    if (current_plan.empty()) {
+    //
+    // Test if a goal is reached
+    //
+    if (current_state.ContainsAllUnitsOf(goal)) {
         goal = nullptr;
-        std::cout << "goal is reached" << std::endl;
+        std::cout << "--- Goal is reached ---" << std::endl;
         agent->ExecuteSubplan();
-        // Goal is reached, need a better goal checker
-        // when multiple goals can be active at the same time.
     }
 
+    //
     // TESTING
-    TEST(for (const Unit *u : observation->GetUnits(Unit::Alliance::Self, [](Unit const& u) { return u.unit_type == UNIT_TYPEID::TERRAN_SCV; })) {
-        std::cout << UnitTypeToName(u->unit_type) << ":";
-        for (auto uo : u->orders) {
-            std::cout << " " << AbilityTypeToName(uo.ability_id);
-        }
-        std::cout << std::endl;
-    })
+    //
+    /*
+    BPState * curr = new BPState(agent);
+
+    BPState * goal = new BPState();
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 9);
+    TestMCTS(curr, goal);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_GHOST, 0);
+    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 5);
+    TestMCTS(curr, goal);
+    delete curr;
+
+    throw std::runtime_error("hehehe");
+    */
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
@@ -86,49 +137,15 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     ActionRepr::InitConvertMap();
     ExecAction::Init(agent);
     setup_finished = true;
-
-    auto test = [] (BPState * const curr, BPState * const goal) {
-        std::cout << "----------------------------" << std::endl;
-        MCTS mcts(curr, goal);
-        mcts.Search(5000);
-        std::cout << mcts.BestPlan() << std::endl;
-        BPPlan plan;
-        plan.AddBasicPlan(curr, goal);
-        std::cout << "time basic:  " << plan.TimeRequired(curr) << std::endl;
-        std::cout << "time better: " << mcts.BestPlan().TimeRequired(curr) << std::endl;
-        std::cout << "----------------------------" << std::endl;
-    };
-
-    BPState * curr = new BPState(agent);
-    curr->SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, 11);
-
-    BPState * goal = new BPState();
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
-    test(curr, goal);
-    goal->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 22);
-    test(curr, goal);
-    delete curr;
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {
     goal = goal_;
-    // Reset the current plan
-    current_plan.resize(0);
+    InitNewPlan();
 }
 
-void BuildManager::InitNewPlan(const ObservationInterface* observation) {
-    BPState * current_state = new BPState(agent);
-    current_plan.AddBasicPlan(current_state, goal);
-
-    std::cout << "--- Creating new plan ---" << std::endl;
-    std::cout << "Current state:" << std::endl;
-    current_state->Print();
-    std::cout << "Goal state:" << std::endl;
-    goal->Print();
-    std::cout << "Current plan:" << std::endl;
-    std::cout << current_plan << std::endl;
-
-    delete current_state;
+void BuildManager::InitNewPlan() {
+    steps_until_replan = -1;
 }
 
 void BuildManager::SetUpTechTree(const ObservationInterface* observation) {

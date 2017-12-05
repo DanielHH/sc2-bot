@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constants.h"
 #include "BPPlan.h"
 
 #include <sc2api/sc2_api.h>
@@ -7,6 +8,7 @@
 #include <vector>
 
 class BPState;
+class MCTS;
 class Kurt;
 
 class BuildManager {
@@ -20,7 +22,10 @@ public:
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
 
-    bool replan = true;
+    /* Called when a major change
+     * (like a new goal or loosing a building) happens
+     */
+    void InitNewPlan();
 
 private:
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::UNIT_TYPEID> > tech_tree_2;
@@ -28,13 +33,13 @@ private:
     static void SetUpTechTree(const sc2::ObservationInterface* observation);
     static bool setup_finished;
 
-    /* Called when a major change
-     * (like a new goal or loosing a building) happens
-     */
-    void InitNewPlan(const sc2::ObservationInterface* observation);
-
     BPState * goal = nullptr;
     BPPlan current_plan;
+    MCTS * mcts = nullptr;
+    int steps_until_replan = -1;
 
     Kurt *const agent;
+
+    const int STEPS_BETWEEN_REPLAN = STEPS_PER_SEC * 1;
+    const int SEARCH_ITER_PER_STEP = 30;
 };
