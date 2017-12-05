@@ -136,6 +136,15 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
         PRINT("Try to exec action " << action)
         if (! ExecAction::Exec(kurt, action)) {
             break;
+        } else {
+            std::cout << "Executed action " << ActionToName(action);
+            if (i + 1 < vector::size()) {
+                ACTION next_a = vector::operator[](i + 1);
+                std::cout << ", next action is " << ActionToName(next_a);
+            } else {
+                std::cout << ", no more actions in this BPPlan";
+            }
+            std::cout << std::endl;
         }
     }
     auto beg = vector::begin();
