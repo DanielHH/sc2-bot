@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "action_repr.h"
 #include "action_enum.h"
+#include "exec_action.h"
 #include "BPState.h"
 #include "BPPlan.h"
 #include "MCTS.h"
@@ -81,10 +82,9 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
 }
 
 void BuildManager::OnGameStart(const ObservationInterface* observation) {
-    // Set up build tree
-    std::cout << (int)(Kurt::GetAbility(ABILITY_ID::BUILD_TECHLAB_STARPORT)->target) << std::endl;
     SetUpTechTree(observation);
     ActionRepr::InitConvertMap();
+    ExecAction::Init(agent);
     setup_finished = true;
 
     auto test = [] (BPState * const curr, BPState * const goal) {
