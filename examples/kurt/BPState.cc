@@ -174,12 +174,12 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
             minerals_time = 1 / GetMineralRate() *
-                std::max(0, ar.consumed[minerals] - GetUnitAmount(minerals));
+                std::max(0, ar.consumed[minerals] - GetUnitAvailableAmount(minerals));
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
             vespene_time = 1 / GetVespeneRate() *
-                std::max(0, ar.consumed[vespene] - GetUnitAmount(vespene));
+                std::max(0, ar.consumed[vespene] - GetUnitAvailableAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
         if (! actions.empty()) {
@@ -215,10 +215,10 @@ void BPState::SimpleUpdate(double delta_time) {
     }
     int minerals = GetMinerals() +
         delta_time * GetMineralRate();
-    SetUnitAmount(UNIT_FAKEID::MINERALS, minerals);
+    SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, minerals);
     int vespene = GetVespene() +
         delta_time * GetVespeneRate();
-    SetUnitAmount(UNIT_FAKEID::VESPENE, vespene);
+    SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, vespene);
     time += delta_time;
 }
 
@@ -317,14 +317,14 @@ bool BPState::CanExecuteNow(ACTION action) const {
 bool BPState::CanExecuteNowOrSoon(ACTION action) const {
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto p : ar.required) {
-        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
+        if (amount > GetUnitAvailableAmount(type) + GetUnitProdAmount(type)) {
             if (type == UNIT_FAKEID::MINERALS &&
                     GetMineralRate() > 0) {
                 continue;
@@ -337,7 +337,7 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
         }
     }
     for (auto p : ar.borrowed) {
-        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }
@@ -432,20 +432,20 @@ double BPState::GetTime() const {
 }
 
 int BPState::GetMinerals() const {
-    return GetUnitAmount(UNIT_FAKEID::MINERALS);
+    return GetUnitAvailableAmount(UNIT_FAKEID::MINERALS);
 }
 
 double BPState::GetMineralRate() const {
-    return GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS) *
+    return GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS) *
         MINERALS_PER_SEC_PER_SCV;
 }
 
 int BPState::GetVespene() const {
-    return GetUnitAmount(UNIT_FAKEID::VESPENE);
+    return GetUnitAvailableAmount(UNIT_FAKEID::VESPENE);
 }
 
 double BPState::GetVespeneRate() const {
-    return GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE) *
+    return GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE) *
         VESPENE_PER_SEC_PER_SCV;
 }
 
