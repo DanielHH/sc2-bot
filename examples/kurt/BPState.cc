@@ -539,8 +539,8 @@ bool BPState::operator<(BPState const &other) const {
 }
 
 bool BPState::ContainsAllUnitsOf(BPState const &other) const {
-    for (auto p : unit_amount) {
-        if (other.GetUnitAmount(p.first) > p.second) {
+    for (auto pair : other.unit_amount) {
+        if (GetUnitAmount(pair.first) < pair.second) {
             return false;
         }
     }
