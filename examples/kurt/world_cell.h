@@ -44,4 +44,5 @@ public:
     void AddBuilding(const sc2::Unit* building);
     void AddTrooper(const sc2::Unit* trooper);
     void ClearBuildings();
+    void ClearTroops();
 };

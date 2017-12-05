@@ -70,6 +70,10 @@ void WorldCell::ClearBuildings() {
     buildings.clear();
 }
 
+void WorldCell::ClearTroops() {
+    troops.clear();
+}
+
 sc2::Units WorldCell::GetTroops(){return troops;}
 sc2::Units WorldCell::GetBuildings(){return buildings;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}

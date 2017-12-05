@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     Kurt bot;
     coordinator.SetParticipants({
             CreateParticipant(sc2::Race::Terran, &bot),
-            CreateComputer(sc2::Race::Terran, sc2::Easy)
+        CreateComputer(sc2::Race::Terran, sc2::VeryEasy)
     });
 
     coordinator.LaunchStarcraft();
