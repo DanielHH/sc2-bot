@@ -28,7 +28,7 @@ private:
     CellPriorityQueue* armyCellPriorityQueue;
     std::vector<DangerPoint*> danger_points;
     float scout_safe_distance = 15;
-    int danger_time = 10;
+    int danger_time = 1;
     
     void Harass();
     void Attack();
