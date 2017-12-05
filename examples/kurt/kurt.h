@@ -13,7 +13,7 @@ public:
     std::list<const sc2::Unit*> scv_minerals;
     std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
-    std::list<const sc2::Unit*> army;
+    std::list<const sc2::Unit*> army_units;
     
     WorldRepresentation* world_rep;
     enum CombatMode { DEFEND, ATTACK, HARASS };
