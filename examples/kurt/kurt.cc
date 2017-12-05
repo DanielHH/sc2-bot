@@ -45,6 +45,9 @@ void Kurt::OnStep() {
 }
 
 void Kurt::OnUnitCreated(const Unit* unit) {
+    if (UnitAlreadyStored(unit)) {
+        return;
+    }
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
     strategy_manager->SaveOurUnits(unit);
@@ -119,6 +122,14 @@ bool Kurt::IsStructureType(const UNIT_TYPEID &type) {
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
     return std::find(list.begin(), list.end(), unit) != list.end();
+}
+
+bool Kurt::UnitAlreadyStored(const sc2::Unit* unit) {
+    return UnitInList(workers, unit) ||
+        UnitInList(scv_minerals, unit) ||
+        UnitInList(scv_vespene, unit) ||
+        UnitInList(scouts, unit) ||
+        UnitInList(army, unit);
 }
 
 bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {

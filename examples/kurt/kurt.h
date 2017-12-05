@@ -37,6 +37,9 @@ public:
     /* Test if given unit exist in given list. */
     bool UnitInList(std::list<const sc2::Unit*>& list, const sc2::Unit* unit);
 
+    /* Tests if given unit already has been stored in a shared list. */
+    bool UnitAlreadyStored(const sc2::Unit* unit);
+
     /* Test if given unit is in the list scv_minerals. */
     bool UnitInScvMinerals(const sc2::Unit* unit);
 
