@@ -23,8 +23,6 @@ ObservedUnits enemy_structures;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
-    our_cp.alliance = "our_cp";
-    enemy_cp.alliance = "enemy_cp";
 
     //current_plan = CreateDefaultGamePlan(kurt);
     current_plan = RushPlan(kurt);
@@ -37,16 +35,24 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     SaveSpottedEnemyUnits(observation);
 
-    if (current_game_loop % 500 == 0) {
+    if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
+            PRINT("|g2g CP: " + to_string(enemy_units.GetCombatPower()->g2g))
+            PRINT("|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a))
+            PRINT("|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g))
+            PRINT("|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a))
         PRINT(enemy_units.ToString())
         PRINT("------Enemy structures-------")
         PRINT(enemy_structures.ToString())
         PRINT("------Our units--------------")
+            PRINT("|g2g CP: " + to_string(our_units.GetCombatPower()->g2g))
+            PRINT("|g2a CP: " + to_string(our_units.GetCombatPower()->g2a))
+            PRINT("|a2g CP: " + to_string(our_units.GetCombatPower()->a2g))
+            PRINT("|a2a CP: " + to_string(our_units.GetCombatPower()->a2a))
         PRINT(our_units.ToString())
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
-        PRINT("-----------------------------")
+        PRINT("-----------------------------\n\n")
     }
 }
 
@@ -57,9 +63,6 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     else {
         our_units.AddUnit(unit);
     }
-
-    //update combatpower. TODO: Make more efficient.
-    CalculateCombatPower(&our_cp);
 }
 
 void StrategyManager::RemoveDeadUnit(const Unit* unit) {
@@ -111,9 +114,6 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     //Save any newly observed units
     enemy_units.AddUnits(&observed_units);
     //SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
-
-    //Update combatpower. TODO: Make more efficient.
-    CalculateCombatPower(&enemy_cp);
 };
 
 //TODO: Not needed anny more?
@@ -133,73 +133,14 @@ void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved
     saved_units->insert(saved_units->end(), new_units->begin(), new_units->end());
 }
 
-void StrategyManager::CalculateCombatPower(CombatPower *cp) {
-    //reset cp-data.
-    cp->g2g = 0;
-    cp->g2a = 0;
-    cp->a2g = 0;
-    cp->a2a = 0;
-
-    //TODO: Implement function in ObservedUnits to calculate cp?
-    if (cp->alliance == "our_cp") {
-        //CalculateCPHelp(cp, our_units);
-    }
-    else if (cp->alliance == "enemy_cp") {
-        //CalculateCPHelp(cp, enemy_units);
-    }
-};
-
-void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
-    UnitTypeData* unit_data = new UnitTypeData();
-    float weapon_dps;
-    
-    for (auto unit : team) {
-        if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
-            unit_data = Kurt::GetUnitType(unit->unit_type);
-            for (auto weapon : unit_data->weapons) {
-                weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
-                if (weapon.type == Weapon::TargetType::Any) { //Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
-                    //GroundToBoth
-                    if (!unit->is_flying) {
-                        cp->g2a += weapon_dps;
-                        cp->g2g += weapon_dps;
-                    }
-                    //AirToBoth
-                    if (unit->is_flying) {
-                        cp->a2a += weapon_dps;
-                        cp->a2g += weapon_dps;
-                    }
-                }
-                else if (weapon.type == Weapon::TargetType::Ground) {
-                    //GroundToGround
-                    if (!unit->is_flying) {
-                        cp->g2g += weapon_dps;
-                    }
-                    //AirToGround
-                    else if (unit->is_flying) {
-                        cp->a2g += weapon_dps;
-                    }
-                }
-                else if (weapon.type == Weapon::TargetType::Air) {
-                    //GroundToAir
-                    if (!unit->is_flying) {
-                        cp->g2a += weapon_dps;
-                    }
-                    //AirToAir
-                    if (unit->is_flying) {
-                        cp->a2a += weapon_dps;
-                    }
-                }
-            }
-        }
-    }
-};
-
 void StrategyManager::CalculateCombatMode() {
-    if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
+    const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
+    const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
+    if (our_cp->g2g > enemy_cp->g2g && our_cp->g2a > enemy_cp->a2g && our_cp->a2g > enemy_cp->g2a && our_cp->a2a > enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
     }
-    else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
+    else if (our_cp->g2g < enemy_cp->g2g && our_cp->g2a < enemy_cp->a2g && our_cp->a2g < enemy_cp->g2a && our_cp->a2a < enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::DEFEND);
     }
     else {
@@ -213,15 +154,18 @@ void StrategyManager::SetGamePlan() {
 }
 
 void StrategyManager::SetBuildGoal() {
+    const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
+    const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
     BPState* new_goal_state = new BPState();
 
-    if (our_cp.g2g < 80 || our_cp.g2a < 80) {
+    if (our_cp->g2g < 80 || our_cp->g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
     }
-    else if (our_cp.a2a < 50) {
+    else if (our_cp->a2a < 50) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
     }
-    else if (our_cp.a2a < enemy_cp.a2a || our_cp.g2a < enemy_cp.g2a) {
+    else if (our_cp->a2a < enemy_cp->a2a || our_cp->g2a < enemy_cp->g2a) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
     }
