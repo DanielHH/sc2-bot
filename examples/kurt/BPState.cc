@@ -48,78 +48,46 @@ BPState::BPState(Kurt * const kurt) {
     const ObservationInterface* observation = kurt->Observation();
     std::vector<const Unit*> commandcenters;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+        if (unit->build_progress < 1) {
+            continue;
+        }
         UNIT_TYPEID type = unit->unit_type.ToType();
         IncreaseUnitAmount(type, 1);
-        if (unit->orders.empty()) IncreaseUnitAvailableAmount(type, 1);
+        IncreaseUnitAvailableAmount(type, 1);
         switch (type) {
         case UNIT_TYPEID::TERRAN_COMMANDCENTER:
         case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
         case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
-            if (unit->orders.empty()) {
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-            IncreaseUnitAmount(type, 1);
-            switch (unit->orders.size()) {
-            case 0:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-                IncreaseUnitAvailableAmount(type, 1);
-                break;
-            case 1:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
-                break;
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
         case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
-            if (unit->orders.empty()) {
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
         case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
-            IncreaseUnitAmount(type, 1);
-            switch (unit->orders.size()) {
-            case 0:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
-                IncreaseUnitAvailableAmount(type, 1);
-                break;
-            case 1:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
-                break;
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
         case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
-            if (unit->orders.empty()) {
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             break;
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-            IncreaseUnitAmount(type, 1);
-            switch (unit->orders.size()) {
-            case 0:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-                IncreaseUnitAvailableAmount(type, 1);
-                break;
-            case 1:
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
-                break;
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
             break;
         case UNIT_TYPEID::TERRAN_STARPORT:
         case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
-            if (unit->orders.empty()) {
-                IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
-            }
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             break;
         }
     }
@@ -157,7 +125,31 @@ BPState::BPState(Kurt * const kurt) {
         GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
-    time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
+    double start_time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
+    time = start_time;
+    for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+        for (UnitOrder order : unit->orders) {
+            AbilityID ability = order.ability_id;
+            if (ActionRepr::convert_api_our.count(ability) == 0) {
+                continue;
+            }
+            ACTION action = ActionRepr::convert_api_our.at(ability);
+            ActionRepr ar = ActionRepr::values.at(action);
+            for (auto pair : ar.consumed) {
+                UNIT_TYPEID type = pair.first;
+                int amount = pair.second;
+                IncreaseUnitAmount(type, amount);
+                IncreaseUnitAvailableAmount(type, amount);
+            }
+            AddAction(action);
+        }
+    }
+    if (start_time != time) {
+        Print();
+        std::cout << "Error: BPState: Constructor(Kurt*): " <<
+            "Adding action updated time on state" << std::endl;
+        throw std::runtime_error("BPState: Invalid constructor.");
+    }
 }
 
 BPState::~BPState() {
@@ -191,12 +183,12 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         }
         if (delta_time == INFINITY) {
             Print();
-            std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
+            std::cout << "Error: BPState: UpdateUntilAvailable: " <<
                 "infinity, action: " << action << std::endl;
             throw std::runtime_error("BPPlan: Update INFINITY time");
         } else if (delta_time == 0) {
             Print();
-            std::cout << "Error: BPPlan: UpdateUntilAvailable: " <<
+            std::cout << "Error: BPState: UpdateUntilAvailable: " <<
                 "Action never available, action: " << action << std::endl;
             throw std::runtime_error("BPPlan: Update zero time");
         }
