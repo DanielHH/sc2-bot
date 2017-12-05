@@ -23,7 +23,10 @@ public:
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();
 
+    /* Returns a float which represents the max health a group of units of a certain unittype can have.*/
     float CalculateUnitTypeMaxHealth(sc2::UNIT_TYPEID unit_type);
+
+    std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
 private:
     std::map <sc2::UNIT_TYPEID, int> saved_units;

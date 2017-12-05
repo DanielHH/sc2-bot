@@ -61,6 +61,10 @@ float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
     return max_health_for_unit_type;
 }
 
+map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
+    return &saved_units;
+}
+
 #undef DEBUG // Stop debug prints from leaking
 #undef TEST
 #undef PRINT

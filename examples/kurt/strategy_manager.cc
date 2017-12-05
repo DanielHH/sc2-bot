@@ -248,38 +248,51 @@ void StrategyManager::CounterEnemyUnits() {
     }
 }*/
 
-/* PSEUDO-CODE
+
 void StrategyManager::CounterEnemyUnits() {
     BPState* new_goal_state = new BPState();
     Unit unit_to_create;
     int number_of_units;
 
-    ObservedUnits tmp = our_units;
+    vector<sc2::UNIT_TYPEID> counter_units;
 
-    float Enemy_max_health;
-    float Enemy_dps;
+    map <UNIT_TYPEID, int> *const tmp = our_units.GetSavedUnits();
+
+    float enemy_max_health;
+    float enemy_dps;
     float our_health;
     float our_dps;
+
+    map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
     
-    For unit in enemy_units:
-        int number_of_units = enemy_units.at(unit);
-        enemy_dps = Calculate total dps of unit(s);
-        enemy_max_health = unit.health * number_of_units;
+    for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
+        // check enemy_units
+        number_of_units = current_enemy_units->at(unit->first);
+        //enemy_dps = 
+        enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
 
-        counter_units = countertable.at(unit->unit_type);
-        our_dps = Calculate total dps of (our) counter_units;
-        remove units, used to calculate our_dps, from tmp;
+        // check our units
+        counter_units = zerg_countertable.at(unit->first);
+        for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
+            if ((tmp->count(*unit)) == 1) {
+                // our_dps += Calculate total dps of(our) counter_units;Calculate total dps of(our) counter_units;
+                // our_health += Calculate total health of(our) counter_units;Calculate total dps of(our) counter_units
+                // remove units, used to calculate our_dps, from tmp;
+            }
+        }
+        
+       // decide which units are most suitable to be created;
 
-        decide which units are most suitable to be created;
-
-        while(our_health/enemy_dps < (1.1 * enemy_max_health/our_dps)) {
+    /*    while (our_health / enemy_dps < (1.1 * enemy_max_health / our_dps)) {
             number_of_units += 1;
             our_health += counter_unit.health;
             our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
         }
-        new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);
+        new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);*/
+    }
+       
 
-}*/
+}
 
 
 //NOT CURRENTLY USED!
