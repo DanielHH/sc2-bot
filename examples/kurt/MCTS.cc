@@ -28,7 +28,13 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
-    basic_time = basic_plan.TimeRequired(root);
+    BPState tmp(root);
+    tmp.SimulatePlan(basic_plan);
+    // The min border is needed since the reward is relative the basic plan.
+    // If e.g. basic_vespene_rate is 0, all higher rates gets the same reward.
+    basic_time = std::max(40.0, tmp.GetTime() - root->GetTime());
+    basic_mineral_rate = std::max(5.0, tmp.GetMineralRate());
+    basic_vespene_rate = std::max(10.0, tmp.GetVespeneRate());
 }
 
 MCTS::~MCTS() {
@@ -104,12 +110,15 @@ void MCTS::SearchOnce() {
      */
     PRINT("Simulation phase.")
     plan.AddBasicPlan(new_state, goal);
-    double time = plan.TimeRequired(root);
-    double reward = 0;
-    if (time <= basic_time) {
-        reward = REWARD_START + (1 - REWARD_START) *
-            (basic_time - time) / basic_time;
-    }
+    BPState tmp(root);
+    tmp.SimulatePlan(plan);
+    double time = tmp.GetTime() - root->GetTime();
+    double mineral_rate = tmp.GetMineralRate();
+    double vespene_rate = tmp.GetVespeneRate();
+    double reward =
+        time_portion * basic_time / (time + basic_time) +
+        minerals_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
+        vespene_portion * vespene_rate / (vespene_rate + basic_vespene_rate);
     /*
      * Backpropagation phase.
      */

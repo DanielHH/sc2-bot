@@ -29,9 +29,17 @@ private:
     /* The goal node/state. */
     BPState * goal;
 
+    /* Stored values for executing only the basic plan. */
     double basic_time;
-    int basic_minerals;
-    int basic_vespene;
+    double basic_mineral_rate;
+    double basic_vespene_rate;
+
+    /* How big impact each factor has on the reward for a state.
+     * The total should sum up to 1.
+     */
+    double time_portion = 0.4;
+    double minerals_portion = 0.3;
+    double vespene_portion = 0.3;
 
     /* The scale of exploration versus exploitation in the selection phase. */
     const double EXPLORATION_SCALE = 0.2;
