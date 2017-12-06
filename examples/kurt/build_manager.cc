@@ -60,14 +60,31 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
 
 void TestMCTS(BPState * const start, BPState * const goal) {
     std::cout << "----------------------------" << std::endl;
+
     MCTS mcts(start, goal);
     mcts.Search(5000);
     BPPlan best_plan = mcts.BestPlan();
+    BPState tmp1(start);
+    tmp1.SimulatePlan(best_plan);
+    double best_time = tmp1.GetTime() - start->GetTime();
+    double best_mineral_rate = tmp1.GetMineralRate();
+    double best_vespene_rate = tmp1.GetVespeneRate();
+
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(start, goal);
+    BPState tmp2(start);
+    tmp2.SimulatePlan(basic_plan);
+    double basic_time = tmp2.GetTime() - start->GetTime();
+    double basic_mineral_rate = tmp2.GetMineralRate();
+    double basic_vespene_rate = tmp2.GetVespeneRate();
+
     std::cout << best_plan << std::endl;
-    std::cout << "time basic:  " << basic_plan.TimeRequired(start) << std::endl;
-    std::cout << "time better: " << best_plan.TimeRequired(start) << std::endl;
+    std::cout << "vespene rate basic:  " << basic_vespene_rate << std::endl;
+    std::cout << "vespene rate best: " << best_vespene_rate << std::endl;
+    std::cout << "mineral rate basic:  " << basic_mineral_rate << std::endl;
+    std::cout << "mineral rate best: " << best_mineral_rate << std::endl;
+    std::cout << "time basic:  " << basic_time << std::endl;
+    std::cout << "time best: " << best_time << std::endl;
     std::cout << "----------------------------" << std::endl;
 }
 
@@ -110,7 +127,8 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
     //
     if (current_state.ContainsAllUnitsOf(goal)) {
         goal = nullptr;
-        std::cout << "--- Goal is reached ---" << std::endl;
+        std::cout << "--- Goal is reached, gametime: " <<
+            current_state.GetTime() << " ---" << std::endl;
         agent->ExecuteSubplan();
     }
 
