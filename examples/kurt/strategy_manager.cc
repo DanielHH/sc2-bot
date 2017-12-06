@@ -256,7 +256,7 @@ void StrategyManager::CounterEnemyUnits() {
 
     vector<sc2::UNIT_TYPEID> counter_units;
 
-    map <UNIT_TYPEID, int> *const tmp = our_units.GetSavedUnits();
+    map <UNIT_TYPEID, int> *const current_our_units = our_units.GetSavedUnits();
 
     float enemy_max_health;
     float enemy_dps;
@@ -266,17 +266,17 @@ void StrategyManager::CounterEnemyUnits() {
     map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
     
     for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
-        // check enemy_units
+        // CHECK ENEMY UNITS
         number_of_units = current_enemy_units->at(unit->first);
         //enemy_dps = 
         enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
 
-        // check our units
+        // CHECK OUR UNITS
         counter_units = zerg_countertable.at(unit->first);
         for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
-            if ((tmp->count(*unit)) == 1) {
-                // our_dps += Calculate total dps of(our) counter_units;Calculate total dps of(our) counter_units;
-                // our_health += Calculate total health of(our) counter_units;Calculate total dps of(our) counter_units
+            if ((current_our_units->count(*unit)) == 1) {
+                // our_dps += Calculate total dps of(our) counter_units;
+                // our_health += Calculate total health of(our) counter_units;
                 // remove units, used to calculate our_dps, from tmp;
             }
         }
