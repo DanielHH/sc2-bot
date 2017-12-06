@@ -5,6 +5,7 @@
 
 #include "kurt.h"
 #include "action_repr.h"
+#include "BPState.h"
 
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -46,6 +47,10 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             if (! kurt->UnitInScvVespene(scv)) {
                 continue;
             }
+            if (! scv->orders.empty() &&
+                    scv->orders[0].ability_id.ToType() == ABILITY_ID::BUILD_REFINERY) {
+                continue;
+            }
             Unit const *target = FindNearestUnitOfType(
                     UNIT_TYPEID::NEUTRAL_MINERALFIELD,
                     scv->pos,
@@ -62,6 +67,13 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
         return false;
     case ACTION::SCV_GATHER_VESPENE:
         // Make an SCV stop gather minerals and start gather vespene
+        // TODO Fix a better check if there is enough refineries
+        {
+            BPState curr(kurt);
+            if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) *3 <= kurt->scv_vespene.size()) {
+                return false;
+            }
+        }
         us = obs->GetUnits(Unit::Alliance::Self, IsSCV);
         for (Unit const * scv : us) {
             if (! kurt->UnitInScvMinerals(scv)) {
