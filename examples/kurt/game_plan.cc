@@ -47,14 +47,13 @@ void GamePlan::ExecuteNextNode() {
     if (head_node != nullptr) {
         Node* next_node = head_node->next;
 
-        bool nextecute = head_node->Nextecute();
-        PRINT(nextecute)
+        bool do_nextecute = head_node->Nextecute();
 
         head_node->Execute();
         delete head_node;
         head_node = next_node;
 
-        if (nextecute) {
+        if (do_nextecute) {
             ExecuteNextNode();
         }
     }

@@ -18,7 +18,6 @@
 #define TEST(s)
 #endif // DEBUG
 
-
 using namespace sc2;
 
 ArmyManager* army_manager;
@@ -38,10 +37,12 @@ void Kurt::OnGameStart() {
 
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
+    int step = observation->GetGameLoop();
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
+    assert(step == observation->GetGameLoop());
 }
 
 void Kurt::OnUnitCreated(const Unit* unit) {
@@ -82,42 +83,17 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     army.remove(destroyed_unit);
 
     
+    if (IsStructure(destroyed_unit)) {
+        build_manager->InitNewPlan();
+        return;
+    }
     for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
-        if ((*it).first == destroyed_unit->unit_type.ToType() || IsStructureType(it->first)) {
+        if ((*it).first == destroyed_unit->unit_type.ToType()) {
             build_manager->InitNewPlan();
             break;
         }
     }
     
-}
-
-bool Kurt::IsArmyUnit(const Unit* unit) {
-    return IsArmyUnitType(unit->unit_type.ToType());
-}
-
-bool Kurt::IsArmyUnitType(const UNIT_TYPEID &type) {
-    if (IsStructureType(type)) {
-        return false;
-    }
-    switch (type) {
-    default: return true;
-    case UNIT_TYPEID::TERRAN_SCV:
-    case UNIT_TYPEID::TERRAN_MULE:
-    case UNIT_TYPEID::TERRAN_NUKE:
-        return false;
-    }
-}
-
-bool Kurt::IsStructure(const Unit* unit) {
-    return IsStructureType(unit->unit_type.ToType());
-}
-
-bool Kurt::IsStructureType(const UNIT_TYPEID &type) {
-    bool is_structure = false;
-    for (const auto &attr : GetUnitType(type)->attributes) {
-        if (attr == Attribute::Structure) return true;
-    }
-    return false;
 }
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
@@ -141,13 +117,11 @@ bool Kurt::UnitInScvVespene(const sc2::Unit* unit) {
 }
 
 void Kurt::ExecuteSubplan() {
-    std::cout << "Kurt exec" << std::endl;
     strategy_manager->ExecuteSubplan();
 }
 
 void Kurt::SendBuildOrder(BPState* const build_order) {
     build_manager->SetGoal(build_order);
-    std::cout << "Build something!" << std::endl;
 }
 
 Kurt::CombatMode Kurt::GetCombatMode() {
@@ -166,6 +140,31 @@ void Kurt::CalculateCombatMode() {
 void Kurt::CalculateBuildOrder() {
     PRINT("Dynamic build order")
     strategy_manager->SetBuildGoal();
+}
+
+bool Kurt::IsArmyUnit(const Unit* unit) {
+    if (IsStructure(unit)) {
+        return false;
+    }
+
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SCV: return false;
+    case UNIT_TYPEID::TERRAN_MULE: return false;
+    case UNIT_TYPEID::TERRAN_NUKE: return false;
+    default: return true;
+    }
+}
+
+bool Kurt::IsStructure(const Unit* unit) {
+    bool is_structure = false;
+    auto& attributes = GetUnitType(unit->unit_type)->attributes;
+
+    for (const auto& attribute : attributes) {
+        if (attribute == Attribute::Structure) {
+            is_structure = true;
+        }
+    }
+    return is_structure;
 }
 
 bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,

@@ -1,7 +1,7 @@
 #include "strategy_manager.h"
 #include "plans.h"
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -14,22 +14,20 @@
 using namespace sc2;
 using namespace std;
 
-
 Units our_units;
+Units our_structures;
 Units enemy_units;
-
+Units enemy_structures;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     our_cp.alliance = "our_cp";
     enemy_cp.alliance = "enemy_cp";
-    Plans* plan = new Plans();
 
     //current_plan = CreateDefaultGamePlan(kurt);
-    current_plan = plan->RushPlan(kurt);
+    current_plan = RushPlan(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
-
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {
@@ -37,7 +35,17 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     SaveSpottedEnemyUnits(observation);
 
-
+    if (current_game_loop % 500 == 0) {
+        PRINT("------Enemy units-------")
+        for (int i = 0; i < enemy_units.size(); ++i) {
+            PRINT(kurt->GetUnitType(enemy_units[i]->unit_type)->name)
+        }
+        PRINT("------Enemy structures-------")
+        for (int i = 0; i < enemy_structures.size(); ++i) {
+            PRINT(kurt->GetUnitType(enemy_structures[i]->unit_type)->name)
+        }
+        PRINT("------------------------")
+    }
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
@@ -50,33 +58,46 @@ void StrategyManager::ExecuteSubplan() {
     current_plan->ExecuteNextNode();
 }
 
-/*
-Save enemy units in vector spotted_enemy_units. This saves the minimal amount of units that
-we know the enemy has, but the enemy might have more units in the fog of war.
-*/
-void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) { //TODO: Remove structures from this vector. Make a new vector for this.
+void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
     Units observed_enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
-    // Måste på nåt sätt ta hänsyn till om man har sett uniten innan eller inte.
-    Units tmp = enemy_units;
+    Units observed_structures;
+    Units observed_units;
 
-    /*
-    For every observed enemy, check if a unit of the same type is already saved in enemy_units.
-    If there is, count the new unit as already seen and don't add it to the enemy_units vector.
-    */
-    for (auto known_unit = tmp.begin(); known_unit != tmp.end(); known_unit++) {
-        for (auto new_unit = observed_enemy_units.begin(); new_unit != observed_enemy_units.end(); new_unit++) {
-            if (*known_unit == *new_unit) {
-                observed_enemy_units.erase(new_unit);
-                break;
-            }
+    // Split observation into structures and units
+    for (auto observed_unit = observed_enemy_units.begin(); observed_unit != observed_enemy_units.end(); ++observed_unit) {
+        if (kurt->IsStructure(*observed_unit)) {
+            observed_structures.push_back(*observed_unit);
+        }
+        else {
+            observed_units.push_back(*observed_unit);
         }
     }
-    // Save the observed units that didn't get filtered out as already seen.
-    enemy_units.insert(enemy_units.end(), observed_enemy_units.begin(), observed_enemy_units.end());
+
+    // Save any newly observed structures
+    SaveSpottedEnemyUnitsHelper(&observed_structures, &enemy_structures);
+
+    //Save any newly observed units
+    SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
 
     //Update combatpower. TODO: Make more efficient.
     CalculateCombatPower(&enemy_cp);
 };
+
+void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved_units) {
+    // For every observed enemy, check if a unit of the same type is already saved in saved_units.
+    // If there is, count the new unit as already seen and don't add it to the saved_units vector.
+    for (auto saved_unit = saved_units->begin(); saved_unit != saved_units->end(); ++saved_unit) {
+        for (auto new_unit = new_units->begin(); new_unit != new_units->end(); ++new_unit) {
+            if ((*saved_unit)->unit_type == (*new_unit)->unit_type) {
+                new_units->erase(new_unit);
+                break;
+            }
+        }
+    }
+
+    // Save the observed units that didn't get filtered out as already seen.
+    saved_units->insert(saved_units->end(), new_units->begin(), new_units->end());
+}
 
 void StrategyManager::CalculateCombatPower(CombatPower *cp) {
     //reset cp-data.
@@ -96,7 +117,7 @@ void StrategyManager::CalculateCombatPower(CombatPower *cp) {
 void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
     UnitTypeData* unit_data = new UnitTypeData();
     float weapon_dps;
-
+    
     for (auto unit : team) {
         if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
             unit_data = Kurt::GetUnitType(unit->unit_type);
@@ -152,7 +173,8 @@ void StrategyManager::CalculateCombatMode() {
 };
 
 void StrategyManager::SetGamePlan() {
-
+    delete current_plan;
+    current_plan = DynamicGamePlan(kurt);
 }
 
 void StrategyManager::SetBuildGoal() {

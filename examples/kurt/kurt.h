@@ -4,7 +4,6 @@
 #include <list>
 #include "BPState.h"
 
-
 class WorldRepresentation;
 
 class Kurt : public sc2::Agent {
@@ -64,6 +63,12 @@ public:
     /* Calculates what is best to build in the moment */
     void CalculateBuildOrder();
 
+    /* Returns true if unit is an terran army unit */
+    bool IsArmyUnit(const sc2::Unit* unit);
+
+    /* Returns true if unit is a structure */
+    bool IsStructure(const sc2::Unit* unit);
+
     bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
         sc2::Point2D location,
         const sc2::Unit* unit);
@@ -71,10 +76,6 @@ public:
     sc2::Point2D randomLocationNearUnit(const sc2::Unit* unit);
     bool TryBuildSupplyDepot();
     bool TryBuildRefinary();
-    bool IsArmyUnit(const sc2::Unit* unit);
-    bool IsStructure(const sc2::Unit* unit);
-    bool IsArmyUnitType(const sc2::UNIT_TYPEID &);
-    bool IsStructureType(const sc2::UNIT_TYPEID &);
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
     
@@ -83,7 +84,6 @@ public:
 
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
-    
 
 private:
     CombatMode current_combat_mode;
