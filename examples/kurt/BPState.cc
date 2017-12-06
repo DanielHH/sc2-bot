@@ -102,10 +102,8 @@ BPState::BPState(Kurt * const kurt) {
             }
         }
     }
-    int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+
     int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
-    geyser_amount -= refinery_amount;
-    SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
@@ -113,7 +111,6 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
@@ -125,6 +122,7 @@ BPState::BPState(Kurt * const kurt) {
         GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
+
     double start_time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
     time = start_time;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
@@ -144,6 +142,19 @@ BPState::BPState(Kurt * const kurt) {
             AddAction(action);
         }
     }
+
+    int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+    int refinery_prod_amount = GetUnitProdAmount(UNIT_TYPEID::TERRAN_REFINERY);
+    geyser_amount -= refinery_amount + refinery_prod_amount;
+    SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
+    SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
+
+    // Currently, an scv that starts building a refinery is added to the scv_vespene list.
+    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
+    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
+    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
+    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
+
     if (start_time != time) {
         Print();
         std::cout << "Error: BPState: Constructor(Kurt*): " <<
