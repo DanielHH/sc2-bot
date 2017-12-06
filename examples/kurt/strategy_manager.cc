@@ -24,8 +24,6 @@ ObservedUnits enemy_structures;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
-    our_cp.alliance = "our_cp";
-    enemy_cp.alliance = "enemy_cp";
 
     //current_plan = CreateDefaultGamePlan(kurt);
     current_plan = RushPlan(kurt);
@@ -38,16 +36,26 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 
     SaveSpottedEnemyUnits(observation);
 
-    if (current_game_loop % 500 == 0) {
+    if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
+            PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
+            PRINT("\t|g2g CP: " + to_string(enemy_units.GetCombatPower()->g2g) + "\t|")
+            PRINT("\t|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a) + "\t|")
+            PRINT("\t|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g) + "\t|")
+            PRINT("\t|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a) + "\t|")
         PRINT(enemy_units.ToString())
         PRINT("------Enemy structures-------")
         PRINT(enemy_structures.ToString())
         PRINT("------Our units--------------")
+            PRINT("\t|Total max health: " + to_string(our_units.GetTotalMaxHealth()))
+            PRINT("\t|g2g CP: " + to_string(our_units.GetCombatPower()->g2g) + "\t|")
+            PRINT("\t|g2a CP: " + to_string(our_units.GetCombatPower()->g2a) + "\t|")
+            PRINT("\t|a2g CP: " + to_string(our_units.GetCombatPower()->a2g) + "\t|")
+            PRINT("\t|a2a CP: " + to_string(our_units.GetCombatPower()->a2a) + "\t|")
         PRINT(our_units.ToString())
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
-        PRINT("-----------------------------")
+        PRINT("-----------------------------\n\n")
     }
 }
 
@@ -58,15 +66,16 @@ void StrategyManager::OnUnitEnterVision(const Unit* unit) {
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
+    if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
+        ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
+    }
+
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnit(unit);
     }
     else {
         our_units.AddUnit(unit);
     }
-
-    //update combatpower. TODO: Make more efficient.
-    CalculateCombatPower(&our_cp);
 }
 
 void StrategyManager::RemoveDeadUnit(const Unit* unit) {
@@ -118,9 +127,6 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
     //Save any newly observed units
     enemy_units.AddUnits(&observed_units);
     //SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
-
-    //Update combatpower. TODO: Make more efficient.
-    CalculateCombatPower(&enemy_cp);
 };
 
 //TODO: Not needed anny more?
@@ -140,73 +146,14 @@ void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved
     saved_units->insert(saved_units->end(), new_units->begin(), new_units->end());
 }
 
-void StrategyManager::CalculateCombatPower(CombatPower *cp) {
-    //reset cp-data.
-    cp->g2g = 0;
-    cp->g2a = 0;
-    cp->a2g = 0;
-    cp->a2a = 0;
-
-    //TODO: Implement function in ObservedUnits to calculate cp?
-    if (cp->alliance == "our_cp") {
-        //CalculateCPHelp(cp, our_units);
-    }
-    else if (cp->alliance == "enemy_cp") {
-        //CalculateCPHelp(cp, enemy_units);
-    }
-};
-
-void StrategyManager::CalculateCPHelp(CombatPower *cp, Units team) {
-    UnitTypeData* unit_data = new UnitTypeData();
-    float weapon_dps;
-    
-    for (auto unit : team) {
-        if (unit->is_alive) { //This check can be removed if we remove dead units from vectors.
-            unit_data = Kurt::GetUnitType(unit->unit_type);
-            for (auto weapon : unit_data->weapons) {
-                weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
-                if (weapon.type == Weapon::TargetType::Any) { //Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
-                    //GroundToBoth
-                    if (!unit->is_flying) {
-                        cp->g2a += weapon_dps;
-                        cp->g2g += weapon_dps;
-                    }
-                    //AirToBoth
-                    if (unit->is_flying) {
-                        cp->a2a += weapon_dps;
-                        cp->a2g += weapon_dps;
-                    }
-                }
-                else if (weapon.type == Weapon::TargetType::Ground) {
-                    //GroundToGround
-                    if (!unit->is_flying) {
-                        cp->g2g += weapon_dps;
-                    }
-                    //AirToGround
-                    else if (unit->is_flying) {
-                        cp->a2g += weapon_dps;
-                    }
-                }
-                else if (weapon.type == Weapon::TargetType::Air) {
-                    //GroundToAir
-                    if (!unit->is_flying) {
-                        cp->g2a += weapon_dps;
-                    }
-                    //AirToAir
-                    if (unit->is_flying) {
-                        cp->a2a += weapon_dps;
-                    }
-                }
-            }
-        }
-    }
-};
-
 void StrategyManager::CalculateCombatMode() {
-    if (our_cp.g2g > enemy_cp.g2g && our_cp.g2a > enemy_cp.a2g && our_cp.a2g > enemy_cp.g2a && our_cp.a2a > enemy_cp.a2a) {
+    const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
+    const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
+    if (our_cp->g2g > enemy_cp->g2g && our_cp->g2a > enemy_cp->a2g && our_cp->a2g > enemy_cp->g2a && our_cp->a2a > enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
     }
-    else if (our_cp.g2g < enemy_cp.g2g && our_cp.g2a < enemy_cp.a2g && our_cp.a2g < enemy_cp.g2a && our_cp.a2a < enemy_cp.a2a) {
+    else if (our_cp->g2g < enemy_cp->g2g && our_cp->g2a < enemy_cp->a2g && our_cp->a2g < enemy_cp->g2a && our_cp->a2a < enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::DEFEND);
     }
     else {
@@ -220,81 +167,176 @@ void StrategyManager::SetGamePlan() {
 }
 
 void StrategyManager::SetBuildGoal() {
+    const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
+    const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
     BPState* new_goal_state = new BPState();
 
-    if (our_cp.g2g < 80 || our_cp.g2a < 80) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
+    if (our_cp->g2g < 80 || our_cp->g2a < 80) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
-    else if (our_cp.a2a < 50) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
+    else if (our_cp->a2a < 50) {
+        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 5);
     }
-    else if (our_cp.a2a < enemy_cp.a2a || our_cp.g2a < enemy_cp.g2a) {
+    else if (our_cp->a2a < enemy_cp->a2a || our_cp->g2a < enemy_cp->g2a) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
+    }
+    else {
+        new_goal_state = CounterEnemyUnit();
     }
 
     kurt->SendBuildOrder(new_goal_state);
 };
-/*
-void StrategyManager::CounterEnemyUnits() {
-    ObservedUnits tmp = our_units;
-    tuple<UNIT_TYPEID> counter_units;
-    for (auto unit : enemy_units) {
-        counter_units = zerg_countertable.at(unit->unit_type);
-        for (int i = 0; sizeof(counter_units), ++i) {
-            counter_units.get
-        }
-       
-    }
-}*/
 
 
-void StrategyManager::CounterEnemyUnits() {
+BPState* StrategyManager::CounterEnemyUnit() {
     BPState* new_goal_state = new BPState();
     Unit unit_to_create;
     int number_of_units;
 
-    vector<sc2::UNIT_TYPEID> counter_units;
+    map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
 
-    map <UNIT_TYPEID, int> *const current_our_units = our_units.GetSavedUnits();
+    vector<sc2::UNIT_TYPEID> counter_units;
+    map <UNIT_TYPEID, int> *const curr_our_units = our_units.GetSavedUnits();
 
     float enemy_max_health;
-    float enemy_dps;
+    float enemy_cp = 0;
+
+    float tmp_enemy_cp = 0;
+    float tmp_enemy_air_cp;
+    float tmp_enemy_ground_cp;
+
     float our_health;
-    float our_dps;
+    float our_cp = 0;
 
-    map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
-    
+    float tmp_our_cp = 0;
+    float tmp_our_air_cp;
+    float tmp_our_ground_cp;
+
+    UNIT_TYPEID unit_to_counter;
+
+    UnitTypeData* unit_data;
+
+    float weapon_dps;
+
     for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
-        // CHECK ENEMY UNITS
         number_of_units = current_enemy_units->at(unit->first);
-        //enemy_dps = 
-        enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
+        unit_data = Kurt::GetUnitType(unit->first);
+        for (auto weapon : unit_data->weapons) {
+            weapon_dps = weapon.damage_ / weapon.speed;
 
-        // CHECK OUR UNITS
-        counter_units = zerg_countertable.at(unit->first);
-        for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
-            if ((current_our_units->count(*unit)) == 1) {
-                // our_dps += Calculate total dps of(our) counter_units;
-                // our_health += Calculate total health of(our) counter_units;
-                // remove units, used to calculate our_dps, from tmp;
+            if (weapon.type == Weapon::TargetType::Any) {
+                tmp_enemy_air_cp = weapon_dps * unit->second;
+                tmp_enemy_ground_cp = weapon_dps * unit->second;
             }
-        }
-        
-       // decide which units are most suitable to be created;
+            else if (weapon.type == Weapon::TargetType::Ground) {
+                tmp_enemy_ground_cp = weapon_dps * unit->second;
+            }
+            else if (weapon.type == Weapon::TargetType::Air) {
+                tmp_enemy_air_cp = weapon_dps * unit->second;
+            }
 
-    /*    while (our_health / enemy_dps < (1.1 * enemy_max_health / our_dps)) {
-            number_of_units += 1;
-            our_health += counter_unit.health;
-            our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
+            tmp_enemy_cp = max(tmp_enemy_air_cp, tmp_enemy_ground_cp);
         }
-        new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);*/
+
+        if (tmp_enemy_cp > enemy_cp) {
+            unit_to_counter = unit->first;
+            enemy_cp = tmp_enemy_cp;
+            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
+        }
     }
-       
 
+    counter_units = zerg_countertable.at(unit_to_counter);
+    bool is_flying;
+    for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
+        if ((curr_our_units->count(*unit)) == 1) {
+            number_of_units = curr_our_units->at(*unit);
+            unit_data = Kurt::GetUnitType(*unit);
+            for (auto weapon : unit_data->weapons) {
+                is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
+                weapon_dps = weapon.damage_ / weapon.speed;
+                if (weapon.type == Weapon::TargetType::Any) {
+                    tmp_our_air_cp = weapon_dps * number_of_units;
+                    tmp_our_ground_cp = weapon_dps * number_of_units;
+                }
+                else if (weapon.type == Weapon::TargetType::Ground) {
+                    tmp_our_ground_cp = weapon_dps * number_of_units;
+                }
+                else if (weapon.type == Weapon::TargetType::Air) {
+                    tmp_our_air_cp = weapon_dps * number_of_units;
+                }
+            }
+            if (is_flying) {
+                our_cp += tmp_our_air_cp;
+            }
+            else {
+                our_cp += tmp_our_ground_cp;
+            }
+            our_health += our_units.CalculateUnitTypeMaxHealth(*unit);
+        }
+    }
+
+    while (our_health / enemy_cp < (1.1 * enemy_max_health / our_cp)) {
+        number_of_units += 1;
+        our_health += ObservedUnits::unit_max_health.at(counter_units.back());
+        if (is_flying) {
+            our_cp += tmp_our_air_cp;
+        }
+        else {
+            our_cp += tmp_our_ground_cp;
+        }
+    }
+    new_goal_state->SetUnitAmount(counter_units.back(), number_of_units);
+    return new_goal_state;
 }
 
 
+
+/*
+void StrategyManager::CounterEnemyUnits() {
+BPState* new_goal_state = new BPState();
+Unit unit_to_create;
+int number_of_units;
+
+vector<sc2::UNIT_TYPEID> counter_units;
+
+map <UNIT_TYPEID, int> *const current_our_units = our_units.GetSavedUnits();
+
+float enemy_max_health;
+float enemy_dps;
+float our_health;
+float our_dps;
+
+map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
+
+for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
+// CHECK ENEMY UNITS
+number_of_units = current_enemy_units->at(unit->first);
+//enemy_dps =
+enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
+
+// CHECK OUR UNITS
+counter_units = zerg_countertable.at(unit->first);
+for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
+if ((current_our_units->count(*unit)) == 1) {
+// our_dps += Calculate total dps of(our) counter_units;
+// our_health += Calculate total health of(our) counter_units;
+// remove units, used to calculate our_dps, from tmp;
+}
+}
+
+// decide which units are most suitable to be created;
+
+while (our_health / enemy_dps < (1.1 * enemy_max_health / our_dps)) {
+number_of_units += 1;
+our_health += counter_unit.health;
+our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
+}
+new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);
+}
+}
+*/
 //NOT CURRENTLY USED!
 /*
 void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {

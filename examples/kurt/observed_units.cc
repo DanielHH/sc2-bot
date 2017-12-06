@@ -1,5 +1,6 @@
 #include "observed_units.h"
 #include "kurt.h"
+#include <algorithm>
 
 using namespace std;
 using namespace sc2;
@@ -13,6 +14,14 @@ using namespace sc2;
 #define PRINT(s)
 #define TEST(s)
 #endif // DEBUG
+
+const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
+    UNIT_TYPEID::TERRAN_VIKINGFIGHTER, UNIT_TYPEID::TERRAN_MEDIVAC, UNIT_TYPEID::TERRAN_LIBERATOR, UNIT_TYPEID::TERRAN_LIBERATORAG,
+    UNIT_TYPEID::TERRAN_RAVEN, UNIT_TYPEID::TERRAN_BANSHEE, UNIT_TYPEID::TERRAN_BATTLECRUISER, UNIT_TYPEID::TERRAN_POINTDEFENSEDRONE,
+    UNIT_TYPEID::ZERG_OVERLORD, UNIT_TYPEID::ZERG_OVERLORDCOCOON, UNIT_TYPEID::ZERG_OVERLORDTRANSPORT, UNIT_TYPEID::ZERG_TRANSPORTOVERLORDCOCOON,
+    UNIT_TYPEID::ZERG_OVERSEER, UNIT_TYPEID::ZERG_MUTALISK, UNIT_TYPEID::ZERG_CORRUPTOR, UNIT_TYPEID::ZERG_BROODLORD,
+    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER
+};
 
 map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
 
@@ -32,26 +41,83 @@ void ObservedUnits::AddUnits(const Units* units) {
             saved_units[unit_id->first] = new_units[unit_id->first];
         }
     }
+
+    calculateCP();
 }
 
 void ObservedUnits::AddUnit(const Unit* unit) {
     saved_units[unit->unit_type] += 1;
+    calculateCP();
 }
 
 void ObservedUnits::RemoveUnit(const Unit* unit) {
     saved_units[unit->unit_type] -= 1;
 }
 
-string ObservedUnits::ToString() {
-    string str;
+void ObservedUnits::calculateCP() {
+    // Reset cp-data.
+    cp.g2g = 0;
+    cp.g2a = 0;
+    cp.a2g = 0;
+    cp.a2a = 0;
 
-    for (auto unit_id = saved_units.begin(); unit_id != saved_units.end(); ++unit_id) {
-        str += Kurt::GetUnitType(unit_id->first)->name + ": ";
-        str += to_string(unit_id->second);
-        str += "\n";
+    UnitTypeData* unit_data;
+    float weapon_dps;
+
+    for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
+        unit_data = Kurt::GetUnitType(unit->first);
+        for (auto weapon : unit_data->weapons) {
+            bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
+            weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
+            if (weapon.type == Weapon::TargetType::Any) { // Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
+                // GroundToBoth
+                if (!is_flying) {
+                    cp.g2a += weapon_dps * unit->second;
+                    cp.g2g += weapon_dps * unit->second;
+                }
+                // AirToBoth
+                if (is_flying) {
+                    cp.a2a += weapon_dps * unit->second;
+                    cp.a2g += weapon_dps * unit->second;
+                }
+            }
+            else if (weapon.type == Weapon::TargetType::Ground) {
+                // GroundToGround
+                if (!is_flying) {
+                    cp.g2g += weapon_dps * unit->second;
+                }
+                // AirToGround
+                else if (is_flying) {
+                    cp.a2g += weapon_dps * unit->second;
+                }
+            }
+            else if (weapon.type == Weapon::TargetType::Air) {
+                // GroundToAir
+                if (!is_flying) {
+                    cp.g2a += weapon_dps * unit->second;
+                }
+                // AirToAir
+                if (is_flying) {
+                    cp.a2a += weapon_dps * unit->second;
+                }
+            }
+        }
+    }
+}
+
+const ObservedUnits::CombatPower* const ObservedUnits::GetCombatPower() {
+    return &cp;
+}
+
+float ObservedUnits::GetTotalMaxHealth() {
+    float total_max_health = 0;
+
+    // Get total max health for all unit types and summerize
+    for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
+        total_max_health += CalculateUnitTypeMaxHealth(unit->first);
     }
 
-    return str;
+    return total_max_health;
 }
 
 float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
@@ -63,6 +129,18 @@ float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
 
 map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
     return &saved_units;
+}
+string ObservedUnits::ToString() {
+    string str;
+
+    for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
+        str += Kurt::GetUnitType(unit->first)->name + ": ";
+        str += to_string(unit->second);
+        str += "\n";
+    }
+
+    return str;
+
 }
 
 #undef DEBUG // Stop debug prints from leaking

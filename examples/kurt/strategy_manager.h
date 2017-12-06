@@ -9,17 +9,8 @@
 class GamePlan;
 
 class StrategyManager{
+
 public:
-
-    /* Stores the total DPS all units has together against air and ground units  */
-    struct CombatPower {
-        std::string alliance;
-        float g2g; // Ground to ground DPS
-        float g2a; // Ground to air DPS
-        float a2g; // Air to ground DPS
-        float a2a; // Air to air DPS
-    } our_cp, enemy_cp;
-
     StrategyManager(Kurt* kurt);
 
     void OnStep(const sc2::ObservationInterface* observation);
@@ -54,15 +45,10 @@ private:
     /* Saves the minimal amount of units we know the enemy have */
     void SaveSpottedEnemyUnitsHelper(sc2::Units* new_units, sc2::Units* saved_units);
 
-    // calculates combatpower for given combatstyle
-    void  CalculateCombatPower(CombatPower *cp);
-
-    void CalculateCPHelp(CombatPower *cp, sc2::Units alliance);
-
     //
     void SetGamePlan();
 
-    void CounterEnemyUnits();
+    BPState* CounterEnemyUnit();
 
     //UNUSED FUNCTIONS
     // Returns true if Enemy structure is observed.
