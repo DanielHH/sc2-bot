@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sc2api\sc2_api.h>
+#include <sc2api/sc2_api.h>
 #include <map>
 #include <string>
 #include <vector>
