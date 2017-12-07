@@ -36,7 +36,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     int current_game_loop = observation->GetGameLoop();
 
     SaveSpottedEnemyUnits(observation);
-
+/*
     if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
             PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
@@ -57,7 +57,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
         PRINT("-----------------------------\n\n")
-    }
+    } */
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -160,12 +160,15 @@ void StrategyManager::CalculateCombatMode() {
 
     if (our_cp->g2g > enemy_cp->g2g && our_cp->g2a > enemy_cp->a2g && our_cp->a2g > enemy_cp->g2a && our_cp->a2a > enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
+        PRINT("COMBAT MODE: ATTACK")
     }
     else if (our_cp->g2g < enemy_cp->g2g && our_cp->g2a < enemy_cp->a2g && our_cp->a2g < enemy_cp->g2a && our_cp->a2a < enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::DEFEND);
+        PRINT("COMBAT MODE: DEFEND")
     }
     else {
         kurt->SetCombatMode(Kurt::HARASS);
+        PRINT("COMBAT MODE: HARASS")
     }
 };
 
@@ -180,13 +183,13 @@ void StrategyManager::SetBuildGoal() {
 
     BPState* new_goal_state = new BPState();
 
-    if (our_cp->g2g < 80 || our_cp->g2a < 80) {
+   /* if (our_cp->g2g < 80 || our_cp->g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
     else {
         new_goal_state = CounterEnemyUnit();
-    }
-
+    }*/
+    new_goal_state = CounterEnemyUnit();
     kurt->SendBuildOrder(new_goal_state);
 };
 
@@ -256,6 +259,9 @@ BPState* StrategyManager::CounterEnemyUnit() {
             }
         }
 
+        if (zerg_countertable.count(unit_to_counter) == 0) {
+            continue;
+        }
         counter_units = zerg_countertable.at(unit_to_counter);
         int our_number_of_units;
         int weapon_dps;
@@ -300,10 +306,15 @@ BPState* StrategyManager::CounterEnemyUnit() {
             final_is_flying = is_flying;
         }
     }
-
-    while (our_final_health / final_enemy_cp < (1.1 * enemy_max_health / our_cp)) {
+    PRINT("----------------------------");
+    PRINT("diff_cp: " << diff_cp);
+    PRINT("final_enemy_cp: " << final_enemy_cp);
+    PRINT("enemy_max_health: " << enemy_max_health);
+    while (our_final_health / final_enemy_cp < (2 * enemy_max_health / our_cp)) {
+        PRINT("----------------------------");
+        PRINT("IN WHILE! " << number_of_units);
         number_of_units += 1;
-        our_health += ObservedUnits::unit_max_health.at(final_counter_unit);
+        our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
         if (is_flying) {
             our_cp += our_weapon_dps;
         }
@@ -311,6 +322,10 @@ BPState* StrategyManager::CounterEnemyUnit() {
             our_cp += our_weapon_dps;
         }
     }
+    PRINT("----------------------------");
+    PRINT("counter_units " << counter_units.back());
+    PRINT("number of units: " << number_of_units)
+    PRINT("----------------------------");
     new_goal_state->SetUnitAmount(counter_units.back(), number_of_units);
     return new_goal_state;
 }
