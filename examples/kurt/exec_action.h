@@ -6,11 +6,14 @@
 #include "action_enum.h"
 
 #include <vector>
+#include <map>
 
 class Kurt;
 
 class ExecAction {
 public:
+
+    static void OnStep();
 
     static bool Exec(Kurt * const, ACTION);
 
@@ -24,9 +27,14 @@ public:
 
     static void Init(Kurt * const kurt);
 
+    static sc2::Unit const * FindNextVespeneGeyser(
+            sc2::ObservationInterface const * obs);
+
 private:
+
+    static std::map<sc2::Unit const *, int> built_refinery_time;
 
     static std::set<sc2::Point3D> commandcenter_locations;
 
-    static std::set<sc2::Unit*> vespene_geysers;
+    static int scv_gather_vespene_delay;
 };

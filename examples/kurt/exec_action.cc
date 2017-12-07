@@ -4,6 +4,7 @@
 #include "sc2lib/sc2_lib.h"
 
 #include "kurt.h"
+#include "constants.h"
 #include "action_repr.h"
 #include "BPState.h"
 
@@ -19,6 +20,33 @@
 
 using namespace sc2;
 
+std::set<Point3D> ExecAction::commandcenter_locations;
+std::map<Unit const*, int> ExecAction::built_refinery_time;
+int ExecAction::scv_gather_vespene_delay = 0;
+
+void ExecAction::OnStep() {
+    if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
+}
+
+bool IsVespeneGeyser(Unit const & unit) {
+    return unit.unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER;
+};
+
+bool IsSCV(Unit const & unit) {
+    return unit.unit_type == UNIT_TYPEID::TERRAN_SCV;
+};
+
+bool IsRefinery(Unit const & unit) {
+    return unit.unit_type == UNIT_TYPEID::TERRAN_REFINERY;
+};
+
+bool IsCommandcenter(Unit const & unit) {
+    return
+        unit.unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
+        unit.unit_type == UNIT_TYPEID::TERRAN_ORBITALCOMMAND ||
+        unit.unit_type == UNIT_TYPEID::TERRAN_PLANETARYFORTRESS;
+};
+
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     //
     // Test if action can be represented by some ability from the api.
@@ -33,10 +61,6 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     ActionInterface * action_interface = kurt->Actions();
     QueryInterface *query = kurt->Query();
     ObservationInterface const *obs = kurt->Observation();
-
-    auto IsSCV = [] (Unit const & unit) {
-        return unit.unit_type == UNIT_TYPEID::TERRAN_SCV;
-    };
 
     Units us;
     switch (action) {
@@ -142,11 +166,11 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
                 break;
             case sc2::AbilityData::Target::Unit:
                 if (ability == ABILITY_ID::BUILD_REFINERY) {
-                    target_unit = FindNearestUnitOfType(
-                          UNIT_TYPEID::NEUTRAL_VESPENEGEYSER
-                        , u->pos
-                        , obs
-                        , Unit::Alliance::Neutral);
+                    target_unit = FindNextVespeneGeyser(obs);
+                    if (target_unit == nullptr) {
+                        return false;
+                    }
+                    built_refinery_time[target_unit] = obs->GetGameLoop();
                 }
                 action_interface->UnitCommand(u, ability, target_unit);
                 break;
@@ -181,6 +205,53 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
     return false;
 }
 
+Unit const * ExecAction::FindNextVespeneGeyser(
+        ObservationInterface const * obs) {
+    Units geysers = obs->GetUnits(Unit::Alliance::Neutral, IsVespeneGeyser);
+    Units refineries = obs->GetUnits(Unit::Alliance::Self, IsRefinery);
+    Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
+    for (Unit const * geyser : geysers) {
+        // Geyser isn't empty
+        if (geyser->vespene_contents <= 0) {
+            continue;
+        }
+        // We aren't already going to build an refinery at given geyser
+        if (built_refinery_time.count(geyser) != 0) {
+            if (obs->GetGameLoop() - built_refinery_time.at(geyser) <
+                    10 * STEPS_PER_SEC) {
+                continue;
+            }
+        }
+        // The geyser is close to some of our commandcenters
+        bool in_range = false;
+        for (Unit const * commandcenter : commandcenters) {
+            if (DistanceSquared3D(geyser->pos, commandcenter->pos) <
+                    BASE_RESOURCE_TEST_RANGE2) {
+                in_range = true;
+                break;
+            }
+        }
+        if (! in_range) {
+            continue;
+        }
+        // Refinery is not already built on given geyser
+        bool taken = false;
+        for (Unit const * refinery : refineries) {
+            if (geyser->pos.x == refinery->pos.x &&
+                    geyser->pos.y == refinery->pos.y &&
+                    geyser->pos.z == refinery->pos.z) {
+                taken = true;
+                break;
+            }
+        }
+        if (taken) {
+            continue;
+        }
+        return geyser;
+    }
+    return nullptr;
+}
+
 Unit const * ExecAction::FindNearestUnitOfType(
         UNIT_TYPEID type,
         Point2D const &location,
@@ -207,7 +278,3 @@ void ExecAction::Init(Kurt * const kurt) {
 //    for (Point3D point : expansions) {
 //    }
 }
-
-std::set<Point3D> ExecAction::commandcenter_locations;
-
-std::set<Unit*> ExecAction::vespene_geysers;
