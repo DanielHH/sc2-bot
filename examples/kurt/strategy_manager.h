@@ -26,6 +26,9 @@ public:
     /* Executes the next step in the current plan */
     void ExecuteSubplan();
 
+    /* Calculates a new plan to execute */
+    void CalculateNewPlan();
+
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
     void CalculateCombatMode();
 

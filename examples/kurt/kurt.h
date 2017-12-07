@@ -63,6 +63,9 @@ public:
     /* Calculates what is best to build in the moment */
     void CalculateBuildOrder();
 
+    /* Calculate a new plan */
+    void CalculateNewPlan();
+
     /* Returns true if unit is an terran army unit */
     static bool IsArmyUnit(const sc2::Unit* unit);
 

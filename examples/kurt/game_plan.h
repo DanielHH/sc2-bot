@@ -2,8 +2,6 @@
 
 #include "BPState.h"
 #include "kurt.h"
-#include "army_manager.h"
-#include <iostream>
 
 /*
     A sequence of build orders(BPStates) and attack orders (CombatMode) that can be executed in order.
