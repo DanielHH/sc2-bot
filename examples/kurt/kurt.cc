@@ -7,6 +7,7 @@
 #include "build_manager.h"
 #include "strategy_manager.h"
 #include "world_representation.h"
+#include "exec_action.h"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -38,6 +39,7 @@ void Kurt::OnGameStart() {
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
     int step = observation->GetGameLoop();
+    ExecAction::OnStep(this);
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
@@ -55,30 +57,15 @@ void Kurt::OnUnitCreated(const Unit* unit) {
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
-    switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_SCV: {
-        const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
-        if (!mineral_target) {
-            break;
-        }
-        Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-        if (! UnitInScvMinerals(unit)) {
-            scv_minerals.push_back(unit);
-        }
-        break;
-    }
-    default: {
-        break;
-    }
-
-    }
+    ExecAction::OnUnitIdle(unit, this);
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
 
     strategy_manager->RemoveDeadUnit(destroyed_unit);
 
-    workers.remove(destroyed_unit);
+    scv_building.remove(destroyed_unit);
+    scv_idle.remove(destroyed_unit);
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
@@ -108,7 +95,8 @@ bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
 
 bool Kurt::UnitAlreadyStored(const sc2::Unit* unit) {
     return
-        UnitInList(workers, unit) ||
+        UnitInList(scv_building, unit) ||
+        UnitInList(scv_idle, unit) ||
         UnitInList(scv_minerals, unit) ||
         UnitInList(scv_vespene, unit) ||
         UnitInList(scouts, unit) ||
@@ -181,112 +169,6 @@ bool Kurt::IsStructure(const Unit* unit) {
         }
     }
     return is_structure;
-}
-
-bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
-    Point2D location,
-    const Unit* unit) {
-    const ObservationInterface* observation = Observation();
-
-    // If a unit already is building a supply structure of this type, do nothing.
-    // Also get an scv to build the structure.
-    std::vector<const Unit*> units_to_build;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-
-    Actions()->UnitCommand(unit,
-        ability_type_for_structure,
-        location);
-    return true;
-}
-
-
-const Unit* Kurt::getUnitOfType(UNIT_TYPEID unit_typeid) {
-    const ObservationInterface* observation = Observation();
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    return units.front();
-}
-
-
-Point2D Kurt::randomLocationNearUnit(const Unit* unit) {
-    float rx = GetRandomScalar();
-    float ry = GetRandomScalar();
-    Point2D location = Point2D(unit->pos.x + rx * 15.0f, unit->pos.y + ry * 15.0f);
-    return location;
-
-}
-
-
-bool Kurt::TryBuildSupplyDepot() {
-    const ObservationInterface* observation = Observation();
-
-    // If we are not supply capped, don't build a supply depot.
-    if (observation->GetFoodUsed() <= observation->GetFoodCap() - 2) {
-        return false;
-    }
-    // Try and build a depot. Find a random SCV and give it the order.
-    const Unit* unit = getUnitOfType(UNIT_TYPEID::TERRAN_SCV);
-    return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, randomLocationNearUnit(unit), unit);
-}
-
-bool Kurt::TryBuildRefinary() {
-    const ObservationInterface* observation = Observation();
-
-    // As soon as we have enough gold we build a refinary
-    if (observation->GetMinerals() < 100) {
-        return false;
-    }
-    const Unit* vespene_target = FindNearestVespeneGeyser();
-    // Try and build a depot. Find a random SCV and give it the order.
-
-    // rmove false
-    return false;
-
-}
-
-const Unit* Kurt::FindNearestMineralPatch(const Point2D& start) {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
-    float distance = std::numeric_limits<float>::max();
-    const Unit* target = nullptr;
-    for (const auto& u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
-            float d = DistanceSquared2D(u->pos, start);
-            if (d < distance) {
-                distance = d;
-                target = u;
-            }
-        }
-    }
-    return target;
-}
-
-const Unit* Kurt::FindNearestVespeneGeyser() {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
-    Units allied_units = Observation()->GetUnits(Unit::Alliance::Ally);
-    float distance = std::numeric_limits<float>::max();
-    const Unit* command_center = nullptr;
-    const Unit* vespene_geyser = nullptr;
-    // Look for a command center among allied units
-    for (const auto& ally : allied_units) {
-        if (ally->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER) {
-            command_center = ally;
-            // look for closest free vespene gayser of that command center
-            for (const auto& unit : units) {
-                if (unit->build_progress == 0) {
-                    float d = DistanceSquared2D(unit->pos, command_center->pos);
-                    if (d < distance) {
-                        distance = d;
-                        vespene_geyser = unit;
-                    }
-                }
-            }
-        }
-        // return if we have found a suitable vespene geyser close to a command center
-        if (command_center && vespene_geyser) {
-            return vespene_geyser;
-        }
-    }
-    //        std::cout << "NO VESPENE FOUND" << std::endl;
-    return nullptr;
 }
 
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;

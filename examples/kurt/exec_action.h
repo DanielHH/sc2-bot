@@ -13,7 +13,11 @@ class Kurt;
 class ExecAction {
 public:
 
-    static void OnStep();
+    static void OnStep(Kurt * kurt);
+
+    static void OnUnitIdle(
+            sc2::Unit const * unit,
+            Kurt * kurt);
 
     static bool Exec(Kurt * const, ACTION);
 
@@ -30,6 +34,12 @@ public:
     static sc2::Unit const * FindNextVespeneGeyser(
             sc2::ObservationInterface const * obs);
 
+    static sc2::Unit const * FindNextRefinery(
+            sc2::ObservationInterface const * obs);
+
+    static sc2::Unit const * FindNextMineralField(
+            sc2::ObservationInterface const * obs);
+
 private:
 
     static std::map<sc2::Unit const *, int> built_refinery_time;
@@ -37,4 +47,5 @@ private:
     static std::set<sc2::Point3D> commandcenter_locations;
 
     static int scv_gather_vespene_delay;
+    static int scv_gather_minerals_delay;
 };

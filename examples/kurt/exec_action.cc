@@ -23,13 +23,23 @@ using namespace sc2;
 std::set<Point3D> ExecAction::commandcenter_locations;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
 int ExecAction::scv_gather_vespene_delay = 0;
+int ExecAction::scv_gather_minerals_delay = 0;
 
-void ExecAction::OnStep() {
+void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
+    if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
 }
 
 bool IsVespeneGeyser(Unit const & unit) {
     return unit.unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER;
+};
+
+bool IsMineralField(Unit const & unit) {
+    return
+        unit.unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD ||
+        unit.unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD750 ||
+        unit.unit_type == UNIT_TYPEID::NEUTRAL_RICHMINERALFIELD ||
+        unit.unit_type == UNIT_TYPEID::NEUTRAL_RICHMINERALFIELD750;
 };
 
 bool IsSCV(Unit const & unit) {
@@ -47,6 +57,33 @@ bool IsCommandcenter(Unit const & unit) {
         unit.unit_type == UNIT_TYPEID::TERRAN_PLANETARYFORTRESS;
 };
 
+void ExecAction::OnUnitIdle(
+        Unit const * unit, Kurt * kurt) {
+    Unit const * target;
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SCV:
+        kurt->scv_building.remove(unit);
+        kurt->scv_idle.remove(unit);
+        kurt->scv_minerals.remove(unit);
+        kurt->scv_vespene.remove(unit);
+        target = FindNextMineralField(kurt->Observation());
+        if (target == nullptr) {
+            if (! kurt->UnitInList(kurt->scv_idle, unit)) {
+                kurt->scv_idle.push_back(unit);
+            }
+        } else {
+            kurt->Actions()->UnitCommand(
+                    unit, ABILITY_ID::SMART, target);
+            if (! kurt->UnitInScvMinerals(unit)) {
+                kurt->scv_minerals.push_back(unit);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     //
     // Test if action can be represented by some ability from the api.
@@ -63,9 +100,17 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     ObservationInterface const *obs = kurt->Observation();
 
     Units us;
+    Unit const * target;
     switch (action) {
     case ACTION::SCV_GATHER_MINERALS:
         // Make an SCV stop gather vespene and start gather minerals
+        if (scv_gather_minerals_delay > 0) {
+            return false;
+        }
+        target = FindNextMineralField(obs);
+        if (target == nullptr) {
+            return false;
+        }
         us = obs->GetUnits(Unit::Alliance::Self, IsSCV);
         for (Unit const * scv : us) {
             if (! kurt->UnitInScvVespene(scv)) {
@@ -75,45 +120,31 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                     scv->orders[0].ability_id.ToType() == ABILITY_ID::BUILD_REFINERY) {
                 continue;
             }
-            Unit const *target = FindNearestUnitOfType(
-                    UNIT_TYPEID::NEUTRAL_MINERALFIELD,
-                    scv->pos,
-                    obs,
-                    Unit::Alliance::Neutral);
-            if (target == nullptr) {
-                continue;
-            }
             action_interface->UnitCommand(scv, ABILITY_ID::SMART, target);
             kurt->scv_vespene.remove(scv);
             kurt->scv_minerals.push_back(scv);
+            scv_gather_minerals_delay = 1 * STEPS_PER_SEC;
             return true;
         }
         return false;
     case ACTION::SCV_GATHER_VESPENE:
         // Make an SCV stop gather minerals and start gather vespene
-        // TODO Fix a better check if there is enough refineries
-        {
-            BPState curr(kurt);
-            if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) *3 <= kurt->scv_vespene.size()) {
-                return false;
-            }
+        target = FindNextRefinery(obs);
+        if (scv_gather_vespene_delay > 0) {
+            return false;
+        }
+        if (target == nullptr) {
+            return false;
         }
         us = obs->GetUnits(Unit::Alliance::Self, IsSCV);
         for (Unit const * scv : us) {
             if (! kurt->UnitInScvMinerals(scv)) {
                 continue;
             }
-            Unit const *target = FindNearestUnitOfType(
-                    UNIT_TYPEID::TERRAN_REFINERY,
-                    scv->pos,
-                    obs,
-                    Unit::Alliance::Self);
-            if (target == nullptr) {
-                continue;
-            }
             action_interface->UnitCommand(scv, ABILITY_ID::SMART, target);
             kurt->scv_vespene.push_back(scv);
             kurt->scv_minerals.remove(scv);
+            scv_gather_vespene_delay = 1 * STEPS_PER_SEC;
             return true;
         }
         return false;
@@ -150,7 +181,8 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
                 if (ability == ABILITY_ID::TRAIN_SCV) {
                     // TODO Fix a better check if there is space for another scv
                     BPState curr(kurt);
-                    if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) * 16 <= kurt->scv_minerals.size()) {
+                    if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) * 16 <=
+                            kurt->scv_minerals.size() + kurt->scv_building.size()) {
                         return false;
                     }
                 }
@@ -196,7 +228,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
                 if (ability == ABILITY_ID::BUILD_REFINERY) {
                     kurt->scv_vespene.push_back(u);
                 } else {
-                    kurt->workers.push_back(u);
+                    kurt->scv_building.push_back(u);
                 }
             }
             return true;
@@ -248,6 +280,39 @@ Unit const * ExecAction::FindNextVespeneGeyser(
             continue;
         }
         return geyser;
+    }
+    return nullptr;
+}
+
+Unit const * ExecAction::FindNextRefinery(
+        ObservationInterface const * obs) {
+    Units refineries = obs->GetUnits(Unit::Alliance::Self, IsRefinery);
+    for (Unit const * refinery : refineries) {
+        // Refinery isn't overfull
+        if (refinery->assigned_harvesters >= refinery->ideal_harvesters) {
+            continue;
+        }
+        return refinery;
+    }
+    return nullptr;
+}
+
+Unit const * ExecAction::FindNextMineralField(
+        ObservationInterface const * obs) {
+    Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
+    Units mineral_fields = obs->GetUnits(Unit::Alliance::Self, IsMineralField);
+    for (Unit const * commandcenter : commandcenters) {
+        // Commandcenter isn't overfull
+        if (commandcenter->assigned_harvesters >= commandcenter->ideal_harvesters) {
+            continue;
+        }
+        // Find a mineral field near given good commandcenter
+        for (Unit const * mineral_field : mineral_fields) {
+            if (DistanceSquared3D(commandcenter->pos, mineral_field->pos) <
+                    BASE_RESOURCE_TEST_RANGE2) {
+                return mineral_field;
+            }
+        }
     }
     return nullptr;
 }

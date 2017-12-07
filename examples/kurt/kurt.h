@@ -9,7 +9,8 @@ class WorldRepresentation;
 class Kurt : public sc2::Agent {
 
 public:
-    std::list<const sc2::Unit*> workers;
+    std::list<const sc2::Unit*> scv_building;
+    std::list<const sc2::Unit*> scv_idle;
     std::list<const sc2::Unit*> scv_minerals;
     std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
@@ -75,16 +76,6 @@ public:
     /* Returns true if unit is a structure */
     static bool IsStructure(const sc2::Unit* unit);
 
-    bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
-        sc2::Point2D location,
-        const sc2::Unit* unit);
-    const sc2::Unit* getUnitOfType(sc2::UNIT_TYPEID unit_typeid);
-    sc2::Point2D randomLocationNearUnit(const sc2::Unit* unit);
-    bool TryBuildSupplyDepot();
-    bool TryBuildRefinary();
-    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
-    const sc2::Unit* FindNearestVespeneGeyser();
-    
     /* Returns data about an ability */
     static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
 
