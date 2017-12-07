@@ -109,7 +109,7 @@ void StrategyManager::ExecuteSubplan() {
 
 void StrategyManager::CalculateNewPlan() {
     delete current_plan;
-    current_plan = CreateDefaultGamePlan(kurt);
+    current_plan =DynamicGamePlan(kurt);
 }
 
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
