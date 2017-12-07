@@ -220,6 +220,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
 
     float our_final_health = 0;
     float our_cp = 0;
+    float final_our_cp = 0;
     float our_weapon_dps = 0;
 
     float tmp_our_cp = 0;
@@ -263,17 +264,19 @@ BPState* StrategyManager::CounterEnemyUnit() {
         }
 
         if (zerg_countertable.count(unit_to_counter) == 0) {
+            string unit_not_in_ct = Kurt::GetUnitType(unit_to_counter)->name;
+            PRINT("Unit is not in countertable: " << unit_not_in_ct)
             continue;
         }
         counter_units = zerg_countertable.at(unit_to_counter);
         int our_number_of_units;
         int weapon_dps;
+        is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
         for (auto counter_unit = counter_units.begin(); counter_unit != counter_units.end(); ++counter_unit) {
             if ((curr_our_units->count(*counter_unit)) == 1) {
                 our_number_of_units = curr_our_units->at(*counter_unit);
                 unit_data = Kurt::GetUnitType(*counter_unit);
                 for (auto weapon : unit_data->weapons) {
-                    is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
                     weapon_dps = weapon.damage_ / weapon.speed;
                     if (weapon.type == Weapon::TargetType::Any) {
                         tmp_our_air_cp = weapon_dps * our_number_of_units;
@@ -285,25 +288,27 @@ BPState* StrategyManager::CounterEnemyUnit() {
                     else if (weapon.type == Weapon::TargetType::Air) {
                         tmp_our_air_cp = weapon_dps * our_number_of_units;
                     }
+
+                    if (is_flying && tmp_our_air_cp > tmp_our_cp) {
+                        tmp_our_cp = tmp_our_air_cp;
+                    }
+                    else if (tmp_our_ground_cp > tmp_our_cp) {
+                        tmp_our_cp = tmp_our_ground_cp;
+                    }
                 }
-                if (is_flying) {
-                    tmp_our_cp += tmp_our_air_cp;
-                }
-                else {
-                    tmp_our_cp += tmp_our_ground_cp;
-                }
+                our_cp += tmp_our_ground_cp;
                 our_health += our_units.CalculateUnitTypeMaxHealth(*counter_unit);
             }
         }
 
-        tmp_diff_cp = enemy_cp - tmp_our_cp;
+        tmp_diff_cp = enemy_cp - our_cp;
         if (tmp_diff_cp > diff_cp) {
             diff_cp = tmp_diff_cp;
             final_enemy_cp = enemy_cp;
             enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(enemy_unit->first);
 
             our_weapon_dps = weapon_dps;
-            our_cp = tmp_our_cp;
+            final_our_cp = tmp_our_cp;
             our_final_health = our_health;
             final_counter_unit = counter_units.back();
             final_is_flying = is_flying;
@@ -314,16 +319,16 @@ BPState* StrategyManager::CounterEnemyUnit() {
     PRINT("final_enemy_cp: " << final_enemy_cp);
     PRINT("enemy_max_health: " << enemy_max_health);
     if (diff_cp > 0) {
-        while (our_final_health / final_enemy_cp < (2 * enemy_max_health / our_cp)) {
+        while (our_final_health / final_enemy_cp < (2 * enemy_max_health / final_our_cp)) {
             PRINT("----------------------------");
             PRINT("IN WHILE! " << number_of_units);
             number_of_units += 1;
             our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
-            if (is_flying) {
-                our_cp += our_weapon_dps;
+            if (final_is_flying) {
+                final_our_cp += our_weapon_dps;
             }
             else {
-                our_cp += our_weapon_dps;
+                final_our_cp += our_weapon_dps;
             }
         }
     }
