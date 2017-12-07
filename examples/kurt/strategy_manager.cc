@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "observed_units.h"
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -109,7 +109,8 @@ void StrategyManager::ExecuteSubplan() {
 
 void StrategyManager::CalculateNewPlan() {
     delete current_plan;
-    current_plan =DynamicGamePlan(kurt);
+    current_plan = DynamicGamePlan(kurt);
+    current_plan->ExecuteNextNode();
 }
 
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {
@@ -181,13 +182,6 @@ void StrategyManager::SetBuildGoal() {
 
     if (our_cp->g2g < 80 || our_cp->g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
-    }
-    else if (our_cp->a2a < 50) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 5);
-    }
-    else if (our_cp->a2a < enemy_cp->a2a || our_cp->g2a < enemy_cp->g2a) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_LIBERATOR, 3);
     }
     else {
         new_goal_state = CounterEnemyUnit();
