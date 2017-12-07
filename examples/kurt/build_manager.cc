@@ -158,7 +158,14 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {
+    if (goal != nullptr) {
+        delete goal;
+    }
     goal = goal_;
+    BPState curr(agent);
+    for (auto it = goal->UnitsBegin(); it != goal->UnitsEnd(); ++it) {
+        goal->IncreaseUnitAmount(it->first, curr.GetUnitAmount(it->first));
+    }
     InitNewPlan();
 }
 
