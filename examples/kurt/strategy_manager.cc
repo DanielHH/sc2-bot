@@ -158,7 +158,7 @@ void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
 
-    if (our_cp->g2g > enemy_cp->g2g && our_cp->g2a > enemy_cp->a2g && our_cp->a2g > enemy_cp->g2a && our_cp->a2a > enemy_cp->a2a) {
+    if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
     }
@@ -211,6 +211,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float enemy_max_health = 0;
     float final_enemy_cp = 0;
 
+
     float enemy_cp = 0;
     float tmp_enemy_cp = 0;
     float tmp_enemy_air_cp = 0;
@@ -230,6 +231,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float tmp_diff_cp = 0;
     float diff_cp = 0;
 
+    UNIT_TYPEID final_unit_to_counter;
     UNIT_TYPEID unit_to_counter;
 
     UnitTypeData* unit_data;
@@ -296,7 +298,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
                         tmp_our_cp = tmp_our_ground_cp;
                     }
                 }
-                our_cp += tmp_our_ground_cp;
+                our_cp += tmp_our_cp;
                 our_health += our_units.CalculateUnitTypeMaxHealth(*counter_unit);
             }
         }
@@ -305,24 +307,28 @@ BPState* StrategyManager::CounterEnemyUnit() {
         if (tmp_diff_cp > diff_cp) {
             diff_cp = tmp_diff_cp;
             final_enemy_cp = enemy_cp;
-            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(enemy_unit->first);
+            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit_to_counter);
 
             our_weapon_dps = weapon_dps;
             final_our_cp = tmp_our_cp;
             our_final_health = our_health;
             final_counter_unit = counter_units.back();
             final_is_flying = is_flying;
+            final_unit_to_counter = unit_to_counter;
         }
     }
-    PRINT("----------------------------");
-    PRINT("diff_cp: " << diff_cp);
-    PRINT("final_enemy_cp: " << final_enemy_cp);
-    PRINT("enemy_max_health: " << enemy_max_health);
+
     if (diff_cp > 0) {
-        while (our_final_health / final_enemy_cp < (2 * enemy_max_health / final_our_cp)) {
+        string str_futc = Kurt::GetUnitType(final_unit_to_counter)->name;
+        PRINT("----------------------------")
+        PRINT("Unit to counter: " << str_futc)
+        PRINT("diff_cp: " << diff_cp);
+        PRINT("final_enemy_cp: " << final_enemy_cp);
+        PRINT("enemy_max_health: " << enemy_max_health);
+        while (our_final_health / final_enemy_cp < (3 * enemy_max_health / final_our_cp)) {
+            number_of_units += 1;
             PRINT("----------------------------");
             PRINT("IN WHILE! " << number_of_units);
-            number_of_units += 1;
             our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
             if (final_is_flying) {
                 final_our_cp += our_weapon_dps;
@@ -331,12 +337,13 @@ BPState* StrategyManager::CounterEnemyUnit() {
                 final_our_cp += our_weapon_dps;
             }
         }
+        PRINT("Total cp on added units: " << final_our_cp)
     }
     else {
         kurt->SetCombatMode(Kurt::ATTACK);
         // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers.
-        final_counter_unit = UNIT_TYPEID::TERRAN_BATTLECRUISER;
-        number_of_units = 2;
+        final_counter_unit = UNIT_TYPEID::TERRAN_REAPER;
+        number_of_units = 10;
     }
     PRINT("----------------------------");
     string str_fcu = Kurt::GetUnitType(final_counter_unit)->name;
