@@ -70,7 +70,6 @@ void Kurt::OnUnitIdle(const Unit* unit) {
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
-
     strategy_manager->RemoveDeadUnit(destroyed_unit);
 
     workers.remove(destroyed_unit);
@@ -120,6 +119,11 @@ void Kurt::CalculateCombatMode() {
 void Kurt::CalculateBuildOrder() {
     PRINT("Dynamic build order")
     strategy_manager->SetBuildGoal();
+}
+
+void Kurt::CalculateNewPlan() {
+    PRINT("Creating new plan...")
+        strategy_manager->CalculateNewPlan();
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {

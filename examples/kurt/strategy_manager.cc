@@ -26,7 +26,8 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
 
     //current_plan = CreateDefaultGamePlan(kurt);
-    current_plan = RushPlan(kurt);
+    //current_plan = RushPlan(kurt);
+    current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
@@ -66,6 +67,7 @@ void StrategyManager::OnUnitEnterVision(const Unit* unit) {
 }
 
 void StrategyManager::SaveOurUnits(const Unit* unit) {
+    // Save healthdata about this unit type if no data is available
     if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
         ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
     }
@@ -73,7 +75,7 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnit(unit);
     }
-    else {
+    else if(unit->unit_type != UNIT_TYPEID::TERRAN_SCV) { // Don't add SCVs because they are "created" when exiting refineries
         our_units.AddUnit(unit);
     }
 }
@@ -94,7 +96,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
             PRINT("OUR BUILDING DESTROYED")
             our_structures.RemoveUnit(unit);
         }
-        else {
+        else if (unit->unit_type != UNIT_TYPEID::TERRAN_SCV) {
             PRINT("OUR UNIT KILLED")
             our_units.RemoveUnit(unit);
         }
@@ -103,6 +105,11 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
 
 void StrategyManager::ExecuteSubplan() {
     current_plan->ExecuteNextNode();
+}
+
+void StrategyManager::CalculateNewPlan() {
+    delete current_plan;
+    current_plan = CreateDefaultGamePlan(kurt);
 }
 
 void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observation) {

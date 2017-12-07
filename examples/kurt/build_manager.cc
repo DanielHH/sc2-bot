@@ -62,7 +62,7 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
     current_plan.ExecuteStep(agent);
     if (current_plan.empty()) {
         goal = nullptr;
-        std::cout << "goal is reached" << std::endl;
+        PRINT("goal is reached")
         agent->ExecuteSubplan();
         // Goal is reached, need a better goal checker
         // when multiple goals can be active at the same time.
