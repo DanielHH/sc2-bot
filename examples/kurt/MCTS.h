@@ -12,6 +12,9 @@ public:
     /* Destructors */
     ~MCTS();
 
+    /* Calculates the reward for a state given time and rate for that state. */
+    double CalcReward(double time, double mineral_rate, double vespene_rate);
+
     /* Performs given amount of iterations. */
     void Search(int);
 
@@ -42,7 +45,7 @@ private:
     double vespene_portion = 0.3;
 
     /* The scale of exploration versus exploitation in the selection phase. */
-    const double EXPLORATION_SCALE = 0.2;
+    const double EXPLORATION_SCALE = 1.2;
 
     /* The minimum reward for a state that gives a plan
      * that is faster or equaly fast as the basic plan.

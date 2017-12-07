@@ -22,24 +22,35 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     root = new BPState(root_);
     goal = new BPState(goal_);
 
-    root->parent = nullptr;
-    root->iter_amount = 1;
-    root->reward = 0;
-
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
     BPState tmp(root);
     tmp.SimulatePlan(basic_plan);
+    double time = tmp.GetTime() - root->GetTime();
+    double mineral_rate = tmp.GetMineralRate();
+    double vespene_rate = tmp.GetVespeneRate();
     // The min border is needed since the reward is relative the basic plan.
     // If e.g. basic_vespene_rate is 0, all higher rates gets the same reward.
-    basic_time = std::max(40.0, tmp.GetTime() - root->GetTime());
-    basic_mineral_rate = std::max(5.0, tmp.GetMineralRate());
-    basic_vespene_rate = std::max(10.0, tmp.GetVespeneRate());
+    basic_time = std::max(40.0, time);
+    basic_mineral_rate = std::max(5.0, mineral_rate);
+    basic_vespene_rate = std::max(10.0, vespene_rate);
+
+    root->parent = nullptr;
+    root->iter_amount = 1;
+    root->reward = CalcReward(time, mineral_rate, vespene_rate);
+    root->reward_stop = root->reward;
 }
 
 MCTS::~MCTS() {
     delete root;
     delete goal;
+}
+
+double MCTS::CalcReward(double time, double mineral_rate, double vespene_rate) {
+    return
+        time_portion * basic_time / (time + basic_time) +
+        minerals_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
+        vespene_portion * vespene_rate / (vespene_rate + basic_vespene_rate);
 }
 
 void MCTS::Search(int num_iterations) {
@@ -115,14 +126,12 @@ void MCTS::SearchOnce() {
     double time = tmp.GetTime() - root->GetTime();
     double mineral_rate = tmp.GetMineralRate();
     double vespene_rate = tmp.GetVespeneRate();
-    double reward =
-        time_portion * basic_time / (time + basic_time) +
-        minerals_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
-        vespene_portion * vespene_rate / (vespene_rate + basic_vespene_rate);
+    double reward = CalcReward(time, mineral_rate, vespene_rate);
     /*
      * Backpropagation phase.
      */
     PRINT("Backpropagation phase.")
+    new_state->reward_stop = reward;
     BPState * curr = new_state;
     while (curr != nullptr) {
         curr->reward = std::max(curr->reward, reward);
@@ -134,7 +143,6 @@ void MCTS::SearchOnce() {
 BPPlan MCTS::BestPlan() {
     BPPlan plan;
     BPState * curr = root;
-    double curr_score = -1;
     while (true) {
         if (curr->available_actions.empty() ||
                 curr->iter_amount - 1 < curr->available_actions.size()) {
@@ -156,10 +164,9 @@ BPPlan MCTS::BestPlan() {
                 "State with invalid children." << std::endl;
             break;
         }
-        if (curr_score > best_score) {
+        if (curr->reward_stop >= best_score) {
             break;
         }
-        curr_score = best_score;
         plan.push_back(curr->available_actions[best_index]);
         curr = curr->children[best_index];
     }

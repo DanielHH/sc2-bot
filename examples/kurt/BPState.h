@@ -137,8 +137,10 @@ public:
     /* USED BY MCTS
      * The reward is the score for how good this state is, range [0, 1].
      * 1 is the best, 0 is the worst.
+     * reward is the best score for this state and all its children and
+     * reward_stop is the score for stopping at this state (and add basic plan)
      */
-    double reward;
+    double reward, reward_stop;
 
     /* USED BY MCTS
      * The amount of times a search iteration has passed through this state.
