@@ -50,20 +50,6 @@ void WorldRepresentation::UpdateWorldRep() {
         } else if(kurt->IsArmyUnit(enemy)) {
             cell->AddTrooper(enemy);
         }
-        /*
-        if(enemy->display_type == Unit::Visible) {
-            cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
-            if (kurt->IsStructure(enemy)) {
-                cell->AddBuilding(enemy);
-            } else if(kurt->IsArmyUnit(enemy)) {
-                cell->AddTrooper(enemy);
-            }
-        } else if (enemy->display_type == Unit::Snapshot) {
-            if (kurt->IsStructure(enemy)) {
-                // add building hidden by fog of war
-                cell->AddBuilding(enemy);
-            }
-        }*/
     }
     for (const Unit* ally : observed_allied_units){
         int ally_cell_x_pos = ally->pos.x / chunk_size;
