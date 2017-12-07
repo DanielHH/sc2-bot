@@ -3,17 +3,17 @@
 #include "world_cell.h"
 #include "world_representation.h"
 
-struct CellComp {
+struct CellCompArmy {
     Kurt* kurt;
     float gas_factor = 1;
     float mineral_factor = 1;
     float seen_ago_factor = 1;
-    float enemy_unit_factor = 1;
-    float enemy_building_factor = 50;
+    float enemy_troop_factor = 100;
+    float enemy_building_factor = 10;
     float neutral_watch_tower_factor = 1;
     bool one_time_bonus = true;
-   
-    CellComp(Kurt* parent_kurt) {
+    
+    CellCompArmy(Kurt* parent_kurt) {
         kurt = parent_kurt;
     }
     
@@ -33,6 +33,7 @@ struct CellComp {
         float seen_game_steps_ago = kurt->Observation()->GetGameLoop() - cell->GetSeenOnGameStep();
         
         float building_worth = 0;
+        float enemy_troops_worth = 0;
         float enemy_start_position_boost = 0;
         float final_worth = 0;
         bool is_enemy_start = false;
@@ -40,27 +41,18 @@ struct CellComp {
             if ((int) point.x/kurt->world_rep->chunk_size == (int) cell->GetCellRealX()/kurt->world_rep->chunk_size &&
                 (int) point.y/kurt->world_rep->chunk_size == (int) cell->GetCellRealY()/kurt->world_rep->chunk_size) {
                 is_enemy_start = true;
-     
             }
         }
         for (const sc2::Unit* building :  cell->GetBuildings()) {
             auto& attributes = kurt->Observation()->GetUnitTypeData().at(building->unit_type);
             building_worth += attributes.mineral_cost + attributes.vespene_cost;
         }
-        
-        if(gas > 0) {
-            final_worth +=10;
+        final_worth += building_worth * enemy_building_factor;
+        for (const sc2::Unit* trooper :  cell->GetTroops()) {
+            auto& attributes = kurt->Observation()->GetUnitTypeData().at(trooper->unit_type);
+            enemy_troops_worth += attributes.mineral_cost + attributes.vespene_cost;
         }
-        if(mineral > 0) {
-            final_worth += 10;
-        }
-        if(building_worth > 0) {
-            final_worth += 50;
-        }
-        if(is_enemy_start) {
-            final_worth = (1000000.0 / (kurt->Observation()->GetGameLoop()));
-        }
-        
+        final_worth += enemy_troops_worth * enemy_troop_factor;
         return final_worth * seen_ago_factor*seen_game_steps_ago;
     }
 };

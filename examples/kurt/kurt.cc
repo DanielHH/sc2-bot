@@ -80,7 +80,7 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
-    army.remove(destroyed_unit);
+    army_units.remove(destroyed_unit);
 
     
     if (IsStructure(destroyed_unit)) {
@@ -93,7 +93,6 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
             break;
         }
     }
-    
 }
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
@@ -101,11 +100,12 @@ bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
 }
 
 bool Kurt::UnitAlreadyStored(const sc2::Unit* unit) {
-    return UnitInList(workers, unit) ||
+    return
+        UnitInList(workers, unit) ||
         UnitInList(scv_minerals, unit) ||
         UnitInList(scv_vespene, unit) ||
         UnitInList(scouts, unit) ||
-        UnitInList(army, unit);
+        UnitInList(army_units, unit);
 }
 
 bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {
@@ -146,19 +146,23 @@ bool Kurt::IsArmyUnit(const Unit* unit) {
     if (IsStructure(unit)) {
         return false;
     }
-
     switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_SCV: return false;
-    case UNIT_TYPEID::TERRAN_MULE: return false;
-    case UNIT_TYPEID::TERRAN_NUKE: return false;
-    default: return true;
+        case UNIT_TYPEID::PROTOSS_PROBE: return false;
+        case UNIT_TYPEID::TERRAN_SCV: return false;
+        case UNIT_TYPEID::TERRAN_MULE: return false;
+        case UNIT_TYPEID::TERRAN_NUKE: return false;
+        case UNIT_TYPEID::ZERG_OVERLORD: return false;
+        case UNIT_TYPEID::ZERG_DRONE: return false;
+        case UNIT_TYPEID::ZERG_QUEEN: return false;
+        case UNIT_TYPEID::ZERG_LARVA: return false;
+        case UNIT_TYPEID::ZERG_EGG: return false;
+        default: return true;
     }
 }
 
 bool Kurt::IsStructure(const Unit* unit) {
     bool is_structure = false;
     auto& attributes = GetUnitType(unit->unit_type)->attributes;
-
     for (const auto& attribute : attributes) {
         if (attribute == Attribute::Structure) {
             is_structure = true;

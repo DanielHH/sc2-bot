@@ -4,6 +4,7 @@
 #include "world_cell.h"
 #include <cmath>
 #include <algorithm>
+#include "cell_priority_enum.cc"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -18,13 +19,14 @@
 using namespace sc2;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
-    cellPriorityQueue = new CellPriorityQueue(kurt);
+    scoutCellPriorityQueue = new CellPriorityQueue(kurt, CellPriorityMode::SCOUT);
+    armyCellPriorityQueue = new CellPriorityQueue(kurt, CellPriorityMode::ARMY);
 }
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
-    // DO ALL DE ARMY STUFF
+    scoutCellPriorityQueue->Update();
+    armyCellPriorityQueue->Update();
     
-    cellPriorityQueue->Update();
     if (kurt->scouts.empty()) {
         ArmyManager::TryGetScout();
     } else {
@@ -89,16 +91,12 @@ void ArmyManager::ScoutSmartPath(){
     float scout_x = scout->pos.x;
     float scout_y = scout->pos.y;
     
-    for (int i = 0; i < cellPriorityQueue->queue.size(); i++) {
-        Point2D point_to_visit = (cellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+    for (int i = 0; i < scoutCellPriorityQueue->queue.size(); i++) {
+        Point2D point_to_visit = (scoutCellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
         float x_distance = abs(point_to_visit.x - scout_x);
         float y_distance = abs(point_to_visit.y - scout_y);
         float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
         kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        /*if(euk_distance_to_unit < 5) {
-         cellPriorityQueue->queue.at(0)->SetSeenOnGameStep((float) kurt->Observation()->GetGameLoop());
-         cellPriorityQueue->Update();
-         }*/
         return;
     }
 }
@@ -108,12 +106,30 @@ void ArmyManager::Defend() {
 }
 
 void ArmyManager::Attack() {
-    // TODO: implement Attack
-    for(const Unit* unit: kurt->army){
-        if (unit->orders.size() == 0) {
-            sc2::Point2D target = kurt->Observation()->GetGameInfo().enemy_start_locations[0];
-            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK,target);
+    if (!armyCellPriorityQueue->queue.empty()) {
+        WorldCell* cell_to_attack = armyCellPriorityQueue->queue.at(0);
+        Point2D point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+        if (kurt->Observation()->GetGameLoop() % 240 == 0) {
+            std::cout << "Army at game step: " << kurt->Observation()->GetGameLoop() << std::endl;
         }
+        for(const Unit* unit: kurt->army_units){
+            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, point_to_attack);
+            if (kurt->Observation()->GetGameLoop() % 240 == 0) {
+                std::cout << "Army unit: " << unit->unit_type << std::endl;
+            }
+        }
+        /*
+        if (kurt->Observation()->GetGameLoop() % 240 == 0) {
+            std::cout << "Army Attack at game step: " << kurt->Observation()->GetGameLoop() << std::endl;
+            std::cout << "Cell to attack: X: " << cell_to_attack->GetCellRealX() << ", Y: " << cell_to_attack->GetCellRealY() << std::endl;
+            for (const Unit* unit : cell_to_attack->GetBuildings()) {
+                std::cout << "building: " << unit->unit_type << std::endl;
+            }
+            for (const Unit* unit : cell_to_attack->GetTroops()) {
+                std::cout << "trooper: " << unit->unit_type << std::endl;
+            }
+        }
+        */
     }
 }
 
@@ -126,35 +142,33 @@ bool ArmyManager::TryGetScout() {
     bool scout_found = false;
     const Unit* scout;
     
-    for (const Unit* unit : kurt->army){
+    for (const Unit* unit : kurt->army_units){
         if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_MARINE) {
             // Marine found, but keep looking.
             scout = unit;
             scout_found = true;
         } else if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_REAPER) {
             // We found a reaper, we are done!
-            kurt->scouts.push_back(unit);
-            kurt->army.remove(unit);
-            return true;
-        }
-    }
-    
-    // if no reaper or marine is found look for a SCV.
-    if (!scout_found) {
-        for(const Unit* unit : kurt->scv_minerals) {
-            kurt->scouts.push_back(unit);
-            kurt->scv_minerals.remove(unit);
+            scout = unit;
             scout_found = true;
-            return true;
+            break;
         }
-        // no SCV:s exists that are allowed to be interrupted.
-        return false;
-    } else {
-        // Add the marine in scouts and remove it from army
-        kurt->scouts.push_back(scout);
-        kurt->army.remove(scout);
-        return true;
     }
+    if (scout_found) {
+        // Add the found scout to scouts and remove it from army
+        kurt->scouts.push_back(scout);
+        kurt->army_units.remove(scout);
+        scout_found = true;
+    } else {
+        // no army scout found look for an SCV.
+        if (kurt->scv_minerals.size() > 0) {
+            scout = kurt->scv_minerals.front();
+            kurt->scouts.push_back(scout);
+            kurt->scv_minerals.remove(scout);
+            scout_found = true;
+        }
+    }
+    return scout_found;
 }
 
 void ArmyManager::PutUnitInGroup(const Unit* unit) {
@@ -163,12 +177,12 @@ void ArmyManager::PutUnitInGroup(const Unit* unit) {
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
     if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-        if (! kurt->UnitInScvMinerals(unit)) {
+        if (!kurt->UnitInScvMinerals(unit)) {
             kurt->scv_minerals.push_back(unit);
         }
     }
     else if (kurt->IsArmyUnit(unit)) {
-        kurt->army.push_back(unit);
+        kurt->army_units.push_back(unit);
     }
 }
 
