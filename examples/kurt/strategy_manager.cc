@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "observed_units.h"
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -189,14 +189,18 @@ void StrategyManager::SetBuildGoal() {
     else {
         new_goal_state = CounterEnemyUnit();
     }*/
+    PRINT("---------------------------")
+    PRINT("In SetBuildGoal")
     new_goal_state = CounterEnemyUnit();
     kurt->SendBuildOrder(new_goal_state);
 };
 
 
 BPState* StrategyManager::CounterEnemyUnit() {
+    PRINT("---------------------------")
+    PRINT("In CounterEnemyUnit")
     BPState* new_goal_state = new BPState();
-    Unit unit_to_create;
+    UNIT_TYPEID final_counter_unit;
     int number_of_units = 0;
 
     map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
@@ -217,7 +221,6 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float our_final_health = 0;
     float our_cp = 0;
     float our_weapon_dps = 0;
-    UNIT_TYPEID final_counter_unit;
 
     float tmp_our_cp = 0;
     float tmp_our_air_cp = 0;
@@ -310,23 +313,32 @@ BPState* StrategyManager::CounterEnemyUnit() {
     PRINT("diff_cp: " << diff_cp);
     PRINT("final_enemy_cp: " << final_enemy_cp);
     PRINT("enemy_max_health: " << enemy_max_health);
-    while (our_final_health / final_enemy_cp < (2 * enemy_max_health / our_cp)) {
-        PRINT("----------------------------");
-        PRINT("IN WHILE! " << number_of_units);
-        number_of_units += 1;
-        our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
-        if (is_flying) {
-            our_cp += our_weapon_dps;
-        }
-        else {
-            our_cp += our_weapon_dps;
+    if (diff_cp > 0) {
+        while (our_final_health / final_enemy_cp < (2 * enemy_max_health / our_cp)) {
+            PRINT("----------------------------");
+            PRINT("IN WHILE! " << number_of_units);
+            number_of_units += 1;
+            our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
+            if (is_flying) {
+                our_cp += our_weapon_dps;
+            }
+            else {
+                our_cp += our_weapon_dps;
+            }
         }
     }
+    else {
+        kurt->SetCombatMode(Kurt::ATTACK);
+        // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers.
+        final_counter_unit = UNIT_TYPEID::TERRAN_BATTLECRUISER;
+        number_of_units = 2;
+    }
     PRINT("----------------------------");
-    PRINT("counter_units " << counter_units.back());
+    string str_fcu = Kurt::GetUnitType(final_counter_unit)->name;
+    PRINT("Final Counter Unit: " << str_fcu)
     PRINT("number of units: " << number_of_units)
     PRINT("----------------------------");
-    new_goal_state->SetUnitAmount(counter_units.back(), number_of_units);
+    new_goal_state->SetUnitAmount(final_counter_unit, number_of_units);
     return new_goal_state;
 }
 
