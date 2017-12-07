@@ -193,26 +193,34 @@ void StrategyManager::SetBuildGoal() {
 BPState* StrategyManager::CounterEnemyUnit() {
     BPState* new_goal_state = new BPState();
     Unit unit_to_create;
-    int number_of_units;
+    int number_of_units = 0;
 
     map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
 
     vector<sc2::UNIT_TYPEID> counter_units;
     map <UNIT_TYPEID, int> *const curr_our_units = our_units.GetSavedUnits();
 
-    float enemy_max_health;
+    float enemy_max_health = 0;
+    float final_enemy_cp = 0;
+
     float enemy_cp = 0;
-
     float tmp_enemy_cp = 0;
-    float tmp_enemy_air_cp;
-    float tmp_enemy_ground_cp;
+    float tmp_enemy_air_cp = 0;
+    float tmp_enemy_ground_cp = 0;
 
-    float our_health;
+    float our_health = 0;
+
+    float our_final_health = 0;
     float our_cp = 0;
+    float our_weapon_dps = 0;
+    UNIT_TYPEID final_counter_unit;
 
     float tmp_our_cp = 0;
-    float tmp_our_air_cp;
-    float tmp_our_ground_cp;
+    float tmp_our_air_cp = 0;
+    float tmp_our_ground_cp = 0;
+
+    float tmp_diff_cp = 0;
+    float diff_cp = 0;
 
     UNIT_TYPEID unit_to_counter;
 
@@ -220,71 +228,86 @@ BPState* StrategyManager::CounterEnemyUnit() {
 
     float weapon_dps;
 
-    for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
-        number_of_units = current_enemy_units->at(unit->first);
-        unit_data = Kurt::GetUnitType(unit->first);
+    bool final_is_flying;
+    bool is_flying;
+
+    for (auto enemy_unit = current_enemy_units->begin(); enemy_unit != current_enemy_units->end(); ++enemy_unit) {
+        unit_to_counter = enemy_unit->first;
+        unit_data = Kurt::GetUnitType(enemy_unit->first);
         for (auto weapon : unit_data->weapons) {
             weapon_dps = weapon.damage_ / weapon.speed;
 
             if (weapon.type == Weapon::TargetType::Any) {
-                tmp_enemy_air_cp = weapon_dps * unit->second;
-                tmp_enemy_ground_cp = weapon_dps * unit->second;
+                tmp_enemy_air_cp = weapon_dps * enemy_unit->second;
+                tmp_enemy_ground_cp = weapon_dps * enemy_unit->second;
             }
             else if (weapon.type == Weapon::TargetType::Ground) {
-                tmp_enemy_ground_cp = weapon_dps * unit->second;
+                tmp_enemy_ground_cp = weapon_dps * enemy_unit->second;
             }
             else if (weapon.type == Weapon::TargetType::Air) {
-                tmp_enemy_air_cp = weapon_dps * unit->second;
+                tmp_enemy_air_cp = weapon_dps * enemy_unit->second;
             }
 
             tmp_enemy_cp = max(tmp_enemy_air_cp, tmp_enemy_ground_cp);
+
+            if (tmp_enemy_cp > enemy_cp) {
+                enemy_cp = tmp_enemy_cp;
+            }
         }
 
-        if (tmp_enemy_cp > enemy_cp) {
-            unit_to_counter = unit->first;
-            enemy_cp = tmp_enemy_cp;
-            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
+        counter_units = zerg_countertable.at(unit_to_counter);
+        int our_number_of_units;
+        int weapon_dps;
+        for (auto counter_unit = counter_units.begin(); counter_unit != counter_units.end(); ++counter_unit) {
+            if ((curr_our_units->count(*counter_unit)) == 1) {
+                our_number_of_units = curr_our_units->at(*counter_unit);
+                unit_data = Kurt::GetUnitType(*counter_unit);
+                for (auto weapon : unit_data->weapons) {
+                    is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
+                    weapon_dps = weapon.damage_ / weapon.speed;
+                    if (weapon.type == Weapon::TargetType::Any) {
+                        tmp_our_air_cp = weapon_dps * our_number_of_units;
+                        tmp_our_ground_cp = weapon_dps * our_number_of_units;
+                    }
+                    else if (weapon.type == Weapon::TargetType::Ground) {
+                        tmp_our_ground_cp = weapon_dps *our_number_of_units;
+                    }
+                    else if (weapon.type == Weapon::TargetType::Air) {
+                        tmp_our_air_cp = weapon_dps * our_number_of_units;
+                    }
+                }
+                if (is_flying) {
+                    tmp_our_cp += tmp_our_air_cp;
+                }
+                else {
+                    tmp_our_cp += tmp_our_ground_cp;
+                }
+                our_health += our_units.CalculateUnitTypeMaxHealth(*counter_unit);
+            }
+        }
+
+        tmp_diff_cp = enemy_cp - tmp_our_cp;
+        if (tmp_diff_cp > diff_cp) {
+            diff_cp = tmp_diff_cp;
+            final_enemy_cp = enemy_cp;
+            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(enemy_unit->first);
+
+            our_weapon_dps = weapon_dps;
+            our_cp = tmp_our_cp;
+            our_final_health = our_health;
+            final_counter_unit = counter_units.back();
+            final_is_flying = is_flying;
         }
     }
 
-    counter_units = zerg_countertable.at(unit_to_counter);
-    bool is_flying;
-    for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
-        if ((curr_our_units->count(*unit)) == 1) {
-            number_of_units = curr_our_units->at(*unit);
-            unit_data = Kurt::GetUnitType(*unit);
-            for (auto weapon : unit_data->weapons) {
-                is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
-                weapon_dps = weapon.damage_ / weapon.speed;
-                if (weapon.type == Weapon::TargetType::Any) {
-                    tmp_our_air_cp = weapon_dps * number_of_units;
-                    tmp_our_ground_cp = weapon_dps * number_of_units;
-                }
-                else if (weapon.type == Weapon::TargetType::Ground) {
-                    tmp_our_ground_cp = weapon_dps * number_of_units;
-                }
-                else if (weapon.type == Weapon::TargetType::Air) {
-                    tmp_our_air_cp = weapon_dps * number_of_units;
-                }
-            }
-            if (is_flying) {
-                our_cp += tmp_our_air_cp;
-            }
-            else {
-                our_cp += tmp_our_ground_cp;
-            }
-            our_health += our_units.CalculateUnitTypeMaxHealth(*unit);
-        }
-    }
-
-    while (our_health / enemy_cp < (1.1 * enemy_max_health / our_cp)) {
+    while (our_final_health / final_enemy_cp < (1.1 * enemy_max_health / our_cp)) {
         number_of_units += 1;
-        our_health += ObservedUnits::unit_max_health.at(counter_units.back());
+        our_health += ObservedUnits::unit_max_health.at(final_counter_unit);
         if (is_flying) {
-            our_cp += tmp_our_air_cp;
+            our_cp += our_weapon_dps;
         }
         else {
-            our_cp += tmp_our_ground_cp;
+            our_cp += our_weapon_dps;
         }
     }
     new_goal_state->SetUnitAmount(counter_units.back(), number_of_units);
