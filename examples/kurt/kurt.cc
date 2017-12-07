@@ -37,10 +37,12 @@ void Kurt::OnGameStart() {
 
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
+    int step = observation->GetGameLoop();
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
+    assert(step == observation->GetGameLoop());
 }
 
 void Kurt::OnUnitCreated(const Unit* unit) {
@@ -76,7 +78,7 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
-    army.remove(destroyed_unit);
+    army_units.remove(destroyed_unit);
 }
 
 void Kurt::OnUnitEnterVision(const Unit* unit) {
@@ -130,19 +132,23 @@ bool Kurt::IsArmyUnit(const Unit* unit) {
     if (IsStructure(unit)) {
         return false;
     }
-
     switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_SCV: return false;
-    case UNIT_TYPEID::TERRAN_MULE: return false;
-    case UNIT_TYPEID::TERRAN_NUKE: return false;
-    default: return true;
+        case UNIT_TYPEID::PROTOSS_PROBE: return false;
+        case UNIT_TYPEID::TERRAN_SCV: return false;
+        case UNIT_TYPEID::TERRAN_MULE: return false;
+        case UNIT_TYPEID::TERRAN_NUKE: return false;
+        case UNIT_TYPEID::ZERG_OVERLORD: return false;
+        case UNIT_TYPEID::ZERG_DRONE: return false;
+        case UNIT_TYPEID::ZERG_QUEEN: return false;
+        case UNIT_TYPEID::ZERG_LARVA: return false;
+        case UNIT_TYPEID::ZERG_EGG: return false;
+        default: return true;
     }
 }
 
 bool Kurt::IsStructure(const Unit* unit) {
     bool is_structure = false;
     auto& attributes = GetUnitType(unit->unit_type)->attributes;
-
     for (const auto& attribute : attributes) {
         if (attribute == Attribute::Structure) {
             is_structure = true;

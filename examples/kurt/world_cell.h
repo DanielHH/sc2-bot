@@ -24,7 +24,6 @@ public:
     float GetGasAmount();
     float GetEnemyDps();
     float GetSeenOnGameStep();
-    float GetScoutPriority();
     int GetCellRealX();
     int GetCellRealY();
     sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);
@@ -43,4 +42,6 @@ public:
     bool SmartComp(WorldCell* a, WorldCell* b);
     void AddBuilding(const sc2::Unit* building);
     void AddTrooper(const sc2::Unit* trooper);
+    void ClearBuildings();
+    void ClearTroops();
 };

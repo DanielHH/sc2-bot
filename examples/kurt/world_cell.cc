@@ -66,6 +66,13 @@ void WorldCell::AddTrooper(const sc2::Unit* trooper) {
         troops.push_back(trooper);
     }
 }
+void WorldCell::ClearBuildings() {
+    buildings.clear();
+}
+
+void WorldCell::ClearTroops() {
+    troops.clear();
+}
 
 sc2::Units WorldCell::GetTroops(){return troops;}
 sc2::Units WorldCell::GetBuildings(){return buildings;}

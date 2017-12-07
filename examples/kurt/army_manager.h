@@ -4,6 +4,8 @@
 #include "kurt.h"
 #include <queue>
 #include "cell_priority_queue.h"
+#include "danger_point.cc"
+#include <list>
 
 
 //using namespace sc2;
@@ -19,9 +21,14 @@ public:
 
     void GroupNewUnit(const sc2::Unit* unit, const sc2::ObservationInterface* observation);
 
+
 private:
     Kurt* kurt;
-    CellPriorityQueue* cellPriorityQueue;
+    CellPriorityQueue* scoutCellPriorityQueue;
+    CellPriorityQueue* armyCellPriorityQueue;
+    std::vector<DangerPoint*> danger_points;
+    float scout_safe_distance = 15;
+    int danger_time = 1;
     
     void Harass();
     void Attack();
