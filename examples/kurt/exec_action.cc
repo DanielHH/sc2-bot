@@ -28,6 +28,29 @@ int ExecAction::scv_gather_minerals_delay = 0;
 void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
+
+    if (! kurt->scv_idle.empty()) {
+        Unit const * scv = kurt->scv_idle.front();
+        Unit const * target = FindNextMineralField(kurt->Observation());
+        if (target != nullptr) {
+            if (! kurt->UnitInScvMinerals(scv)) {
+                kurt->scv_minerals.push_back(scv);
+            }
+        } else {
+            target = FindNextRefinery(kurt->Observation());
+            if (target != nullptr) {
+                if (! kurt->UnitInScvVespene(scv)) {
+                    kurt->scv_vespene.push_back(scv);
+                }
+            }
+        }
+        if (target == nullptr) {
+            return;
+        }
+        kurt->scv_idle.pop_front();
+        kurt->scv_minerals.push_back(scv);
+        kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, target);
+    }
 }
 
 bool IsVespeneGeyser(Unit const & unit) {
@@ -72,8 +95,7 @@ void ExecAction::OnUnitIdle(
                 kurt->scv_idle.push_back(unit);
             }
         } else {
-            kurt->Actions()->UnitCommand(
-                    unit, ABILITY_ID::SMART, target);
+            kurt->Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
             if (! kurt->UnitInScvMinerals(unit)) {
                 kurt->scv_minerals.push_back(unit);
             }
@@ -300,7 +322,7 @@ Unit const * ExecAction::FindNextRefinery(
 Unit const * ExecAction::FindNextMineralField(
         ObservationInterface const * obs) {
     Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
-    Units mineral_fields = obs->GetUnits(Unit::Alliance::Self, IsMineralField);
+    Units mineral_fields = obs->GetUnits(Unit::Alliance::Neutral, IsMineralField);
     for (Unit const * commandcenter : commandcenters) {
         // Commandcenter isn't overfull
         if (commandcenter->assigned_harvesters >= commandcenter->ideal_harvesters) {
