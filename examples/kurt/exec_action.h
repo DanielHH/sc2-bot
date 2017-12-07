@@ -13,6 +13,8 @@ class Kurt;
 class ExecAction {
 public:
 
+    static double TimeSinceOrderSent(sc2::Unit const * unit, Kurt * kurt);
+
     static void OnStep(Kurt * kurt);
 
     static void OnUnitIdle(
@@ -42,6 +44,7 @@ public:
 
 private:
 
+    static std::map<sc2::Unit const *, int> sent_order_time;
     static std::map<sc2::Unit const *, int> built_refinery_time;
 
     static std::set<sc2::Point3D> commandcenter_locations;

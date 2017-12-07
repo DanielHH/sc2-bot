@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "action_enum.h"
 #include "action_repr.h"
+#include "exec_action.h"
 #include "kurt.h"
 
 #include <sc2api/sc2_api.h>
@@ -132,6 +133,7 @@ BPState::BPState(Kurt * const kurt) {
                 continue;
             }
             ACTION action = ActionRepr::convert_api_our.at(ability);
+            ActiveAction aa(action);
             ActionRepr ar = ActionRepr::values.at(action);
             for (auto pair : ar.consumed) {
                 UNIT_TYPEID type = pair.first;
@@ -139,7 +141,11 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAmount(type, amount);
                 IncreaseUnitAvailableAmount(type, amount);
             }
-            AddAction(action);
+            double time = aa.time_left - ExecAction::TimeSinceOrderSent(unit, kurt);
+            if (time < 0) {
+                time = 0;
+            }
+            AddAction(action, time);
         }
     }
 
@@ -239,7 +245,7 @@ void BPState::SimulatePlan(BPPlan * plan) {
     CompleteAllActions();
 }
 
-void BPState::AddAction(ACTION action) {
+void BPState::AddAction(ACTION action, double time) {
     UpdateUntilAvailable(action);
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto pair : ar.consumed) {
@@ -259,6 +265,9 @@ void BPState::AddAction(ACTION action) {
         IncreaseUnitProdAmount(type, amount);
     }
     ActiveAction aa(action);
+    if (time >= 0) {
+        aa.time_left = time;
+    }
     for (auto it = actions.begin(); it != actions.end(); ++it) {
         ActiveAction other = *it;
         if (aa < other) {
@@ -320,14 +329,14 @@ bool BPState::CanExecuteNow(ACTION action) const {
 bool BPState::CanExecuteNowOrSoon(ACTION action) const {
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto p : ar.required) {
-        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        if (amount > GetUnitAvailableAmount(type) + GetUnitProdAmount(type)) {
+        if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
             if (type == UNIT_FAKEID::MINERALS &&
                     GetMineralRate() > 0) {
                 continue;
@@ -340,7 +349,7 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
         }
     }
     for (auto p : ar.borrowed) {
-        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }

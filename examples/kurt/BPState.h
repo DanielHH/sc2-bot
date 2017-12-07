@@ -36,7 +36,7 @@ public:
     void SimulatePlan(BPPlan * const);
 
     /* Updates this state and add the action. */
-    void AddAction(ACTION);
+    void AddAction(ACTION action, double time_left = -1);
 
     /* Updates this state with completing all active actions. */
     void CompleteAllActions();

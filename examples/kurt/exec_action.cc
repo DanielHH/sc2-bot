@@ -20,10 +20,20 @@
 
 using namespace sc2;
 
-std::set<Point3D> ExecAction::commandcenter_locations;
+std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
+std::set<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
+
+double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
+    if (sent_order_time.count(unit) == 0) {
+        return 0;
+    } else {
+        return (kurt->Observation()->GetGameLoop() - sent_order_time[unit])
+            / (double) STEPS_PER_SEC;
+    }
+}
 
 void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
@@ -253,6 +263,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
                     kurt->scv_building.push_back(u);
                 }
             }
+            sent_order_time[u] = obs->GetGameLoop();
             return true;
         }
     }
