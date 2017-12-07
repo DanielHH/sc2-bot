@@ -46,6 +46,9 @@ void Kurt::OnStep() {
 }
 
 void Kurt::OnUnitCreated(const Unit* unit) {
+    if (UnitAlreadyStored(unit)) {
+        return;
+    }
     const ObservationInterface* observation = Observation();
     army_manager->GroupNewUnit(unit, observation);
     strategy_manager->SaveOurUnits(unit);
@@ -72,6 +75,7 @@ void Kurt::OnUnitIdle(const Unit* unit) {
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
+
     strategy_manager->RemoveDeadUnit(destroyed_unit);
 
     workers.remove(destroyed_unit);
@@ -79,6 +83,19 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
     army_units.remove(destroyed_unit);
+
+    if(destroyed_unit->alliance != Unit::Alliance::Self) return;
+    
+    if (IsStructure(destroyed_unit)) {
+        build_manager->InitNewPlan();
+        return;
+    }
+    for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
+        if ((*it).first == destroyed_unit->unit_type.ToType()) {
+            build_manager->InitNewPlan();
+            break;
+        }
+    }
 }
 
 void Kurt::OnUnitEnterVision(const Unit* unit) {
@@ -87,6 +104,15 @@ void Kurt::OnUnitEnterVision(const Unit* unit) {
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
     return std::find(list.begin(), list.end(), unit) != list.end();
+}
+
+bool Kurt::UnitAlreadyStored(const sc2::Unit* unit) {
+    return
+        UnitInList(workers, unit) ||
+        UnitInList(scv_minerals, unit) ||
+        UnitInList(scv_vespene, unit) ||
+        UnitInList(scouts, unit) ||
+        UnitInList(army_units, unit);
 }
 
 bool Kurt::UnitInScvMinerals(const sc2::Unit* unit) {

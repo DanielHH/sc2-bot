@@ -1,7 +1,6 @@
 #include "army_manager.h"
 #include <iostream>
 #include <sc2api/sc2_map_info.h>
-#include "BPAction.h"
 #include "world_cell.h"
 #include <cmath>
 #include <algorithm>

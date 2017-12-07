@@ -1,6 +1,10 @@
 #pragma once
 
+#include <iostream>
+
 enum class ACTION {
+    INVALID,
+
     //Resource gathering
     SCV_GATHER_MINERALS,
     SCV_GATHER_VESPENE,
@@ -32,7 +36,6 @@ enum class ACTION {
 
     // Unit training
     TRAIN_SCV,
-    TRAIN_MULE,
     TRAIN_MARINE,
     TRAIN_REAPER,
     TRAIN_MARAUDER,
@@ -54,6 +57,10 @@ enum class ACTION {
 
     // Other
 };
+
+std::string ActionToName(ACTION action);
+
+std::ostream& operator<<(std::ostream& os, const ACTION & action);
 
 class ActiveAction {
 public:

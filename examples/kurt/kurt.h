@@ -39,6 +39,9 @@ public:
     /* Test if given unit exist in given list. */
     bool UnitInList(std::list<const sc2::Unit*>& list, const sc2::Unit* unit);
 
+    /* Tests if given unit already has been stored in a shared list. */
+    bool UnitAlreadyStored(const sc2::Unit* unit);
+
     /* Test if given unit is in the list scv_minerals. */
     bool UnitInScvMinerals(const sc2::Unit* unit);
 
@@ -81,13 +84,12 @@ public:
     bool TryBuildRefinary();
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser();
-
+    
     /* Returns data about an ability */
     static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
 
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
-    
 
 private:
     CombatMode current_combat_mode;

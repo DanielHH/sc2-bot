@@ -2,8 +2,10 @@
 
 #include "kurt.h"
 #include "build_manager.h"
+#include "action_enum.h"
+#include "action_repr.h"
+#include "exec_action.h"
 #include "BPState.h"
-#include "BPAction.h"
 
 #include "sc2api/sc2_api.h"
 
@@ -27,8 +29,9 @@ void BPPlan::AddBasicPlan(BPState * const start,
         BPState * const goal) {
     // TODO Remove duplicated code?
     BPState built(start);
+    built.CompleteAllActions();
     // add_to_plan is almost a queue of stacks
-    std::vector<std::stack<BPAction> > add_to_plan;
+    std::vector<std::stack<ACTION> > add_to_plan;
     std::queue<UNIT_TYPEID> need_to_build;
     int mineral_cost = 0;
     int vespene_cost = 0;
@@ -47,14 +50,14 @@ void BPPlan::AddBasicPlan(BPState * const start,
         }
         need_to_build.push(type);
         for (int i = start->GetUnitAmount(type); i < amount; ++i) {
-            add_to_plan[add_i].push(BPAction::CreatesUnit(type));
+            add_to_plan[add_i].push(ActionRepr::CreatesUnit(type));
         }
         built.SetUnitAmount(type, amount);
         UnitTypeData * t_data = Kurt::GetUnitType(type);
         mineral_cost += t_data->mineral_cost * amount;
         vespene_cost += t_data->vespene_cost * amount;
-        food_required += t_data->food_required * amount;
-        food_required -= t_data->food_provided * amount;
+        food_required += (int) t_data->food_required * amount;
+        food_required -= (int) t_data->food_provided * amount;
         /*
          * Add buildings required for to reach the goal.
          */
@@ -67,13 +70,13 @@ void BPPlan::AddBasicPlan(BPState * const start,
                     continue;
                 }
                 need_to_build.push(req);
-                add_to_plan[add_i].push(BPAction::CreatesUnit(req));
+                add_to_plan[add_i].push(ActionRepr::CreatesUnit(req));
                 built.SetUnitAmount(req, 1);
                 UnitTypeData * t_data = Kurt::GetUnitType(req);
                 mineral_cost += t_data->mineral_cost;
                 vespene_cost += t_data->vespene_cost;
-                food_required += t_data->food_required;
-                food_required -= t_data->food_provided;
+                food_required += (int) t_data->food_required;
+                food_required -= (int) t_data->food_provided;
             }
         }
     }
@@ -85,12 +88,12 @@ void BPPlan::AddBasicPlan(BPState * const start,
     while (food_required > food_in_store) {
         UNIT_TYPEID supplydepot = UNIT_TYPEID::TERRAN_SUPPLYDEPOT;
         built.SetUnitAmount(supplydepot, built.GetUnitAmount(supplydepot) + 1);
-        add_to_plan[add_i].push(BPAction::CreatesUnit(supplydepot));
+        add_to_plan[add_i].push(ActionRepr::CreatesUnit(supplydepot));
         UnitTypeData * t_data = Kurt::GetUnitType(supplydepot);
         mineral_cost += t_data->mineral_cost;
         vespene_cost += t_data->vespene_cost;
-        food_required += t_data->food_required;
-        food_required -= t_data->food_provided;
+        food_required += (int) t_data->food_required;
+        food_required -= (int) t_data->food_provided;
     }
     /*
      * Add refinery if plan requires more vespene than we got
@@ -98,18 +101,16 @@ void BPPlan::AddBasicPlan(BPState * const start,
      *
      * TODO Is this bad for MCTS?
      */
-    if (vespene_cost > built.GetVespene() &&
-            built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
-        UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
-        built.SetUnitAmount(refinery, 1);
-        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan[add_i].push(BPAction(0, BPAction::GATHER_VESPENE_SCV));
-        add_to_plan[add_i].push(BPAction::CreatesUnit(refinery));
-        UnitTypeData * t_data = Kurt::GetUnitType(refinery);
-        mineral_cost += t_data->mineral_cost;
-        vespene_cost += t_data->vespene_cost;
-        food_required += t_data->food_required;
-        food_required -= t_data->food_provided;
+    if (vespene_cost > built.GetVespene()) {
+        if (built.GetVespeneRate() == 0) {
+            add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+            add_to_plan[add_i].push(ACTION::SCV_GATHER_VESPENE);
+        }
+        if (built.GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+            UNIT_TYPEID refinery = UNIT_TYPEID::TERRAN_REFINERY;
+            built.SetUnitAmount(refinery, 1);
+            add_to_plan[add_i].push(ActionRepr::CreatesUnit(refinery));
+        }
     }
     /*
      * Add all actions in reverse.
@@ -122,17 +123,28 @@ void BPPlan::AddBasicPlan(BPState * const start,
     }
 }
 
-float BPPlan::TimeRequired() const {
-    return INFINITY; // TODO
+float BPPlan::TimeRequired(BPState * const from) {
+    BPState tmp(from);
+    tmp.SimulatePlan(this);
+    return tmp.GetTime() - from->GetTime();
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt) {
     int i;
     for (i = 0; i < std::min(1, (int) vector::size()); ++i) {
-        BPAction action = vector::operator[](i);
+        ACTION action = vector::operator[](i);
         PRINT("Try to exec action " << action)
-        if (! action.Execute(kurt, kurt->Actions(), kurt->Query(), kurt->Observation())) {
+        if (! ExecAction::Exec(kurt, action)) {
             break;
+        } else {
+            std::cout << "Executed action " << ActionToName(action);
+            if (i + 1 < vector::size()) {
+                ACTION next_a = vector::operator[](i + 1);
+                std::cout << ", next action is " << ActionToName(next_a);
+            } else {
+                std::cout << ", no more actions in this BPPlan";
+            }
+            std::cout << std::endl;
         }
     }
     auto beg = vector::begin();
@@ -142,8 +154,8 @@ void BPPlan::ExecuteStep(Kurt * const kurt) {
 std::string BPPlan::ToString() const {
     std::string val = "BPPlan(";
     for (int i = 0; i < vector::size(); ++i) {
-        BPAction action = vector::operator[](i);
-        val += action.ToString();
+        ACTION action = vector::operator[](i);
+        val += ActionToName(action);
         if (i + 1 < vector::size()) {
             val += ", ";
         }
