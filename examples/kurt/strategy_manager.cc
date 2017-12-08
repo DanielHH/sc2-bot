@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "observed_units.h"
 
+//TODO: Remove destroyed structures from enemy_structures (or our_strucutreS)
+
 //#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
@@ -196,7 +198,7 @@ void StrategyManager::SetBuildGoal() {
 };
 
 
-BPState* StrategyManager::CounterEnemyUnit() {
+BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har enemy x, enemy y counterunit-problemet
     PRINT("---------------------------")
     PRINT("In CounterEnemyUnit")
     BPState* new_goal_state = new BPState();
@@ -312,7 +314,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
             our_weapon_dps = weapon_dps;
             final_our_cp = tmp_our_cp;
             our_final_health = our_health;
-            final_counter_unit = counter_units.back();
+            final_counter_unit = counter_units.back(); //TODO: FöRBÄTTRA COUNTERUNIT-VALET. t ex kolla enemy anti-ground vs anti-air. GÖr den unit som skulle ta minst damage.
             final_is_flying = is_flying;
             final_unit_to_counter = unit_to_counter;
         }
@@ -324,8 +326,8 @@ BPState* StrategyManager::CounterEnemyUnit() {
         PRINT("Unit to counter: " << str_futc)
         PRINT("diff_cp: " << diff_cp);
         PRINT("final_enemy_cp: " << final_enemy_cp);
-        //PRINT("enemy_max_health: " << enemy_max_health);
-        while (our_final_health/final_enemy_cp < (3*enemy_max_health/final_our_cp)) {
+        PRINT("enemy_max_health: " << enemy_max_health);
+        while (our_final_health/final_enemy_cp < (3*enemy_max_health/final_our_cp)) { // TODO: testa. eventuellt ändra till our_final_health * final_our_cp < 3*enemy_max_health*final_enemy_cp
             PRINT("----------------------------")
             PRINT("our_final_health/final_enemy_cp: " << our_final_health/final_enemy_cp)
             PRINT("enemy_max_health/final_our_cp: " << enemy_max_health/final_our_cp)
@@ -352,7 +354,8 @@ BPState* StrategyManager::CounterEnemyUnit() {
         PRINT("ATTACK")
         PRINT("--------------------")
         kurt->SetCombatMode(Kurt::ATTACK);
-        // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers. Eller göra en progressionfunction, t ex vi har marines, och vikings, men inga liberators => Gör liberators.
+        // TODO: Exempelvis (1) kalla på en funktion som jobbar mot Battlecruisers. Eller (2) göra en progressionfunction, t ex vi har marines, och
+        // vikings, men inga liberators => Gör liberators, eller (3) satsa på units som är bra på att förstöra structures.
         if ((curr_our_units->count(UNIT_TYPEID::TERRAN_MARINE) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_MARINE) < 5) {
             new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
         }
