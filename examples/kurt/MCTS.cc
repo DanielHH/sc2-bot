@@ -18,6 +18,16 @@
 #define TEST(s)
 #endif // DEBUG
 
+//#define PRINT_TREE // Comment out to disable printing the search tree.
+#ifdef PRINT_TREE
+#include <iostream>
+#define PT(s); std::cout << s;
+#define PTLN(s); std::cout << s << std::endl;
+#else
+#define PT(s);
+#define PTLN(s);
+#endif
+
 MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     root = new BPState(root_);
     goal = new BPState(goal_);
@@ -69,7 +79,7 @@ void MCTS::SearchOnce() {
     while (true) {
         if (leaf->available_actions.empty()) {
             leaf->available_actions = leaf->AvailableActions();
-            leaf->children.resize(leaf->available_actions.size());
+            leaf->children.resize(leaf->available_actions.size(), nullptr);
             if (leaf->available_actions.empty()) {
                 leaf->Print();
                 std::cout << "Warning: MCTS: Leaf node found" << std::endl;
@@ -141,18 +151,42 @@ void MCTS::SearchOnce() {
 }
 
 BPPlan MCTS::BestPlan() {
+    auto spaces = [] (int len) {
+        std::string ans = "";
+        while (len-- > 0) {
+            ans += " ";
+        }
+        return ans;
+    };
+    auto plan_print = [] (BPState * curr, BPState * goal) {
+        BPPlan tmp;
+        tmp.AddBasicPlan(curr, goal);
+        return tmp;
+    };
     BPPlan plan;
     BPState * curr = root;
+    PTLN("");
+    PT("--> ROOT: (" << curr->iter_amount << ") ")
+    PTLN(curr->reward_stop << " / " << curr->reward);
+    int depth = 0;
     while (true) {
-        if (curr->available_actions.empty() ||
-                curr->iter_amount - 1 < curr->available_actions.size()) {
+        ++depth;
+        if (curr->available_actions.empty()) {
+            PTLN(spaces(depth * 2) << "(No children expanded)");
             break;
         }
         int best_index = -1;
         double best_score = -1;
         for (int i = 0; i < curr->children.size(); ++i) {
             BPState * child = curr->children[i];
+            if (child == nullptr) {
+                PTLN(spaces(depth * 2) << "(Not all children expanded)");
+                break;
+            }
             double score = child->reward;
+            PT(spaces(depth * 2) << curr->available_actions[i] << ": (");
+            PT(child->iter_amount << ") ")
+            PTLN(child->reward_stop << " / " << child->reward);
             if (score > best_score) {
                 best_score = score;
                 best_index = i;
@@ -165,11 +199,16 @@ BPPlan MCTS::BestPlan() {
             break;
         }
         if (curr->reward_stop >= best_score) {
+            PTLN(spaces(depth * 2) << "--> Choosing to stop here");
             break;
         }
+        PT(spaces(depth * 2) << "--> Choosing ");
+        PTLN(curr->available_actions[best_index]);
         plan.push_back(curr->available_actions[best_index]);
         curr = curr->children[best_index];
     }
+    PTLN("MCTS (head): " << plan);
+    PTLN("BasicPlan (tail): " << plan_print(curr, goal));
     plan.AddBasicPlan(curr, goal);
     return plan;
 }
