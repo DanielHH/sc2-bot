@@ -36,7 +36,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     int current_game_loop = observation->GetGameLoop();
 
     SaveSpottedEnemyUnits(observation);
-
+/*
     if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
             PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
@@ -57,7 +57,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
         PRINT("-----------------------------\n\n")
-    }
+    } */
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -158,14 +158,17 @@ void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
 
-    if (our_cp->g2g > enemy_cp->g2g && our_cp->g2a > enemy_cp->a2g && our_cp->a2g > enemy_cp->g2a && our_cp->a2a > enemy_cp->a2a) {
+    if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
+        PRINT("COMBAT MODE: ATTACK")
     }
     else if (our_cp->g2g < enemy_cp->g2g && our_cp->g2a < enemy_cp->a2g && our_cp->a2g < enemy_cp->g2a && our_cp->a2a < enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::DEFEND);
+        PRINT("COMBAT MODE: DEFEND")
     }
     else {
         kurt->SetCombatMode(Kurt::HARASS);
+        PRINT("COMBAT MODE: HARASS")
     }
 };
 
@@ -180,20 +183,24 @@ void StrategyManager::SetBuildGoal() {
 
     BPState* new_goal_state = new BPState();
 
-    if (our_cp->g2g < 80 || our_cp->g2a < 80) {
+   /* if (our_cp->g2g < 80 || our_cp->g2a < 80) {
         new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
     }
     else {
         new_goal_state = CounterEnemyUnit();
-    }
-
+    }*/
+    PRINT("---------------------------")
+    PRINT("In SetBuildGoal")
+    new_goal_state = CounterEnemyUnit();
     kurt->SendBuildOrder(new_goal_state);
 };
 
 
 BPState* StrategyManager::CounterEnemyUnit() {
+    PRINT("---------------------------")
+    PRINT("In CounterEnemyUnit")
     BPState* new_goal_state = new BPState();
-    Unit unit_to_create;
+    UNIT_TYPEID final_counter_unit;
     int number_of_units = 0;
 
     map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
@@ -204,6 +211,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float enemy_max_health = 0;
     float final_enemy_cp = 0;
 
+
     float enemy_cp = 0;
     float tmp_enemy_cp = 0;
     float tmp_enemy_air_cp = 0;
@@ -213,8 +221,8 @@ BPState* StrategyManager::CounterEnemyUnit() {
 
     float our_final_health = 0;
     float our_cp = 0;
+    float final_our_cp = 0;
     float our_weapon_dps = 0;
-    UNIT_TYPEID final_counter_unit;
 
     float tmp_our_cp = 0;
     float tmp_our_air_cp = 0;
@@ -223,6 +231,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float tmp_diff_cp = 0;
     float diff_cp = 0;
 
+    UNIT_TYPEID final_unit_to_counter;
     UNIT_TYPEID unit_to_counter;
 
     UnitTypeData* unit_data;
@@ -256,15 +265,20 @@ BPState* StrategyManager::CounterEnemyUnit() {
             }
         }
 
+        if (zerg_countertable.count(unit_to_counter) == 0) {
+            string unit_not_in_ct = Kurt::GetUnitType(unit_to_counter)->name;
+            PRINT("Unit is not in countertable: " << unit_not_in_ct)
+            continue;
+        }
         counter_units = zerg_countertable.at(unit_to_counter);
         int our_number_of_units;
         int weapon_dps;
+        is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
         for (auto counter_unit = counter_units.begin(); counter_unit != counter_units.end(); ++counter_unit) {
             if ((curr_our_units->count(*counter_unit)) == 1) {
                 our_number_of_units = curr_our_units->at(*counter_unit);
                 unit_data = Kurt::GetUnitType(*counter_unit);
                 for (auto weapon : unit_data->weapons) {
-                    is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
                     weapon_dps = weapon.damage_ / weapon.speed;
                     if (weapon.type == Weapon::TargetType::Any) {
                         tmp_our_air_cp = weapon_dps * our_number_of_units;
@@ -276,42 +290,109 @@ BPState* StrategyManager::CounterEnemyUnit() {
                     else if (weapon.type == Weapon::TargetType::Air) {
                         tmp_our_air_cp = weapon_dps * our_number_of_units;
                     }
+
+                    if (is_flying && tmp_our_air_cp > tmp_our_cp) {
+                        tmp_our_cp = tmp_our_air_cp;
+                    }
+                    else if (tmp_our_ground_cp > tmp_our_cp) {
+                        tmp_our_cp = tmp_our_ground_cp;
+                    }
                 }
-                if (is_flying) {
-                    tmp_our_cp += tmp_our_air_cp;
-                }
-                else {
-                    tmp_our_cp += tmp_our_ground_cp;
-                }
+                our_cp += tmp_our_cp;
                 our_health += our_units.CalculateUnitTypeMaxHealth(*counter_unit);
             }
         }
 
-        tmp_diff_cp = enemy_cp - tmp_our_cp;
+        tmp_diff_cp = enemy_cp - our_cp;
         if (tmp_diff_cp > diff_cp) {
             diff_cp = tmp_diff_cp;
             final_enemy_cp = enemy_cp;
-            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(enemy_unit->first);
+            enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit_to_counter);
 
             our_weapon_dps = weapon_dps;
-            our_cp = tmp_our_cp;
+            final_our_cp = tmp_our_cp;
             our_final_health = our_health;
             final_counter_unit = counter_units.back();
             final_is_flying = is_flying;
+            final_unit_to_counter = unit_to_counter;
         }
     }
 
-    while (our_final_health / final_enemy_cp < (1.1 * enemy_max_health / our_cp)) {
-        number_of_units += 1;
-        our_health += ObservedUnits::unit_max_health.at(final_counter_unit);
-        if (is_flying) {
-            our_cp += our_weapon_dps;
+    if (diff_cp > 0) {
+        string str_futc = Kurt::GetUnitType(final_unit_to_counter)->name;
+        PRINT("----------------------------")
+        PRINT("Unit to counter: " << str_futc)
+        PRINT("diff_cp: " << diff_cp);
+        PRINT("final_enemy_cp: " << final_enemy_cp);
+        //PRINT("enemy_max_health: " << enemy_max_health);
+        while (our_final_health/final_enemy_cp < (3*enemy_max_health/final_our_cp)) {
+            PRINT("----------------------------")
+            PRINT("our_final_health/final_enemy_cp: " << our_final_health/final_enemy_cp)
+            PRINT("enemy_max_health/final_our_cp: " << enemy_max_health/final_our_cp)
+            PRINT("3*enemy_max_health/final_our_cp: " << 3*enemy_max_health/final_our_cp)
+            PRINT("----------------------------")
+            PRINT("diff_cp: " << diff_cp);
+            PRINT("final_enemy_cp: " << final_enemy_cp);
+            number_of_units += 1;
+            PRINT("----------------------------");
+            PRINT("IN WHILE! " << number_of_units);
+            our_final_health += ObservedUnits::unit_max_health.at(final_counter_unit);
+            if (final_is_flying) {
+                final_our_cp += our_weapon_dps;
+            }
+            else {
+                final_our_cp += our_weapon_dps;
+            }
+        }
+        PRINT("Total cp on added units: " << final_our_cp)
+    }
+    else {
+        PRINT("-------------------")
+        PRINT("In Progression mode!")
+        PRINT("ATTACK")
+        PRINT("--------------------")
+        kurt->SetCombatMode(Kurt::ATTACK);
+        // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers. Eller göra en progressionfunction, t ex vi har marines, och vikings, men inga liberators => Gör liberators.
+        if ((curr_our_units->count(UNIT_TYPEID::TERRAN_MARINE) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_MARINE) < 5) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_REAPER) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_REAPER) < 3) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_HELLION) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_HELLION) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_HELLION, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_MEDIVAC) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_MEDIVAC) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 6);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 3);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 4);
         }
         else {
-            our_cp += our_weapon_dps;
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 1);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
         }
+        /*
+        final_counter_unit = UNIT_TYPEID::TERRAN_REAPER;
+        number_of_units = 2;
+        */
+        return new_goal_state;
     }
-    new_goal_state->SetUnitAmount(counter_units.back(), number_of_units);
+    PRINT("-------------------")
+    PRINT("In countermode")
+    PRINT("HARASS")
+    PRINT("--------------------")
+    kurt->SetCombatMode(Kurt::HARASS);
+    PRINT("----------------------------");
+    string str_fcu = Kurt::GetUnitType(final_counter_unit)->name;
+    PRINT("Final Counter Unit: " << str_fcu)
+    PRINT("number of units: " << number_of_units)
+    PRINT("----------------------------");
+    new_goal_state->SetUnitAmount(final_counter_unit, number_of_units);
     return new_goal_state;
 }
 
