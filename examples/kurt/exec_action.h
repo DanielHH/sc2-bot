@@ -23,7 +23,8 @@ public:
 
     static bool Exec(Kurt * const, ACTION);
 
-    static bool ExecAbility(Kurt * const, sc2::ABILITY_ID); 
+    static bool ExecAbility(Kurt * const, sc2::ABILITY_ID);
+    static bool ExecAbility(Kurt * const, sc2::ABILITY_ID, sc2::Unit const *);
 
     static sc2::Unit const * FindNearestUnitOfType(
             sc2::UNIT_TYPEID type,
