@@ -11,7 +11,7 @@
 #include "BPPlan.h"
 #include "MCTS.h"
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -20,6 +20,8 @@
 #define PRINT(s)
 #define TEST(s)
 #endif // DEBUG
+
+#define NO_EXTERNAL_PLAN 1
 
 using namespace sc2;
 
@@ -89,6 +91,12 @@ void TestMCTS(BPState * const start, BPState * const goal) {
 }
 
 void BuildManager::OnStep(const ObservationInterface* observation) {
+#ifdef NO_EXTERNAL_PLAN
+    current_plan.ExecuteStep(agent);
+    return;
+#endif
+    
+
     // If there is no goal in life, what is the point of living?
     if (goal == nullptr) {
         return;
@@ -154,6 +162,14 @@ void BuildManager::OnGameStart(const ObservationInterface* observation) {
     ActionRepr::InitConvertMap();
     ExecAction::Init(agent);
     setup_finished = true;
+
+#ifdef NO_EXTERNAL_PLAN
+    current_plan.push_back(ACTION::BUILD_SUPPLY_DEPOT);
+    current_plan.push_back(ACTION::BUILD_REFINERY);
+    current_plan.push_back(ACTION::SCV_GATHER_VESPENE);
+    current_plan.push_back(ACTION::BUILD_BARRACKS);
+    current_plan.push_back(ACTION::BUILD_BARRACKS_TECH_LAB);
+#endif
 }
 
 void BuildManager::SetGoal(BPState * const goal_) {

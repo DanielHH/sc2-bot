@@ -8,7 +8,7 @@
 #include "action_repr.h"
 #include "BPState.h"
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -116,7 +116,17 @@ void ExecAction::OnUnitIdle(
     }
 }
 
+TEST(bool built_a_tech_lab = false;)
+
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
+    if (action == ACTION::BUILD_BARRACKS_TECH_LAB) PRINT("we're off to build a techlab.")
+    Units us;
+    Unit const * target;
+    ActionInterface * action_interface = kurt->Actions();
+    QueryInterface *query = kurt->Query();
+    ObservationInterface const *obs = kurt->Observation();
+    switch (action) {
+    default:
     //
     // Test if action can be represented by some ability from the api.
     //
@@ -124,16 +134,10 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
         ABILITY_ID ability = ActionRepr::convert_our_api.at(action);
         return ExecAbility(kurt, ability);
     }
-    //
-    // Execute our own custom action.
-    //
-    ActionInterface * action_interface = kurt->Actions();
-    QueryInterface *query = kurt->Query();
-    ObservationInterface const *obs = kurt->Observation();
-
-    Units us;
-    Unit const * target;
-    switch (action) {
+    else {
+        std::cout << "Error: exec_action: No case for action: " << ActionToName(action) << std::endl;
+        return false;
+    }
     case ACTION::SCV_GATHER_MINERALS:
         // Make an SCV stop gather vespene and start gather minerals
         if (scv_gather_minerals_delay > 0) {
@@ -177,11 +181,22 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             kurt->scv_vespene.push_back(scv);
             kurt->scv_minerals.remove(scv);
             scv_gather_vespene_delay = 1 * STEPS_PER_SEC;
-            return true;
+            
+            return TEST(built_a_tech_lab = )true;
         }
         return false;
-    default:
-        std::cout << "Error: exec_action: No case for action: " << ActionToName(action) << std::endl;
+    case ACTION::BUILD_BARRACKS_TECH_LAB:
+        for (Unit const * actor : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
+            if (actor->build_progress < 1) {
+                PRINT("TThis barracks is not finished.");
+                continue;
+            }
+            PRINT("sending action \"BUILD_TECHLAB_BARRACKS\" to barracks...")
+            action_interface->UnitCommand(actor, ABILITY_ID::BUILD_TECHLAB_BARRACKS, true);
+            
+            return true;
+        }
+        PRINT("No barracks could build a tech lab?")
         return false;
     }
 }
@@ -197,6 +212,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
     };
 
     for (const Unit *u : obs->GetUnits(Unit::Alliance::Self, is_idle_or_scv)) {
+        if (u->build_progress < 1) continue; // Unit under construction.
         for (AvailableAbility order : query->GetAbilitiesForUnit(u).abilities){
             if (order.ability_id != ability) {
                 continue;
