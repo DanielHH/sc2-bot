@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "observed_units.h"
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -324,8 +324,15 @@ BPState* StrategyManager::CounterEnemyUnit() {
         PRINT("Unit to counter: " << str_futc)
         PRINT("diff_cp: " << diff_cp);
         PRINT("final_enemy_cp: " << final_enemy_cp);
-        PRINT("enemy_max_health: " << enemy_max_health);
-        while (our_final_health / final_enemy_cp < (3 * enemy_max_health / final_our_cp)) {
+        //PRINT("enemy_max_health: " << enemy_max_health);
+        while (our_final_health/final_enemy_cp < (3*enemy_max_health/final_our_cp)) {
+            PRINT("----------------------------")
+            PRINT("our_final_health/final_enemy_cp: " << our_final_health/final_enemy_cp)
+            PRINT("enemy_max_health/final_our_cp: " << enemy_max_health/final_our_cp)
+            PRINT("3*enemy_max_health/final_our_cp: " << 3*enemy_max_health/final_our_cp)
+            PRINT("----------------------------")
+            PRINT("diff_cp: " << diff_cp);
+            PRINT("final_enemy_cp: " << final_enemy_cp);
             number_of_units += 1;
             PRINT("----------------------------");
             PRINT("IN WHILE! " << number_of_units);
@@ -340,11 +347,46 @@ BPState* StrategyManager::CounterEnemyUnit() {
         PRINT("Total cp on added units: " << final_our_cp)
     }
     else {
+        PRINT("-------------------")
+        PRINT("In Progression mode!")
+        PRINT("ATTACK")
+        PRINT("--------------------")
         kurt->SetCombatMode(Kurt::ATTACK);
-        // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers.
+        // TODO: Exempelvis kalla på en funktion som jobbar mot Battlecruisers. Eller göra en progressionfunction, t ex vi har marines, och vikings, men inga liberators => Gör liberators.
+        if ((curr_our_units->count(UNIT_TYPEID::TERRAN_MARINE) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_MARINE) < 5) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_REAPER) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_REAPER) < 3) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_HELLION) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_HELLION) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 2);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_HELLION, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_MEDIVAC) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_MEDIVAC) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 6);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 2);
+        }
+        else if ((curr_our_units->count(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) == 0) || curr_our_units->at(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) < 2) {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 3);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 4);
+        }
+        else {
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 1);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 3);
+            new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
+        }
+        /*
         final_counter_unit = UNIT_TYPEID::TERRAN_REAPER;
-        number_of_units = 10;
+        number_of_units = 2;
+        */
+        return new_goal_state;
     }
+    PRINT("-------------------")
+    PRINT("In countermode")
+    PRINT("HARASS")
+    PRINT("--------------------")
+    kurt->SetCombatMode(Kurt::HARASS);
     PRINT("----------------------------");
     string str_fcu = Kurt::GetUnitType(final_counter_unit)->name;
     PRINT("Final Counter Unit: " << str_fcu)
