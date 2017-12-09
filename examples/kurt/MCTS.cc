@@ -42,15 +42,20 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     double time = tmp.GetTime() - root->GetTime();
     double mineral_rate = tmp.GetMineralRate();
     double vespene_rate = tmp.GetVespeneRate();
+    int mineral_stock = tmp.GetMinerals();
+    int vespene_stock = tmp.GetVespene();
     // The min border is needed since the reward is relative the basic plan.
     // If e.g. basic_vespene_rate is 0, all higher rates gets the same reward.
     basic_time = std::max(40.0, time);
     basic_mineral_rate = std::max(5.0, mineral_rate);
     basic_vespene_rate = std::max(10.0, vespene_rate);
+    basic_mineral_stock = std::max(2000, mineral_stock);
+    basic_vespene_stock = std::max(2000, vespene_stock);
 
     root->parent = nullptr;
     root->iter_amount = 1;
-    root->reward = CalcReward(time, mineral_rate, vespene_rate);
+    root->reward = CalcReward(
+            time, mineral_rate, vespene_rate, mineral_stock, vespene_stock);
     root->reward_stop = root->reward;
 
     BPState init_state;
@@ -73,11 +78,16 @@ MCTS::~MCTS() {
     delete goal;
 }
 
-double MCTS::CalcReward(double time, double mineral_rate, double vespene_rate) {
+double MCTS::CalcReward(
+        double time,
+        double mineral_rate, double vespene_rate,
+        int mineral_stock, int vespene_stock) {
     return
         time_portion * basic_time / (time + basic_time) +
-        minerals_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
-        vespene_portion * vespene_rate / (vespene_rate + basic_vespene_rate);
+        m_rate_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
+        v_rate_portion * vespene_rate / (vespene_rate + basic_vespene_rate) +
+        m_stock_portion * mineral_stock / (mineral_stock+basic_mineral_stock) +
+        v_stock_portion * vespene_stock / (vespene_stock+basic_vespene_stock);
 }
 
 void MCTS::Search(int num_iterations) {
@@ -152,7 +162,10 @@ void MCTS::SearchOnce() {
     double time = tmp.GetTime() - root->GetTime();
     double mineral_rate = tmp.GetMineralRate();
     double vespene_rate = tmp.GetVespeneRate();
-    double reward = CalcReward(time, mineral_rate, vespene_rate);
+    int mineral_stock = tmp.GetMinerals();
+    int vespene_stock = tmp.GetVespene();
+    double reward = CalcReward(
+            time, mineral_rate, vespene_rate, mineral_stock, vespene_stock);
     /*
      * Backpropagation phase.
      */
