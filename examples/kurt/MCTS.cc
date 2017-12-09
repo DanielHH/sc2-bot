@@ -1,5 +1,7 @@
 #include "MCTS.h"
 
+#include "sc2api/sc2_api.h"
+
 #include "BPPlan.h"
 #include "BPState.h"
 #include "action_enum.h"
@@ -34,6 +36,7 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     BPPlan basic_plan;
     basic_plan.AddBasicPlan(root, goal);
+
     BPState tmp(root);
     tmp.SimulatePlan(basic_plan);
     double time = tmp.GetTime() - root->GetTime();
@@ -49,6 +52,20 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     root->iter_amount = 1;
     root->reward = CalcReward(time, mineral_rate, vespene_rate);
     root->reward_stop = root->reward;
+
+    BPState init_state;
+    init_state.SetUnitAmount(sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    init_state.SetUnitAmount(sc2::UNIT_TYPEID::TERRAN_SCV, 12);
+    BPPlan init_basic_plan;
+    init_basic_plan.AddBasicPlan(&init_state, goal);
+    for (ACTION action : init_basic_plan) {
+        interesting_actions.insert(action);
+    }
+    interesting_actions.insert(ACTION::SCV_GATHER_MINERALS);
+    interesting_actions.insert(ACTION::SCV_GATHER_VESPENE);
+    interesting_actions.insert(ACTION::BUILD_REFINERY);
+    interesting_actions.insert(ACTION::BUILD_SUPPLY_DEPOT);
+    interesting_actions.insert(ACTION::TRAIN_SCV);
 }
 
 MCTS::~MCTS() {
@@ -70,7 +87,6 @@ void MCTS::Search(int num_iterations) {
 }
 
 void MCTS::SearchOnce() {
-    BPPlan plan;
     /*
      * Select phase.
      */
@@ -78,7 +94,8 @@ void MCTS::SearchOnce() {
     BPState * leaf = root;
     while (true) {
         if (leaf->available_actions.empty()) {
-            leaf->available_actions = leaf->AvailableActions();
+            leaf->available_actions =
+                leaf->AvailableActions(interesting_actions);
             leaf->children.resize(leaf->available_actions.size(), nullptr);
             if (leaf->available_actions.empty()) {
                 leaf->Print();
@@ -107,7 +124,6 @@ void MCTS::SearchOnce() {
                 "State with invalid children." << std::endl;
             return;
         }
-        plan.push_back(leaf->available_actions[best_index]);
         leaf = leaf->children[best_index];
     }
     /*
@@ -118,7 +134,6 @@ void MCTS::SearchOnce() {
     {
         int index = leaf->iter_amount - 1;
         ACTION action = leaf->available_actions[index];
-        plan.push_back(action);
         new_state = new BPState(leaf);
         new_state->AddAction(action);
         new_state->reward = 0;
@@ -130,9 +145,10 @@ void MCTS::SearchOnce() {
      * Simulation phase.
      */
     PRINT("Simulation phase.")
-    plan.AddBasicPlan(new_state, goal);
-    BPState tmp(root);
-    tmp.SimulatePlan(plan);
+    BPPlan tail;
+    tail.AddBasicPlan(new_state, goal);
+    BPState tmp(new_state);
+    tmp.SimulatePlan(tail);
     double time = tmp.GetTime() - root->GetTime();
     double mineral_rate = tmp.GetMineralRate();
     double vespene_rate = tmp.GetVespeneRate();

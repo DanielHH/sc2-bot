@@ -367,6 +367,17 @@ std::vector<ACTION> BPState::AvailableActions() const {
     return aa;
 }
 
+std::vector<ACTION> BPState::AvailableActions(
+        std::set<ACTION> & selectable_actions) const {
+    std::vector<ACTION> aa;
+    for (auto action : selectable_actions) {
+        if (CanExecuteNowOrSoon(action)) {
+            aa.push_back(action);
+        }
+    }
+    return aa;
+}
+
 int BPState::GetUnitAmount(UNIT_TYPEID type) const {
     if (unit_amount.count(type) == 0) {
         return 0;

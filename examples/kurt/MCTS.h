@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include "BPPlan.h"
 
 class BPState;
@@ -32,6 +34,11 @@ private:
     /* The goal node/state. */
     BPState * goal;
 
+    /* All actions required to reach the goal and
+     * those that are useful for getting a better score.
+     */
+    std::set<ACTION> interesting_actions;
+
     /* Stored values for executing only the basic plan. */
     double basic_time;
     double basic_mineral_rate;
@@ -45,7 +52,7 @@ private:
     double vespene_portion = 0.3;
 
     /* The scale of exploration versus exploitation in the selection phase. */
-    const double EXPLORATION_SCALE = 1.2;
+    const double EXPLORATION_SCALE = 0.3;
 
     /* The minimum reward for a state that gives a plan
      * that is faster or equaly fast as the basic plan.
