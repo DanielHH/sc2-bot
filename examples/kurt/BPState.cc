@@ -264,6 +264,11 @@ void BPState::AddAction(ACTION action, double time) {
         int amount = pair.second;
         IncreaseUnitProdAmount(type, amount);
     }
+    int food_diff = GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP) +
+        GetUnitAmount(UNIT_FAKEID::FOOD_CAP) - 200;
+    food_diff = std::max(0, food_diff);
+    IncreaseUnitProdAmount(UNIT_FAKEID::FOOD_CAP, -food_diff);
+
     ActiveAction aa(action);
     if (time >= 0) {
         aa.time_left = time;
@@ -303,6 +308,9 @@ bool BPState::CompleteFirstAction() {
         IncreaseUnitAvailableAmount(type, amount);
         IncreaseUnitProdAmount(type, -amount);
     }
+    int food_cap = std::min(200, GetUnitAmount(UNIT_FAKEID::FOOD_CAP));
+    SetUnitAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
+    SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
     return true;
 }
 
@@ -314,8 +322,18 @@ bool BPState::CanExecuteNow(ACTION action) const {
         }
     }
     for (auto pair : ar.consumed) {
-        if (pair.second > GetUnitAvailableAmount(pair.first)) {
-            return false;
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        if (type == UNIT_FAKEID::FOOD_USED) {
+            // subtract amount because negative food_used requirements
+            if (GetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED) - amount >
+                    GetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP)) {
+                return false;
+            }
+        } else {
+            if (amount > GetUnitAvailableAmount(type)) {
+                return false;
+            }
         }
     }
     for (auto pair : ar.borrowed) {
@@ -336,7 +354,14 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
+        if (type == UNIT_FAKEID::FOOD_USED) {
+            // subtract amount because negative food_used requirements
+            if (GetUnitAmount(UNIT_FAKEID::FOOD_USED) - amount >
+                    GetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP) +
+                    GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP)) {
+                return false;
+            }
+        } else if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
             if (type == UNIT_FAKEID::MINERALS &&
                     GetMineralRate() > 0) {
                 continue;
@@ -486,7 +511,9 @@ void BPState::Print() {
     std::cout << "Minerals: " << GetMinerals();
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
-    std::cout << "/" << GetFoodCap() << std::endl;
+    std::cout << "/" << GetFoodCap();
+    std::cout << " (" << GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP) << ")";
+    std::cout << std::endl;
 
     auto PrintUnit = [] (BPState * state, UNIT_TYPEID type) {
         if (    type == UNIT_FAKEID::MINERALS ||

@@ -49,9 +49,7 @@ std::vector<UNIT_TYPEID> BuildManager::GetRequirements(UNIT_TYPEID unit) {
     std::vector<UNIT_TYPEID> requirements;
     UnitTypeData *data = Kurt::GetUnitType(unit);
     if (tech_tree_2.count(unit) > 0) {
-        for (UNIT_TYPEID req_elem : tech_tree_2[unit]) {
-            requirements.push_back(req_elem);
-        }
+        return tech_tree_2.at(unit);
     } else if (data->tech_requirement != UNIT_TYPEID::INVALID) {
         requirements.push_back(data->tech_requirement);
     }
@@ -173,28 +171,66 @@ void BuildManager::InitNewPlan() {
 }
 
 void BuildManager::SetUpTechTree(const ObservationInterface* observation) {
-    // Barrack upgrades
+    // The lines without push_back is for to specify no requirements
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_COMMANDCENTER];
+    tech_tree_2[UNIT_TYPEID::TERRAN_PLANETARYFORTRESS].push_back(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    tech_tree_2[UNIT_TYPEID::TERRAN_PLANETARYFORTRESS].push_back(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_ORBITALCOMMAND].push_back(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    tech_tree_2[UNIT_TYPEID::TERRAN_ORBITALCOMMAND].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_SUPPLYDEPOT];
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_BARRACKS].push_back(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     tech_tree_2[UNIT_TYPEID::TERRAN_BARRACKSTECHLAB].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
     tech_tree_2[UNIT_TYPEID::TERRAN_BARRACKSREACTOR].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
 
-    // Produced at barracks
-    tech_tree_2[UNIT_TYPEID::TERRAN_MARINE].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
-    tech_tree_2[UNIT_TYPEID::TERRAN_MARAUDER].push_back(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    tech_tree_2[UNIT_TYPEID::TERRAN_REAPER].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
-    tech_tree_2[UNIT_TYPEID::TERRAN_GHOST].push_back(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    tech_tree_2[UNIT_TYPEID::TERRAN_GHOST].push_back(UNIT_TYPEID::TERRAN_GHOSTACADEMY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_ENGINEERINGBAY].push_back(UNIT_TYPEID::TERRAN_COMMANDCENTER);
 
-    // Starport upgrade
+    tech_tree_2[UNIT_TYPEID::TERRAN_BUNKER];
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_SENSORTOWER].push_back(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_MISSILETURRET].push_back(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_FACTORY].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
+    tech_tree_2[UNIT_TYPEID::TERRAN_FACTORYTECHLAB].push_back(UNIT_TYPEID::TERRAN_FACTORY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_FACTORYREACTOR].push_back(UNIT_TYPEID::TERRAN_FACTORY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_GHOSTACADEMY].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_STARPORT].push_back(UNIT_TYPEID::TERRAN_FACTORY);
     tech_tree_2[UNIT_TYPEID::TERRAN_STARPORTTECHLAB].push_back(UNIT_TYPEID::TERRAN_STARPORT);
     tech_tree_2[UNIT_TYPEID::TERRAN_STARPORTREACTOR].push_back(UNIT_TYPEID::TERRAN_STARPORT);
 
-    // Produced at factory
+    tech_tree_2[UNIT_TYPEID::TERRAN_ARMORY].push_back(UNIT_TYPEID::TERRAN_FACTORY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_FUSIONCORE].push_back(UNIT_TYPEID::TERRAN_STARPORT);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_SCV].push_back(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    tech_tree_2[UNIT_TYPEID::TERRAN_MULE].push_back(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_MARINE].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
+    tech_tree_2[UNIT_TYPEID::TERRAN_REAPER].push_back(UNIT_TYPEID::TERRAN_BARRACKS);
+    tech_tree_2[UNIT_TYPEID::TERRAN_MARAUDER].push_back(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    tech_tree_2[UNIT_TYPEID::TERRAN_GHOST].push_back(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    tech_tree_2[UNIT_TYPEID::TERRAN_GHOST].push_back(UNIT_TYPEID::TERRAN_GHOSTACADEMY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_HELLIONTANK].push_back(UNIT_TYPEID::TERRAN_ARMORY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_HELLION].push_back(UNIT_TYPEID::TERRAN_FACTORY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_WIDOWMINE].push_back(UNIT_TYPEID::TERRAN_FACTORYREACTOR);
+    tech_tree_2[UNIT_TYPEID::TERRAN_SIEGETANK].push_back(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
+    tech_tree_2[UNIT_TYPEID::TERRAN_CYCLONE].push_back(UNIT_TYPEID::TERRAN_FACTORY);
+    tech_tree_2[UNIT_TYPEID::TERRAN_THOR].push_back(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
+    tech_tree_2[UNIT_TYPEID::TERRAN_THOR].push_back(UNIT_TYPEID::TERRAN_ARMORY);
+
+    tech_tree_2[UNIT_TYPEID::TERRAN_VIKINGFIGHTER].push_back(UNIT_TYPEID::TERRAN_STARPORT);
     tech_tree_2[UNIT_TYPEID::TERRAN_MEDIVAC].push_back(UNIT_TYPEID::TERRAN_STARPORT);
+    tech_tree_2[UNIT_TYPEID::TERRAN_LIBERATOR].push_back(UNIT_TYPEID::TERRAN_STARPORT);
+    tech_tree_2[UNIT_TYPEID::TERRAN_RAVEN].push_back(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
     tech_tree_2[UNIT_TYPEID::TERRAN_BANSHEE].push_back(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
     tech_tree_2[UNIT_TYPEID::TERRAN_BATTLECRUISER].push_back(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
     tech_tree_2[UNIT_TYPEID::TERRAN_BATTLECRUISER].push_back(UNIT_TYPEID::TERRAN_FUSIONCORE);
-
-    // TODO Add more data to tech_tree_2
 }
 
 #undef DEBUG
