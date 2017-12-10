@@ -3,6 +3,8 @@
 #include "sc2api/sc2_api.h"
 #include "sc2lib/sc2_lib.h"
 
+#include <algorithm>
+
 #include "kurt.h"
 #include "constants.h"
 #include "action_repr.h"
@@ -22,7 +24,7 @@ using namespace sc2;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
-std::set<Point3D> ExecAction::commandcenter_locations;
+std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
 
@@ -221,10 +223,16 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
                 action_interface->UnitCommand(u, ability);
                 break;
             case sc2::AbilityData::Target::Point:
-                // Assume we have to place a unit.
-                while (!query->Placement(ability, target_point, u)) {
-                    target_point = Point2D(u->pos.x + GetRandomScalar() * 15
-                        , u->pos.y + GetRandomScalar() * 15);
+                if (ability == ABILITY_ID::BUILD_COMMANDCENTER) {
+                    if (! FindNextCommandcenterLoc(obs, query, target_point)) {
+                        return false;
+                    }
+                } else {
+                    // Assume we have to place a unit.
+                    while (!query->Placement(ability, target_point, u)) {
+                        target_point = Point2D(u->pos.x + GetRandomScalar() * 15
+                            , u->pos.y + GetRandomScalar() * 15);
+                    }
                 }
                 action_interface->UnitCommand(u, ability, target_point);
                 break;
@@ -321,6 +329,10 @@ Unit const * ExecAction::FindNextRefinery(
         ObservationInterface const * obs) {
     Units refineries = obs->GetUnits(Unit::Alliance::Self, IsRefinery);
     for (Unit const * refinery : refineries) {
+        // Refinery isn't built yet
+        if (refinery->build_progress < 1.0) {
+            continue;
+        }
         // Refinery isn't overfull
         if (refinery->assigned_harvesters >= refinery->ideal_harvesters) {
             continue;
@@ -335,6 +347,10 @@ Unit const * ExecAction::FindNextMineralField(
     Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
     Units mineral_fields = obs->GetUnits(Unit::Alliance::Neutral, IsMineralField);
     for (Unit const * commandcenter : commandcenters) {
+        // Commandcenter isn't built yet
+        if (commandcenter->build_progress < 1.0) {
+            continue;
+        }
         // Commandcenter isn't overfull
         if (commandcenter->assigned_harvesters >= commandcenter->ideal_harvesters) {
             continue;
@@ -348,6 +364,38 @@ Unit const * ExecAction::FindNextMineralField(
         }
     }
     return nullptr;
+}
+
+bool ExecAction::FindNextCommandcenterLoc(
+        ObservationInterface const * obs,
+        QueryInterface * query,
+        Point2D & location) {
+    Units commandcenters = obs->GetUnits(IsCommandcenter);
+    std::vector<int> order(commandcenter_locations.size());
+    for (int i = 0; i < commandcenter_locations.size(); ++i) {
+        order[i] = i;
+    }
+    for (int i = 0; i < commandcenter_locations.size(); ++i) {
+        Point3D point3D = commandcenter_locations[order[i]];
+        bool taken = false;
+        for (Unit const * commandcenter : commandcenters) {
+            if (DistanceSquared3D(commandcenter->pos, point3D) < 0.1) {
+                taken = true;
+                break;
+            }
+        }
+        if (taken) {
+            continue;
+        }
+        Point2D point2D(point3D.x, point3D.y);
+        if (! query->Placement(ABILITY_ID::BUILD_COMMANDCENTER, point2D)) {
+            continue;
+        }
+        location.x = point2D.x;
+        location.y = point2D.y;
+        return true;
+    }
+    return false;
 }
 
 Unit const * ExecAction::FindNearestUnitOfType(
@@ -372,7 +420,6 @@ Unit const * ExecAction::FindNearestUnitOfType(
 }
 
 void ExecAction::Init(Kurt * const kurt) {
-//    std::vector<sc2::Point3D> expansions = search::CalculateExpansionLocations(kurt->Observation(), kurt->Query());
-//    for (Point3D point : expansions) {
-//    }
+    commandcenter_locations = search::CalculateExpansionLocations(
+            kurt->Observation(), kurt->Query());
 }

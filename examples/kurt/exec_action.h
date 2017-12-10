@@ -42,12 +42,17 @@ public:
     static sc2::Unit const * FindNextMineralField(
             sc2::ObservationInterface const * obs);
 
+    static bool FindNextCommandcenterLoc(
+            sc2::ObservationInterface const * obs,
+            sc2::QueryInterface * query,
+            sc2::Point2D & location);
+
 private:
 
     static std::map<sc2::Unit const *, int> sent_order_time;
     static std::map<sc2::Unit const *, int> built_refinery_time;
 
-    static std::set<sc2::Point3D> commandcenter_locations;
+    static std::vector<sc2::Point3D> commandcenter_locations;
 
     static int scv_gather_vespene_delay;
     static int scv_gather_minerals_delay;
