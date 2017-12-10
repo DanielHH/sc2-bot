@@ -119,20 +119,38 @@ void ExecAction::OnUnitIdle(
 }
 
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
+    ActionInterface * action_interface = kurt->Actions();
+    QueryInterface *query = kurt->Query();
+    ObservationInterface const *obs = kurt->Observation();
     //
     // Test if action can be represented by some ability from the api.
     //
     if (ActionRepr::convert_our_api.count(action) != 0) {
+        if (ActionRepr::values.count(action) != 0) {
+            std::map<UNIT_TYPEID, int> req = ActionRepr::values.at(action).consumed;
+            UNIT_TYPEID minerals_kw = UNIT_FAKEID::MINERALS;
+            UNIT_TYPEID vespene_kw = UNIT_FAKEID::VESPENE;
+            UNIT_TYPEID food_used_kw = UNIT_FAKEID::FOOD_USED;
+            if (req.count(minerals_kw) != 0 &&
+                    req.at(minerals_kw) > obs->GetMinerals()) {
+                return false;
+            }
+            if (req.count(vespene_kw) != 0 &&
+                    req.at(vespene_kw) > obs->GetVespene()) {
+                return false;
+            }
+            if (req.count(food_used_kw) != 0 &&
+                    -req.at(food_used_kw) >
+                    obs->GetFoodCap() - obs->GetFoodUsed()) {
+                return false;
+            }
+        }
         ABILITY_ID ability = ActionRepr::convert_our_api.at(action);
         return ExecAbility(kurt, ability);
     }
     //
     // Execute our own custom action.
     //
-    ActionInterface * action_interface = kurt->Actions();
-    QueryInterface *query = kurt->Query();
-    ObservationInterface const *obs = kurt->Observation();
-
     Units us;
     Unit const * target;
     switch (action) {
