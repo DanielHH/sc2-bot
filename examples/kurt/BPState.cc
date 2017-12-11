@@ -63,6 +63,20 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
             break;
+        case UNIT_TYPEID::TERRAN_COMMANDCENTERFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_COMMAND_CENTER);
+            break;
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_ORBITAL_COMMAND);
+            break;
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
@@ -72,6 +86,12 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
+        case UNIT_TYPEID::TERRAN_BARRACKSFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            AddAction(ACTION::FLY_BARRACKS);
         case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
@@ -81,6 +101,13 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             break;
+        case UNIT_TYPEID::TERRAN_FACTORYFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            AddAction(ACTION::FLY_FACTORY);
+            break;
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
@@ -89,6 +116,13 @@ BPState::BPState(Kurt * const kurt) {
         case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_STARPORTFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            AddAction(ACTION::FLY_STARPORT);
             break;
         }
     }
@@ -105,14 +139,16 @@ BPState::BPState(Kurt * const kurt) {
     }
 
     int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
+            kurt->scv_minerals.size() + kurt->scv_building.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
+            kurt->scv_minerals.size() + kurt->scv_building.size());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
