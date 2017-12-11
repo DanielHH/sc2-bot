@@ -231,18 +231,30 @@ void BPState::SimpleUpdate(double delta_time) {
     time += delta_time;
 }
 
-void BPState::SimulatePlan(BPPlan & plan) {
+bool BPState::SimulatePlan(BPPlan & plan) {
     for (auto it = plan.begin(); it != plan.end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            AddAction(action);
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
-void BPState::SimulatePlan(BPPlan * plan) {
+bool BPState::SimulatePlan(BPPlan * plan) {
     for (auto it = plan->begin(); it != plan->end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            AddAction(action);
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
 void BPState::AddAction(ACTION action, double time) {
