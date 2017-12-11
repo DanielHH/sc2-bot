@@ -3,12 +3,14 @@
 #include "sc2api/sc2_api.h"
 #include "sc2lib/sc2_lib.h"
 
+#include <algorithm>
+
 #include "kurt.h"
 #include "constants.h"
 #include "action_repr.h"
 #include "BPState.h"
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -19,22 +21,19 @@
 #endif // DEBUG
 
 using namespace sc2;
-using std::vector;
-using std::find;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
-std::set<Point3D> ExecAction::commandcenter_locations;
+std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
 
 double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
     if (sent_order_time.count(unit) == 0) {
         return 0;
-    }
-    else {
+    } else {
         return (kurt->Observation()->GetGameLoop() - sent_order_time[unit])
-            / (double)STEPS_PER_SEC;
+            / (double) STEPS_PER_SEC;
     }
 }
 
@@ -42,18 +41,17 @@ void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
 
-    if (!kurt->scv_idle.empty()) {
+    if (! kurt->scv_idle.empty()) {
         Unit const * scv = kurt->scv_idle.front();
         Unit const * target = FindNextMineralField(kurt->Observation());
         if (target != nullptr) {
-            if (!kurt->UnitInScvMinerals(scv)) {
+            if (! kurt->UnitInScvMinerals(scv)) {
                 kurt->scv_minerals.push_back(scv);
             }
-        }
-        else {
+        } else {
             target = FindNextRefinery(kurt->Observation());
             if (target != nullptr) {
-                if (!kurt->UnitInScvVespene(scv)) {
+                if (! kurt->UnitInScvVespene(scv)) {
                     kurt->scv_vespene.push_back(scv);
                 }
             }
@@ -95,7 +93,7 @@ bool IsCommandcenter(Unit const & unit) {
 };
 
 void ExecAction::OnUnitIdle(
-    Unit const * unit, Kurt * kurt) {
+        Unit const * unit, Kurt * kurt) {
     Unit const * target;
     switch (unit->unit_type.ToType()) {
     case UNIT_TYPEID::TERRAN_SCV:
@@ -105,13 +103,12 @@ void ExecAction::OnUnitIdle(
         kurt->scv_vespene.remove(unit);
         target = FindNextMineralField(kurt->Observation());
         if (target == nullptr) {
-            if (!kurt->UnitInList(kurt->scv_idle, unit)) {
+            if (! kurt->UnitInList(kurt->scv_idle, unit)) {
                 kurt->scv_idle.push_back(unit);
             }
-        }
-        else {
+        } else {
             kurt->Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
-            if (!kurt->UnitInScvMinerals(unit)) {
+            if (! kurt->UnitInScvMinerals(unit)) {
                 kurt->scv_minerals.push_back(unit);
             }
         }
@@ -120,8 +117,6 @@ void ExecAction::OnUnitIdle(
         break;
     }
 }
-
-TEST(bool built_a_tech_lab = false;)
 
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     Units us;
@@ -302,17 +297,24 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                     return false;
                 }
             }
-            
-                action_interface->UnitCommand(u, ability, true);
+
+            action_interface->UnitCommand(u, ability, true);
             break;
         case sc2::AbilityData::Target::Point:
-            // Assume we have to place a unit.
-            while (!query->Placement(ability, target_point, u)) {
-                target_point = Point2D(u->pos.x + GetRandomScalar() * 15
-                    , u->pos.y + GetRandomScalar() * 15);
+            if (ability == ABILITY_ID::BUILD_COMMANDCENTER) {
+                if (!FindNextCommandcenterLoc(obs, query, target_point)) {
+                    return false;
+                }
             }
-            
-                action_interface->UnitCommand(u, ability, target_point);
+            else {
+                // Assume we have to place a unit.
+                while (!query->Placement(ability, target_point, u)) {
+                    target_point = Point2D(u->pos.x + GetRandomScalar() * 15
+                        , u->pos.y + GetRandomScalar() * 15);
+                }
+            }
+
+            action_interface->UnitCommand(u, ability, target_point);
             break;
         case sc2::AbilityData::Target::Unit:
             if (ability == ABILITY_ID::BUILD_REFINERY) {
@@ -322,18 +324,18 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                 }
                 built_refinery_time[target_unit] = obs->GetGameLoop();
             }
-            
-                action_interface->UnitCommand(u, ability, target_unit);
+
+            action_interface->UnitCommand(u, ability, target_unit);
             break;
         case sc2::AbilityData::Target::PointOrNone:
-            
+
             action_interface->UnitCommand(u, ability);
             // TODO: Maybe target someplace?
             break;
         case sc2::AbilityData::Target::PointOrUnit:
             action_interface->UnitCommand(u, ability, target_point);
             // TODO: Where or who?
-            
+
             std::cout << "Warning: exec_action: PointOrUnit, ability: "
                 << AbilityTypeToName(AbilityID(ability)) << std::endl;
             break;
@@ -342,26 +344,26 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
             std::cout << "Error: exec_action: Invalid target type!!" << std::endl;
             throw std::runtime_error("Build planner - ability had invalid targeting method");
         }
-            /*Point2D pt = Point2D(u->pos.x, u->pos.y);
-            action->UnitCommand(u, ability, pt);*/
-            if (u->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
-                kurt->scv_minerals.remove(u);
-                if (ability == ABILITY_ID::BUILD_REFINERY) {
-                    kurt->scv_vespene.push_back(u);
-                }
-                else {
-                    kurt->scv_building.push_back(u);
-                }
+        /*Point2D pt = Point2D(u->pos.x, u->pos.y);
+        action->UnitCommand(u, ability, pt);*/
+        if (u->unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) {
+            kurt->scv_minerals.remove(u);
+            if (ability == ABILITY_ID::BUILD_REFINERY) {
+                kurt->scv_vespene.push_back(u);
             }
+            else {
+                kurt->scv_building.push_back(u);
+            }
+        }
         sent_order_time[u] = obs->GetGameLoop();
         return true;
     }
-    
+
     return false;
 }
 
 Unit const * ExecAction::FindNextVespeneGeyser(
-    ObservationInterface const * obs) {
+        ObservationInterface const * obs) {
     Units geysers = obs->GetUnits(Unit::Alliance::Neutral, IsVespeneGeyser);
     Units refineries = obs->GetUnits(Unit::Alliance::Self, IsRefinery);
     Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
@@ -373,7 +375,7 @@ Unit const * ExecAction::FindNextVespeneGeyser(
         // We aren't already going to build an refinery at given geyser
         if (built_refinery_time.count(geyser) != 0) {
             if (obs->GetGameLoop() - built_refinery_time.at(geyser) <
-                10 * STEPS_PER_SEC) {
+                    10 * STEPS_PER_SEC) {
                 continue;
             }
         }
@@ -381,20 +383,20 @@ Unit const * ExecAction::FindNextVespeneGeyser(
         bool in_range = false;
         for (Unit const * commandcenter : commandcenters) {
             if (DistanceSquared3D(geyser->pos, commandcenter->pos) <
-                BASE_RESOURCE_TEST_RANGE2) {
+                    BASE_RESOURCE_TEST_RANGE2) {
                 in_range = true;
                 break;
             }
         }
-        if (!in_range) {
+        if (! in_range) {
             continue;
         }
         // Refinery is not already built on given geyser
         bool taken = false;
         for (Unit const * refinery : refineries) {
             if (geyser->pos.x == refinery->pos.x &&
-                geyser->pos.y == refinery->pos.y &&
-                geyser->pos.z == refinery->pos.z) {
+                    geyser->pos.y == refinery->pos.y &&
+                    geyser->pos.z == refinery->pos.z) {
                 taken = true;
                 break;
             }
@@ -408,9 +410,13 @@ Unit const * ExecAction::FindNextVespeneGeyser(
 }
 
 Unit const * ExecAction::FindNextRefinery(
-    ObservationInterface const * obs) {
+        ObservationInterface const * obs) {
     Units refineries = obs->GetUnits(Unit::Alliance::Self, IsRefinery);
     for (Unit const * refinery : refineries) {
+        // Refinery isn't built yet
+        if (refinery->build_progress < 1.0) {
+            continue;
+        }
         // Refinery isn't overfull
         if (refinery->assigned_harvesters >= refinery->ideal_harvesters) {
             continue;
@@ -421,10 +427,14 @@ Unit const * ExecAction::FindNextRefinery(
 }
 
 Unit const * ExecAction::FindNextMineralField(
-    ObservationInterface const * obs) {
+        ObservationInterface const * obs) {
     Units commandcenters = obs->GetUnits(Unit::Alliance::Self, IsCommandcenter);
     Units mineral_fields = obs->GetUnits(Unit::Alliance::Neutral, IsMineralField);
     for (Unit const * commandcenter : commandcenters) {
+        // Commandcenter isn't built yet
+        if (commandcenter->build_progress < 1.0) {
+            continue;
+        }
         // Commandcenter isn't overfull
         if (commandcenter->assigned_harvesters >= commandcenter->ideal_harvesters) {
             continue;
@@ -432,7 +442,7 @@ Unit const * ExecAction::FindNextMineralField(
         // Find a mineral field near given good commandcenter
         for (Unit const * mineral_field : mineral_fields) {
             if (DistanceSquared3D(commandcenter->pos, mineral_field->pos) <
-                BASE_RESOURCE_TEST_RANGE2) {
+                    BASE_RESOURCE_TEST_RANGE2) {
                 return mineral_field;
             }
         }
@@ -440,13 +450,45 @@ Unit const * ExecAction::FindNextMineralField(
     return nullptr;
 }
 
+bool ExecAction::FindNextCommandcenterLoc(
+        ObservationInterface const * obs,
+        QueryInterface * query,
+        Point2D & location) {
+    Units commandcenters = obs->GetUnits(IsCommandcenter);
+    std::vector<int> order(commandcenter_locations.size());
+    for (int i = 0; i < commandcenter_locations.size(); ++i) {
+        order[i] = i;
+    }
+    for (int i = 0; i < commandcenter_locations.size(); ++i) {
+        Point3D point3D = commandcenter_locations[order[i]];
+        bool taken = false;
+        for (Unit const * commandcenter : commandcenters) {
+            if (DistanceSquared3D(commandcenter->pos, point3D) < 0.1) {
+                taken = true;
+                break;
+            }
+        }
+        if (taken) {
+            continue;
+        }
+        Point2D point2D(point3D.x, point3D.y);
+        if (! query->Placement(ABILITY_ID::BUILD_COMMANDCENTER, point2D)) {
+            continue;
+        }
+        location.x = point2D.x;
+        location.y = point2D.y;
+        return true;
+    }
+    return false;
+}
+
 Unit const * ExecAction::FindNearestUnitOfType(
-    UNIT_TYPEID type,
-    Point2D const &location,
-    ObservationInterface const *obs,
-    Unit::Alliance alliance) {
+        UNIT_TYPEID type,
+        Point2D const &location,
+        ObservationInterface const *obs,
+        Unit::Alliance alliance) {
     Units candidates;
-    auto cmp = [type](Unit const &unit) { return unit.unit_type == type; };
+    auto cmp = [type] (Unit const &unit) { return unit.unit_type == type; };
     candidates = obs->GetUnits(alliance, cmp);
     Unit const *best = nullptr;
     float distance_squared = INFINITY;
@@ -462,7 +504,6 @@ Unit const * ExecAction::FindNearestUnitOfType(
 }
 
 void ExecAction::Init(Kurt * const kurt) {
-    //    std::vector<sc2::Point3D> expansions = search::CalculateExpansionLocations(kurt->Observation(), kurt->Query());
-    //    for (Point3D point : expansions) {
-    //    }
+    commandcenter_locations = search::CalculateExpansionLocations(
+            kurt->Observation(), kurt->Query());
 }

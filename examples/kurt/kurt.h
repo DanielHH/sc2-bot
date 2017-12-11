@@ -2,6 +2,11 @@
 
 #include <sc2api/sc2_api.h>
 #include <list>
+#include <vector>
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
 #include "BPState.h"
 
 class WorldRepresentation;
@@ -82,6 +87,15 @@ public:
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
 
+    /* Starts the timer. */
+    void TimeNew();
+
+    /* Count the time since last call to either TimeNew or TimeNext and
+     * adds the duration to given variable sent in as parameter.
+     */
+    void TimeNext(double & time_count);
+
+
 private:
     CombatMode current_combat_mode;
 
@@ -89,4 +103,11 @@ private:
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> unit_ability_map;
     static void SetUpDataMaps(const sc2::ObservationInterface *);
+
+    /* Clocks used for measuring the execution time. */
+    std::chrono::steady_clock::time_point clock_start, clock_end;
+    /* Time spent executing respective manager. */
+    double time_am = 0, time_bm = 0, time_sm = 0;
+    /* The time (in game seconds) between every print and reset of exec time.*/
+    const int time_interval = 10;
 };
