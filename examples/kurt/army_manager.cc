@@ -109,27 +109,9 @@ void ArmyManager::Attack() {
     if (!armyCellPriorityQueue->queue.empty()) {
         WorldCell* cell_to_attack = armyCellPriorityQueue->queue.at(0);
         Point2D point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
-        if (kurt->Observation()->GetGameLoop() % 240 == 0) {
-            std::cout << "Army at game step: " << kurt->Observation()->GetGameLoop() << std::endl;
+        for(Squad squad: squads) {
+            squad.attackMove(point_to_attack);
         }
-        for(const Unit* unit: kurt->army_units){
-            kurt->Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, point_to_attack);
-            if (kurt->Observation()->GetGameLoop() % 240 == 0) {
-                std::cout << "Army unit: " << unit->unit_type << std::endl;
-            }
-        }
-        /*
-        if (kurt->Observation()->GetGameLoop() % 240 == 0) {
-            std::cout << "Army Attack at game step: " << kurt->Observation()->GetGameLoop() << std::endl;
-            std::cout << "Cell to attack: X: " << cell_to_attack->GetCellRealX() << ", Y: " << cell_to_attack->GetCellRealY() << std::endl;
-            for (const Unit* unit : cell_to_attack->GetBuildings()) {
-                std::cout << "building: " << unit->unit_type << std::endl;
-            }
-            for (const Unit* unit : cell_to_attack->GetTroops()) {
-                std::cout << "trooper: " << unit->unit_type << std::endl;
-            }
-        }
-        */
     }
 }
 
@@ -171,8 +153,12 @@ bool ArmyManager::TryGetScout() {
     return scout_found;
 }
 
-void ArmyManager::PutUnitInGroup(const Unit* unit) {
-    
+void ArmyManager::PutUnitInSquad(const Unit* unit) {
+    if (squads.empty() || squads.back().members.size() == Squad::SQUAD_SIZE) {
+        Squad new_squad = Squad(kurt);
+        squads.push_back(new_squad);
+    }
+    squads.back().members.push_back(unit);
 }
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {
@@ -183,16 +169,8 @@ void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* obs
     }
     else if (kurt->IsArmyUnit(unit)) {
         kurt->army_units.push_back(unit);
+        PutUnitInSquad(unit);
     }
-}
-
-bool ArmyManager::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
-    // Send a pathing query from the unit to that point. Can also query from point to point,
-    // but using a unit tag wherever possible will be more accurate.
-    // Note: This query must communicate with the game to get a result which affects performance.
-    // Ideally batch up the queries (using PathingDistanceBatched) and do many at once.
-    float distance = kurt->Query()->PathingDistance(unit, target_pos);
-    return distance > 0.1f;
 }
 
 #undef DEBUG

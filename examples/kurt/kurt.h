@@ -94,6 +94,9 @@ public:
      * adds the duration to given variable sent in as parameter.
      */
     void TimeNext(double & time_count);
+    
+    /* Returns true if position is pathable by a certain unit */
+    bool CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos);
 
 
 private:

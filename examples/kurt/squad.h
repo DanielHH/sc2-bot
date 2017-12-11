@@ -5,12 +5,13 @@
 
 class Squad {
 private:
-    sc2::Units members;
     Kurt* kurt;
     bool isGrouped();
     void groupUp();
     
 public:
-    Squad(sc2::Units units, Kurt* parent_kurt);
+    Squad(Kurt* parent_kurt);
+    sc2::Units members;
+    const static int SQUAD_SIZE = 6;
     void attackMove(sc2::Point2D point);
 };
