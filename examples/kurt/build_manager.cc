@@ -119,7 +119,7 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
     //
     // Execute the current plan
     //
-    current_plan.ExecuteStep(agent);
+    current_plan.ExecuteStep(agent, &current_state);
     //
     // Test if a goal is reached
     //

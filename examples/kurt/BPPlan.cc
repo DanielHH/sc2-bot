@@ -129,26 +129,23 @@ float BPPlan::TimeRequired(BPState * const from) {
     return tmp.GetTime() - from->GetTime();
 }
 
-void BPPlan::ExecuteStep(Kurt * const kurt) {
-    int i;
-    for (i = 0; i < std::min(1, (int) vector::size()); ++i) {
+void BPPlan::ExecuteStep(Kurt * const kurt, BPState * current_state) {
+    BPState * tmp;
+    if (current_state == nullptr) {
+        tmp = new BPState(kurt);
+    } else {
+        tmp = new BPState(current_state);
+    }
+    for (int i = 0; i < std::min(1, (int) vector::size()); ++i) {
         ACTION action = vector::operator[](i);
         PRINT("Try to exec action " << action)
-        if (! ExecAction::Exec(kurt, action)) {
+        if (tmp->CanExecuteNow(action) && ExecAction::Exec(kurt, action)) {
+            std::cout<< "Executed action "<< ActionToName(action) << std::endl;
+            vector::erase(vector::begin() + i);
             break;
-        } else {
-            std::cout << "Executed action " << ActionToName(action);
-            if (i + 1 < vector::size()) {
-                ACTION next_a = vector::operator[](i + 1);
-                std::cout << ", next action is " << ActionToName(next_a);
-            } else {
-                std::cout << ", no more actions in this BPPlan";
-            }
-            std::cout << std::endl;
         }
     }
-    auto beg = vector::begin();
-    vector::erase(beg, beg + i);
+    delete tmp;
 }
 
 std::string BPPlan::ToString() const {
