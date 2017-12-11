@@ -1,18 +1,20 @@
 #pragma once
+
+#include "action_enum.h"
+
 #include <iostream>
 #include <vector>
 
-class BPAction;
 class BPState;
 class Kurt;
 
-class BPPlan : public std::vector<BPAction> {
+class BPPlan : public std::vector<ACTION> {
 public:
     /* Apends a basic plan for going from a given state to some goal state */
     void AddBasicPlan(BPState * const, BPState * const);
 
-    /* Returns the time required to execute this plan */
-    float TimeRequired() const;
+    /* Returns the time required to execute this plan from given state. */
+    float TimeRequired(BPState * const);
 
     /* Executes as much of this plan as possible during one game tick */
     void ExecuteStep(Kurt * const);

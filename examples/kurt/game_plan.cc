@@ -58,8 +58,8 @@ void GamePlan::ExecuteNextNode() {
         }
     }
     else {
-        // TODO: ask for new plan
-        std::cout << "Nothing to execute!" << std::endl;
+        PRINT("Nothing to execute!")
+        kurt->CalculateNewPlan();
     }
 }
 

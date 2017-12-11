@@ -1,10 +1,22 @@
 #include "plans.h"
 
+#define DEBUG // Comment out to disable debug prints in this file.
+#ifdef DEBUG
+#include <iostream>
+#define PRINT(s) std::cout << s << std::endl;
+#define TEST(s) s
+#else
+#define PRINT(s)
+#define TEST(s)
+#endif // DEBUG
+
 using namespace sc2;
 using namespace std;
 
 GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
-    GamePlan* plan;
+    PRINT("DefaultGamePlan")
+    GamePlan* plan = new GamePlan(kurt);
+
     // Build order of 3 marines
     BPState* first_build_order= new BPState();
     BPState* second_build_order = new BPState();
@@ -94,6 +106,17 @@ GamePlan* CruiserPlan(Kurt* kurt) {
     return plan;
 }
 
+GamePlan* VespeneGasTycoon(Kurt* kurt) {
+    GamePlan* plan = new GamePlan(kurt);
+
+    BPState* first_build_order = new BPState();
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+
+    plan->AddStatBuildOrderNode(first_build_order);
+
+    return plan;
+}
+
 GamePlan* DynamicGamePlan(Kurt* kurt) {
     GamePlan* plan = new GamePlan(kurt);
 
@@ -101,5 +124,8 @@ GamePlan* DynamicGamePlan(Kurt* kurt) {
     plan->AddDynCombatNode();
 
     return plan; 
-
 }
+
+#undef DEBUG // Stop debug prints from leaking
+#undef TEST
+#undef PRINT
