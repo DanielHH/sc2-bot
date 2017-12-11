@@ -70,7 +70,17 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     interesting_actions.insert(ACTION::SCV_GATHER_VESPENE);
     interesting_actions.insert(ACTION::BUILD_REFINERY);
     interesting_actions.insert(ACTION::BUILD_SUPPLY_DEPOT);
+    interesting_actions.insert(ACTION::BUILD_COMMAND_CENTER);
     interesting_actions.insert(ACTION::TRAIN_SCV);
+    if (interesting_actions.count(ACTION::BUILD_BARRACKS) != 0) {
+        interesting_actions.insert(ACTION::BUILD_BARRACKS_REACTOR);
+    }
+    if (interesting_actions.count(ACTION::BUILD_FACTORY) != 0) {
+        interesting_actions.insert(ACTION::BUILD_FACTORY_REACTOR);
+    }
+    if (interesting_actions.count(ACTION::BUILD_STARPORT) != 0) {
+        interesting_actions.insert(ACTION::BUILD_STARPORT_REACTOR);
+    }
 }
 
 MCTS::~MCTS() {
