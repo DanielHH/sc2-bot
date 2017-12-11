@@ -183,12 +183,12 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
             minerals_time = 1 / GetMineralRate() *
-                std::max(0, ar.consumed[minerals] - GetUnitAvailableAmount(minerals));
+                std::max(0, ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals));
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
             vespene_time = 1 / GetVespeneRate() *
-                std::max(0, ar.consumed[vespene] - GetUnitAvailableAmount(vespene));
+                std::max(0, ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
         if (! actions.empty()) {
