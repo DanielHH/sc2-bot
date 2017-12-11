@@ -61,11 +61,24 @@ void WorldCell::AddBuilding(const sc2::Unit* building) {
     }
 }
 
+void WorldCell::AddAlliedBuilding(const sc2::Unit* building) {
+    if (std::find(buildings.begin(), buildings.end(), building) == buildings.end()) {
+        allied_buildings.push_back(building);
+    }
+}
+
 void WorldCell::AddTrooper(const sc2::Unit* trooper) {
     if (std::find(troops.begin(), troops.end(), trooper) == troops.end()) {
         troops.push_back(trooper);
     }
 }
+
+void WorldCell::AddAlliedTrooper(const sc2::Unit* trooper) {
+    if (std::find(troops.begin(), troops.end(), trooper) == troops.end()) {
+        allied_troops.push_back(trooper);
+    }
+}
+
 void WorldCell::ClearBuildings() {
     buildings.clear();
 }
@@ -74,8 +87,17 @@ void WorldCell::ClearTroops() {
     troops.clear();
 }
 
+void WorldCell::ClearAlliedBuildings() {
+    allied_buildings.clear();
+}
+
+void WorldCell::ClearAlliedTroops() {
+    allied_troops.clear();
+}
 sc2::Units WorldCell::GetTroops(){return troops;}
 sc2::Units WorldCell::GetBuildings(){return buildings;}
+sc2::Units WorldCell::GetAlliedTroops(){return allied_troops;}
+sc2::Units WorldCell::GetAlliedBuildings(){return allied_buildings;}
 float WorldCell::GetMineralAmount() {return mineral_amount;}
 float WorldCell::GetGasAmount() {return gas_amount;}
 float WorldCell::GetEnemyDps() {return enemy_dps;}
