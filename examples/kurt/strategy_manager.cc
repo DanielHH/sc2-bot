@@ -341,7 +341,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
         PRINT("diff_cp: " << diff_cp);
         PRINT("final_enemy_cp: " << final_enemy_cp);
         PRINT("enemy_max_health: " << enemy_max_health);
-        while (our_final_health*final_our_cp < (3*enemy_max_health*final_enemy_cp)) { // TODO: testa. eventuellt ändra till our_final_health * final_our_cp < 3*enemy_max_health*final_enemy_cp
+        while (our_final_health/final_enemy_cp < (3*enemy_max_health/final_our_cp)) { // TODO: testa. eventuellt ändra till our_final_health * final_our_cp < 3*enemy_max_health*final_enemy_cp
             PRINT("----------------------------")
             PRINT("our_final_health/final_enemy_cp: " << our_final_health/final_enemy_cp)
             PRINT("enemy_max_health/final_our_cp: " << enemy_max_health/final_our_cp)
