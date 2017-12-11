@@ -158,13 +158,13 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
 
         PRINT("Checking unit: " + Kurt::GetUnitType(current_unit_type)->name)
 
-        if (zerg_countertable.count(current_unit_type) == 0) {
+        if (protoss_countertable.count(current_unit_type) == 0) {
             string unit_not_in_ct = Kurt::GetUnitType(current_unit_type)->name;
             PRINT("Unit is not in countertable: " << unit_not_in_ct)
                 continue;
         }
 
-        vector<UNIT_TYPEID> counter_unit_types = zerg_countertable.at(current_unit_type); // Get all units good at countering the current unit
+        vector<UNIT_TYPEID> counter_unit_types = protoss_countertable.at(current_unit_type); // Get all units good at countering the current unit
         ObservedUnits counter_units = ObservedUnits();
 
         PRINT("Iterating through counter units...")
