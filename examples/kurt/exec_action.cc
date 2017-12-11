@@ -19,6 +19,8 @@
 #endif // DEBUG
 
 using namespace sc2;
+using std::vector;
+using std::find;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
@@ -122,8 +124,7 @@ void ExecAction::OnUnitIdle(
 TEST(bool built_a_tech_lab = false;)
 
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
-    if (action == ACTION::BUILD_BARRACKS_TECH_LAB) PRINT("we're off to build a techlab.")
-        Units us;
+    Units us;
     Unit const * target;
     ActionInterface * action_interface = kurt->Actions();
     QueryInterface *query = kurt->Query();
@@ -135,7 +136,6 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
         //
         if (ActionRepr::convert_our_api.count(action) != 0) {
             ABILITY_ID ability = ActionRepr::convert_our_api.at(action);
-            PRINT("Executing actual ability " << AbilityTypeToName(ability));
             return ExecAbility(kurt, ability);
         }
         else {
@@ -143,21 +143,57 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             return false;
         }
     case ACTION::BUILD_BARRACKS_TECH_LAB:
+        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_BARRACKS, true);
+                return true;
+            }
+        }
+        return false;
     case ACTION::BUILD_BARRACKS_REACTOR:
         for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
-            if (ExecAbility(kurt, ActionRepr::convert_our_api.at(action), u)) return true;
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_BARRACKS, true);
+                return true;
+            }
         }
         return false;
     case ACTION::BUILD_FACTORY_REACTOR:
+        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_FACTORY, true);
+                return true;
+            }
+        }
+        return false;
     case ACTION::BUILD_FACTORY_TECH_LAB:
         for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
-            if (ExecAbility(kurt, ActionRepr::convert_our_api.at(action), u)) return true;
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_FACTORY, true);
+                return true;
+            }
         }
         return false;
     case ACTION::BUILD_STARPORT_REACTOR:
+        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_STARPORT, true);
+                return true;
+            }
+        }
+        return false;
     case ACTION::BUILD_STARPORT_TECH_LAB:
         for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORT; })) {
-            if (ExecAbility(kurt, ActionRepr::convert_our_api.at(action), u)) return true;
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
+                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_STARPORT, true);
+                return true;
+            }
         }
         return false;
     case ACTION::SCV_GATHER_MINERALS:
@@ -223,7 +259,6 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
     for (const Unit *u : obs->GetUnits(Unit::Alliance::Self, is_idle_or_scv)) {
         if (ExecAbility(kurt, ability, u)) return true;
     }
-    std::cout << "No unit could perform " << AbilityTypeToName(ability) << std::endl;
     return false;
 }
 
@@ -232,7 +267,6 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
     ActionInterface *action_interface = kurt->Actions();
     ObservationInterface const *obs = kurt->Observation();
     if (u->build_progress < 1) {
-        std::cout << " is still under production: " << 100 * u->build_progress << "%\n";
         return false; // Unit under construction.
     }
     for (AvailableAbility order : query->GetAbilitiesForUnit(u, true).abilities) {
@@ -243,7 +277,6 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
             !kurt->UnitInScvMinerals(u)) {
             continue;
         }
-        std::cout << " can perform " << AbilityTypeToName(ability);
 
         bool can_afford_it = false;
         for (AvailableAbility affordable : query->GetAbilitiesForUnit(u, false).abilities) {
@@ -254,10 +287,8 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         }
 
         if (!can_afford_it) {
-            std::cout << ", but can't afford it";
             continue;
         }
-        std::cout << std::endl;
         Point2D target_point(u->pos.x + GetRandomScalar() * 15
             , u->pos.y + GetRandomScalar() * 15);
         Unit const *target_unit;
@@ -271,7 +302,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                     return false;
                 }
             }
-            if (ability == ABILITY_ID::BUILD_TECHLAB_BARRACKS) PRINT("It takes no target.")
+            
                 action_interface->UnitCommand(u, ability, true);
             break;
         case sc2::AbilityData::Target::Point:
@@ -280,7 +311,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                 target_point = Point2D(u->pos.x + GetRandomScalar() * 15
                     , u->pos.y + GetRandomScalar() * 15);
             }
-            if (ability == ABILITY_ID::BUILD_TECHLAB_BARRACKS) PRINT("It targets a point.")
+            
                 action_interface->UnitCommand(u, ability, target_point);
             break;
         case sc2::AbilityData::Target::Unit:
@@ -291,19 +322,19 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                 }
                 built_refinery_time[target_unit] = obs->GetGameLoop();
             }
-            if (ability == ABILITY_ID::BUILD_TECHLAB_BARRACKS) PRINT("It targets a unit.")
+            
                 action_interface->UnitCommand(u, ability, target_unit);
             break;
         case sc2::AbilityData::Target::PointOrNone:
-            if (ability == ABILITY_ID::BUILD_TECHLAB_BARRACKS) PRINT("It may target a point.")
-                action_interface->UnitCommand(u, ability);
+            
+            action_interface->UnitCommand(u, ability);
             // TODO: Maybe target someplace?
             break;
         case sc2::AbilityData::Target::PointOrUnit:
             action_interface->UnitCommand(u, ability, target_point);
             // TODO: Where or who?
-            if (ability == ABILITY_ID::BUILD_TECHLAB_BARRACKS) PRINT("It targest a point or a unit -- not implemented!!!.")
-                std::cout << "Warning: exec_action: PointOrUnit, ability: "
+            
+            std::cout << "Warning: exec_action: PointOrUnit, ability: "
                 << AbilityTypeToName(AbilityID(ability)) << std::endl;
             break;
         default:
@@ -325,7 +356,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         sent_order_time[u] = obs->GetGameLoop();
         return true;
     }
-    std::cout << " can't perform " << AbilityTypeToName(ability) << "\n";
+    
     return false;
 }
 

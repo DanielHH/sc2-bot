@@ -111,10 +111,12 @@ void ActionRepr::InitConvertMap() {
     convert_api_our[ABILITY_ID::BUILD_STARPORT] = ACTION::BUILD_STARPORT;
     convert_api_our[ABILITY_ID::BUILD_ARMORY] = ACTION::BUILD_ARMORY;
     convert_api_our[ABILITY_ID::BUILD_FUSIONCORE] = ACTION::BUILD_FUSION_CORE;
-    // Reactors and techlabs used to be here.
-    // Unfortunately, since they all use the same ability for different actions
-    // The one-to-one mapping was ruined, so they had to be removed
-    // May they rest in peace
+    convert_api_our[ABILITY_ID::BUILD_TECHLAB_BARRACKS] = ACTION::BUILD_BARRACKS_TECH_LAB;
+    convert_api_our[ABILITY_ID::BUILD_TECHLAB_FACTORY] = ACTION::BUILD_FACTORY_TECH_LAB;
+    convert_api_our[ABILITY_ID::BUILD_TECHLAB_STARPORT] = ACTION::BUILD_STARPORT_TECH_LAB;
+    convert_api_our[ABILITY_ID::BUILD_REACTOR_BARRACKS] = ACTION::BUILD_BARRACKS_REACTOR;
+    convert_api_our[ABILITY_ID::BUILD_REACTOR_FACTORY] = ACTION::BUILD_FACTORY_REACTOR;
+    convert_api_our[ABILITY_ID::BUILD_REACTOR_STARPORT] = ACTION::BUILD_STARPORT_REACTOR;
     convert_api_our[ABILITY_ID::TRAIN_SCV] = ACTION::TRAIN_SCV;
     convert_api_our[ABILITY_ID::TRAIN_MARINE] = ACTION::TRAIN_MARINE;
     convert_api_our[ABILITY_ID::TRAIN_REAPER] = ACTION::TRAIN_REAPER;
@@ -132,13 +134,6 @@ void ActionRepr::InitConvertMap() {
     convert_api_our[ABILITY_ID::TRAIN_RAVEN] = ACTION::TRAIN_RAVEN;
     convert_api_our[ABILITY_ID::TRAIN_BANSHEE] = ACTION::TRAIN_BANSHEE;
     convert_api_our[ABILITY_ID::TRAIN_BATTLECRUISER] = ACTION::TRAIN_BATTLECRUISER;
-
-    convert_our_api[ACTION::BUILD_BARRACKS_REACTOR] = ABILITY_ID::BUILD_REACTOR;
-    convert_our_api[ACTION::BUILD_FACTORY_REACTOR] = ABILITY_ID::BUILD_REACTOR;
-    convert_our_api[ACTION::BUILD_STARPORT_REACTOR] = ABILITY_ID::BUILD_REACTOR;
-    convert_our_api[ACTION::BUILD_BARRACKS_TECH_LAB] = ABILITY_ID::BUILD_TECHLAB;
-    convert_our_api[ACTION::BUILD_FACTORY_TECH_LAB] = ABILITY_ID::BUILD_TECHLAB;
-    convert_our_api[ACTION::BUILD_STARPORT_TECH_LAB] = ABILITY_ID::BUILD_TECHLAB;
 
     for (auto it = convert_api_our.begin(); it != convert_api_our.end(); ++it){
         convert_our_api[it->second] = it->first;
