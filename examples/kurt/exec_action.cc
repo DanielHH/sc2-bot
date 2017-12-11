@@ -21,6 +21,7 @@
 #endif // DEBUG
 
 using namespace sc2;
+using std::vector;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
