@@ -5,7 +5,7 @@
 
 //TODO: Remove destroyed structures from enemy_structures (or our_strucutreS)
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -27,8 +27,8 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
 
     //current_plan = CreateDefaultGamePlan(kurt);
-    //current_plan = RushPlan(kurt);
-    current_plan = VespeneGasTycoon(kurt);
+    current_plan = RushPlan(kurt);
+    //current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
@@ -37,7 +37,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     int current_game_loop = observation->GetGameLoop();
 
     SaveSpottedEnemyUnits(observation);
-/*
+
     if (current_game_loop % 400 == 0) {
         PRINT("------Enemy units-----------")
             PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
@@ -58,7 +58,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
         PRINT("------Our structures---------")
         PRINT(our_structures.ToString())
         PRINT("-----------------------------\n\n")
-    } */
+    } 
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -251,7 +251,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
 
     BPState* counter_order = new BPState();
-    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }
 
