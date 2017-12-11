@@ -45,8 +45,13 @@ void ObservedUnits::AddUnits(const Units* units) {
     calculateCP();
 }
 
-void ObservedUnits::AddUnit(const Unit* unit) {
-    saved_units[unit->unit_type] += 1;
+void ObservedUnits::AddUnits(const sc2::UNIT_TYPEID unit_type, const int amount) {
+    saved_units[unit_type] += amount;
+    calculateCP();
+}
+
+void ObservedUnits::AddUnits(const Unit* unit, const int amount) {
+    saved_units[unit->unit_type] += amount;
     calculateCP();
 }
 
@@ -66,8 +71,9 @@ void ObservedUnits::calculateCP() {
 
     for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
         unit_data = Kurt::GetUnitType(unit->first);
+        bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
+
         for (auto weapon : unit_data->weapons) {
-            bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
             weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
             if (weapon.type == Weapon::TargetType::Any) { // Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
                 // GroundToBoth

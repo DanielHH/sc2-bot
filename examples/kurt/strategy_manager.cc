@@ -73,10 +73,10 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     }
 
     if (kurt->IsStructure(unit)) {
-        our_structures.AddUnit(unit);
+        our_structures.AddUnits(unit);
     }
     else if(unit->unit_type != UNIT_TYPEID::TERRAN_SCV) { // Don't add SCVs because they are "created" when exiting refineries
-        our_units.AddUnit(unit);
+        our_units.AddUnits(unit);
     }
 }
 
@@ -199,7 +199,7 @@ void StrategyManager::SetBuildGoal() {
 BPState* StrategyManager::CounterEnemyUnit() {
     PRINT("---------------------------")
     PRINT("In CounterEnemyUnit")
-    BPState* new_goal_state = new BPState();
+    /*BPState* new_goal_state = new BPState();
     UNIT_TYPEID final_counter_unit;
     int number_of_units = 0;
 
@@ -237,10 +237,86 @@ BPState* StrategyManager::CounterEnemyUnit() {
     float weapon_dps;
 
     bool final_is_flying;
-    bool is_flying;
+    bool is_flying;*/
 
+    map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
+    map <UNIT_TYPEID, int> *const curr_our_units = our_units.GetSavedUnits();
+    vector<sc2::UNIT_TYPEID> counter_units;
+    float max_cp_difference;
+    UNIT_TYPEID strongest_enemy_unit;
+    int number_of_strongest_units;
+
+    // Go through all enemy unit types and find which type is the biggest threat right now, and needs to be countered
     for (auto enemy_unit = current_enemy_units->begin(); enemy_unit != current_enemy_units->end(); ++enemy_unit) {
-        unit_to_counter = enemy_unit->first;
+        UNIT_TYPEID unit_to_counter = enemy_unit->first;
+        int number_of_units = enemy_unit->second;
+
+        ObservedUnits units_to_counter = ObservedUnits();
+        units_to_counter.AddUnits(unit_to_counter, number_of_units); // Save how many of the current unit the enemy has
+
+        const ObservedUnits::CombatPower* units_to_counter_cp = units_to_counter.GetCombatPower();
+
+        PRINT("Checking unit: " + Kurt::GetUnitType(unit_to_counter)->name)
+
+        if (zerg_countertable.count(unit_to_counter) == 0) {
+            string unit_not_in_ct = Kurt::GetUnitType(unit_to_counter)->name;
+            PRINT("Unit is not in countertable: " << unit_not_in_ct)
+            continue;
+        }
+
+        counter_units = zerg_countertable.at(unit_to_counter); // Get all unit_types good at countering the enemy unit
+        ObservedUnits current_counter_units = ObservedUnits(); 
+
+        PRINT("Iterating through counter units...")
+        // Save the amount of each counter unit we currently have
+        for (auto counter_unit = counter_units.begin(); counter_unit != counter_units.end(); ++counter_unit) {
+            if ((curr_our_units->count(*counter_unit)) == 1) {
+                int number_of_units = curr_our_units->at(*counter_unit);
+                current_counter_units.AddUnits(*counter_unit, number_of_units);
+            }
+        }
+        PRINT("Done iterating")
+        const ObservedUnits::CombatPower* counter_units_cp = current_counter_units.GetCombatPower();
+
+        bool is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
+        PRINT("Found is flying")
+        float our_cp;
+        float enemy_cp;
+        float cp_difference;
+
+        // Combine the combat power of all our counter units
+        if (is_flying) {
+            our_cp = counter_units_cp->a2a + counter_units_cp->g2a;
+        }
+        else {
+            our_cp = counter_units_cp->a2g + counter_units_cp->g2g;
+        }
+
+        // Combine the combat power of the enemy unit
+        enemy_cp = units_to_counter_cp->a2a + units_to_counter_cp->a2g + units_to_counter_cp->g2a + units_to_counter_cp->g2g;
+
+        cp_difference = enemy_cp - our_cp;
+
+        PRINT("Comparing cp difference...")
+        if (cp_difference > max_cp_difference) {
+            max_cp_difference = cp_difference;
+            strongest_enemy_unit = unit_to_counter;
+            number_of_strongest_units;
+        }
+        PRINT("Done comparing")
+    }
+
+    PRINT("Strongest enemy unit: " << Kurt::GetUnitType(strongest_enemy_unit)->name << " " << to_string((int)strongest_enemy_unit))
+
+    ObservedUnits strongest_enemy_units = ObservedUnits();
+    strongest_enemy_units.AddUnits(strongest_enemy_unit, number_of_strongest_units);
+
+    BPState* counter_order = new BPState();
+    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+    return counter_order;
+}
+
+        /*unit_to_counter = enemy_unit->first;
         unit_data = Kurt::GetUnitType(enemy_unit->first);
         for (auto weapon : unit_data->weapons) {
             weapon_dps = weapon.damage_ / weapon.speed;
@@ -261,16 +337,11 @@ BPState* StrategyManager::CounterEnemyUnit() {
             if (tmp_enemy_cp > enemy_cp) {
                 enemy_cp = tmp_enemy_cp;
             }
-        }
 
-        if (zerg_countertable.count(unit_to_counter) == 0) {
-            string unit_not_in_ct = Kurt::GetUnitType(unit_to_counter)->name;
-            PRINT("Unit is not in countertable: " << unit_not_in_ct)
-            continue;
-        }
-        counter_units = zerg_countertable.at(unit_to_counter);
         int our_number_of_units;
         int weapon_dps;
+
+        // Summerize the total DPS of all our current counter units
         is_flying = count(ObservedUnits::flying_units.begin(), ObservedUnits::flying_units.end(), unit_to_counter) == 1;
         for (auto counter_unit = counter_units.begin(); counter_unit != counter_units.end(); ++counter_unit) {
             if ((curr_our_units->count(*counter_unit)) == 1) {
@@ -296,7 +367,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
                         tmp_our_cp = tmp_our_ground_cp;
                     }
                 }
-                our_cp += tmp_our_ground_cp;
+                our_cp += tmp_our_cp;
                 our_health += our_units.CalculateUnitTypeMaxHealth(*counter_unit);
             }
         }
@@ -313,7 +384,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
             final_counter_unit = counter_units.back();
             final_is_flying = is_flying;
         }
-    }
+        
     PRINT("----------------------------");
     PRINT("diff_cp: " << diff_cp);
     PRINT("final_enemy_cp: " << final_enemy_cp);
@@ -345,70 +416,7 @@ BPState* StrategyManager::CounterEnemyUnit() {
     PRINT("----------------------------");
     new_goal_state->SetUnitAmount(final_counter_unit, number_of_units);
     return new_goal_state;
-}
-
-
-
-/*
-void StrategyManager::CounterEnemyUnits() {
-BPState* new_goal_state = new BPState();
-Unit unit_to_create;
-int number_of_units;
-
-vector<sc2::UNIT_TYPEID> counter_units;
-
-map <UNIT_TYPEID, int> *const current_our_units = our_units.GetSavedUnits();
-
-float enemy_max_health;
-float enemy_dps;
-float our_health;
-float our_dps;
-
-map <UNIT_TYPEID, int> *const current_enemy_units = enemy_units.GetSavedUnits();
-
-for (auto unit = current_enemy_units->begin(); unit != current_enemy_units->end(); ++unit) {
-// CHECK ENEMY UNITS
-number_of_units = current_enemy_units->at(unit->first);
-//enemy_dps =
-enemy_max_health = enemy_units.CalculateUnitTypeMaxHealth(unit->first);
-
-// CHECK OUR UNITS
-counter_units = zerg_countertable.at(unit->first);
-for (auto unit = counter_units.begin(); unit != counter_units.end(); ++unit) {
-if ((current_our_units->count(*unit)) == 1) {
-// our_dps += Calculate total dps of(our) counter_units;
-// our_health += Calculate total health of(our) counter_units;
-// remove units, used to calculate our_dps, from tmp;
-}
-}
-
-// decide which units are most suitable to be created;
-
-while (our_health / enemy_dps < (1.1 * enemy_max_health / our_dps)) {
-number_of_units += 1;
-our_health += counter_unit.health;
-our_dps += counter_unit.dps; //kan absolut inte skrivas så enkelt, men det är ju pseudo.
-}
-new_goal_state->SetUnitAmount(unit_to_create->unit_type, number_of_units);
-}
-}
-*/
-//NOT CURRENTLY USED!
-/*
-void StrategyManager::CheckCombatStyle(const Unit* unit, map<string, Units> map) {
-    //GroundToGround
-    if (!unit->is_flying && unit->is_alive) {
-        map["g2g"].push_back(unit);
->>>>>>> 81559c0b9f8398d5db4a9ca3346fc67c32e49833
-    }
-    else if (our_cp.g2g < enemy_cp.g2g || our_cp.a2g < enemy_cp.a2g) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGASSAULT, 5);
-    }
-    kurt->SendBuildOrder(new_goal_state);
-};
-
-
-*/
+    */
 
 #undef DEBUG
 #undef PRINT

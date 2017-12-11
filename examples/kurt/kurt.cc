@@ -38,10 +38,12 @@ void Kurt::OnGameStart() {
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
     int step = observation->GetGameLoop();
+
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
     build_manager->OnStep(observation);
     strategy_manager->OnStep(observation);
+
     assert(step == observation->GetGameLoop());
 }
 

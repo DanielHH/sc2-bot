@@ -25,8 +25,11 @@ public:
     /* Takes a Units (vector) and adds units if more than prevoius are observed */
     void AddUnits(const sc2::Units* units);
 
-    /* Adds a single unit */
-    void AddUnit(const sc2::Unit* unit);
+    /* Adds any amount of a single type of unit, with a default of 1 */
+    void AddUnits(const sc2::UNIT_TYPEID unit_type, const int amount = 1);
+
+    /* Adds any amount of a single type of unit, with a default of 1 */
+    void AddUnits(const sc2::Unit* unit, const int amount = 1);
 
     /* Removes a unit from the observations */
     void RemoveUnit(const sc2::Unit* unit);
