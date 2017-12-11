@@ -120,7 +120,7 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
     int num_mineral_worker_slots = 16 * GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER) -
-        GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
 
