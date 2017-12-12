@@ -160,13 +160,13 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
 
         PRINT("Checking unit: " + Kurt::GetUnitType(current_unit_type)->name)
 
-        if (protoss_countertable.count(current_unit_type) == 0) {
+        if (countertable.count(current_unit_type) == 0) {
             string unit_not_in_ct = Kurt::GetUnitType(current_unit_type)->name;
             PRINT("Unit is not in countertable: " << unit_not_in_ct)
                 continue;
         }
 
-        vector<UNIT_TYPEID> counter_unit_types = protoss_countertable.at(current_unit_type); // Get all units good at countering the current unit
+        vector<UNIT_TYPEID> counter_unit_types = countertable.at(current_unit_type); // Get all units good at countering the current unit
         ObservedUnits counter_units = ObservedUnits();
 
         PRINT("Iterating through counter units...")
@@ -223,6 +223,31 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
         PRINT("Strongest unit: You are waek my son")
     }
     return strongest_unit;
+}
+
+ObservedUnits* ObservedUnits::GetBestCounterUnit() {
+    ObservedUnits* best_counter_unit = nullptr;
+    UNIT_TYPEID strongest_enemy_type;
+    ObservedUnits* current_counter_unit = new ObservedUnits();
+    for (auto strongest_enemy = saved_units.begin(); strongest_enemy != saved_units.end(); ++strongest_enemy) {
+        strongest_enemy_type = strongest_enemy->first;
+        vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
+        bool counter_unit_is_flying;
+        for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
+            current_counter_unit->AddUnits(*counter_unit_type, 1);
+            counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
+            if ((cp.a2a + cp.g2a < cp.a2g + cp.g2g) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
+                best_counter_unit = current_counter_unit;
+            }
+            else if ((cp.a2a + cp.g2a > cp.a2g + cp.g2g) && !counter_unit_is_flying) {
+                best_counter_unit = current_counter_unit;
+            }
+            if (best_counter_unit = nullptr) {
+                best_counter_unit = current_counter_unit;
+            }
+        }
+    }
+    return best_counter_unit;
 }
 
 int ObservedUnits::GetNumberOfAirUnits() {

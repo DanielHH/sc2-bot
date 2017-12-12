@@ -233,6 +233,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     int number_of_strongest_units;
 
     ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
+    ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
     BPState* counter_order = new BPState();
     counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
@@ -308,16 +309,13 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
             final_is_flying = is_flying;
             final_unit_to_counter = unit_to_counter;
         }
-<<<<<<< HEAD
         
     PRINT("----------------------------");
     PRINT("diff_cp: " << diff_cp);
     PRINT("final_enemy_cp: " << final_enemy_cp);
     PRINT("enemy_max_health: " << enemy_max_health);
-=======
-    }
 
->>>>>>> 49db4116d0b2219b7a5f1835636690e9dcc6ace7
+    }
     if (diff_cp > 0) {
         string str_futc = Kurt::GetUnitType(final_unit_to_counter)->name;
         PRINT("----------------------------")

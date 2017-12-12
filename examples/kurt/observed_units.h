@@ -52,6 +52,8 @@ public:
     /* Returns the strongest unit relative to the enemy units in the enemies parameter */
     ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
 
+    ObservedUnits* GetBestCounterUnit();
+
     int GetNumberOfAirUnits();
 
     int GetNumberOfGroundUnits();
