@@ -62,6 +62,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
+    // Save how much health each type of new unit have
     if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
         ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
     }
@@ -131,29 +132,10 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
 
     // Save any newly observed structures
     enemy_structures.AddUnits(&observed_structures);
-    //SaveSpottedEnemyUnitsHelper(&observed_structures, &enemy_structures);
 
     //Save any newly observed units
     enemy_units.AddUnits(&observed_units);
-    //SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
 };
-
-//TODO: Not needed anny more?
-void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved_units) {
-    // For every observed enemy, check if a unit of the same type is already saved in saved_units.
-    // If there is, count the new unit as already seen and don't add it to the saved_units vector.
-    for (auto saved_unit = saved_units->begin(); saved_unit != saved_units->end(); ++saved_unit) {
-        for (auto new_unit = new_units->begin(); new_unit != new_units->end(); ++new_unit) {
-            if ((*saved_unit)->unit_type == (*new_unit)->unit_type) {
-                new_units->erase(new_unit);
-                break;
-            }
-        }
-    }
-
-    // Save the observed units that didn't get filtered out as already seen.
-    saved_units->insert(saved_units->end(), new_units->begin(), new_units->end());
-}
 
 void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
@@ -172,11 +154,6 @@ void StrategyManager::CalculateCombatMode() {
         PRINT("COMBAT MODE: HARASS")
     }
 };
-
-void StrategyManager::SetGamePlan() {
-    delete current_plan;
-    current_plan = DynamicGamePlan(kurt);
-}
 
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
