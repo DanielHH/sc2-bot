@@ -24,6 +24,13 @@
 #define TEST(s)
 #endif // DEBUG
 
+#if __cplusplus == 201703L
+#define FALLTHROUGH [[fallthrough]]
+#else
+#define FALLTHROUGH
+#endif
+#define UNREACHABLE PRINT(__FILE__ << "." << __LINE__ << ": UNREACHABLE statement reached");assert(false);
+
 using namespace sc2;
 
 BPState::BPState() {
@@ -82,10 +89,8 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
                 IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
             }
+            FALLTHROUGH;
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
-            break;
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
@@ -101,6 +106,7 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
                 IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
             }
+            FALLTHROUGH;
         case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
@@ -117,6 +123,7 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
                 IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
             }
+            FALLTHROUGH;
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
