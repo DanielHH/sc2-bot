@@ -48,6 +48,7 @@ public:
 
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
+    /* Returns the strongest unit relative to the enemy units in the enemies parameter */
     ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
 
     ObservedUnits* GetBestCounterUnit();

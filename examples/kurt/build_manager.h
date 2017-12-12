@@ -41,5 +41,5 @@ private:
     Kurt *const agent;
 
     const int STEPS_BETWEEN_REPLAN = STEPS_PER_SEC * 1;
-    const int SEARCH_ITER_PER_STEP = 1;
+    const int SEARCH_ITER_PER_STEP = 5;
 };
