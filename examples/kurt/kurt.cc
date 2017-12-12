@@ -209,6 +209,15 @@ bool Kurt::IsStructure(const Unit* unit) {
     return is_structure;
 }
 
+bool Kurt::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
+    // Send a pathing query from the unit to that point. Can also query from point to point,
+    // but using a unit tag wherever possible will be more accurate.
+    // Note: This query must communicate with the game to get a result which affects performance.
+    // Ideally batch up the queries (using PathingDistanceBatched) and do many at once.
+    float distance = Query()->PathingDistance(unit, target_pos);
+    return distance > 0.1f;
+}
+
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
 std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;

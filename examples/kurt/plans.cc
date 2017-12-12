@@ -59,17 +59,21 @@ GamePlan* RushPlan(Kurt* kurt) {
 
     BPState* first_build_order = new BPState();
     BPState* second_build_order = new BPState();
+    BPState* third_build_order = new BPState();
 
-    // Create 7 marines to use in the rush
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);
+    // Create 6 marines to use in the rush
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 6);
     
     // Continue produce marines and reapers as reinforcements to the rush force
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 10);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 12);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 12);
 
     plan->AddStatBuildOrderNode(first_build_order);
     plan->AddStatCombatNode(Kurt::ATTACK); // Send the marines to attack
     plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddStatCombatNode(Kurt::DEFEND); // Send the marines to defend
+    plan->AddStatBuildOrderNode(third_build_order);
 
     return plan;
 }
@@ -120,6 +124,21 @@ GamePlan* DynamicGamePlan(Kurt* kurt) {
     return plan; 
 }
 
+GamePlan* DefendGamePlan(Kurt* kurt) {
+    GamePlan* plan = new GamePlan(kurt);
+    BPState* first_build_order = new BPState();
+    BPState* second_build_order = new BPState();
+    BPState* third_build_order = new BPState();
+
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 1);
+    plan->AddStatBuildOrderNode(first_build_order);
+    plan->AddStatCombatNode(Kurt::DEFEND);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 1);
+    plan->AddStatBuildOrderNode(second_build_order);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
+    plan->AddStatBuildOrderNode(second_build_order);
+    return plan;
+}
 #undef DEBUG // Stop debug prints from leaking
 #undef TEST
 #undef PRINT

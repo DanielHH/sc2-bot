@@ -15,7 +15,9 @@ private:
     float enemy_dps;
     float seen_on_game_step;
     sc2::Units buildings;
+    sc2::Units allied_buildings;
     sc2::Units troops;
+    sc2::Units allied_troops;
     float UnitDamageVSSquad(const sc2::Unit* unit, sc2::Units units, Kurt* kurt);
     
 public:
@@ -29,6 +31,8 @@ public:
     sc2::Point2D GetCellLocationAs2DPoint(int chunk_size);
     sc2::Units GetTroops();
     sc2::Units GetBuildings();
+    sc2::Units GetAlliedTroops();
+    sc2::Units GetAlliedBuildings();
     float GetRelativeStrength(sc2::Units allied_troops, Kurt* kurt);
     const sc2::Unit* GetScout();
     
@@ -42,6 +46,10 @@ public:
     bool SmartComp(WorldCell* a, WorldCell* b);
     void AddBuilding(const sc2::Unit* building);
     void AddTrooper(const sc2::Unit* trooper);
+    void AddAlliedBuilding(const sc2::Unit* building);
+    void AddAlliedTrooper(const sc2::Unit* trooper);
     void ClearBuildings();
     void ClearTroops();
+    void ClearAlliedBuildings();
+    void ClearAlliedTroops();
 };
