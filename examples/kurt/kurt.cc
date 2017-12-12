@@ -2,11 +2,16 @@
 
 #include <list>
 #include <algorithm>
+#include <ctime>
+#include <ratio>
+#include <chrono>
 
 #include "army_manager.h"
 #include "build_manager.h"
 #include "strategy_manager.h"
 #include "world_representation.h"
+#include "exec_action.h"
+#include "constants.h"
 
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
@@ -27,11 +32,15 @@ StrategyManager* strategy_manager;
 void Kurt::OnGameStart() {
     const ObservationInterface *observation = Observation();
     SetUpDataMaps(observation);
+    TimeNew();
     world_rep = new WorldRepresentation(this);
     army_manager = new ArmyManager(this);
+    TimeNext(time_am);
     build_manager = new BuildManager(this);
     build_manager->OnGameStart(Observation());
+    TimeNext(time_bm);
     strategy_manager = new StrategyManager(this);
+    TimeNext(time_sm);
     world_rep->PrintWorld();
 }
 
@@ -39,10 +48,25 @@ void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
     int step = observation->GetGameLoop();
 
+    TimeNew();
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);
+    TimeNext(time_am);
+    ExecAction::OnStep(this);
     build_manager->OnStep(observation);
+    TimeNext(time_bm);
     strategy_manager->OnStep(observation);
+    TimeNext(time_sm);
+
+    if (observation->GetGameLoop() % (time_interval * STEPS_PER_SEC) == 0 &&
+            observation->GetGameLoop() != 0) {
+        std::cout << "Exec time over " << time_interval <<" sec, ";
+        std::cout << "Army: " << time_am << ", Build: " << time_bm;
+        std::cout << ", Strategy: " << time_sm << std::endl;
+        time_am = 0;
+        time_bm = 0;
+        time_sm = 0;
+    }
 
     assert(step == observation->GetGameLoop());
 }
@@ -52,35 +76,26 @@ void Kurt::OnUnitCreated(const Unit* unit) {
         return;
     }
     const ObservationInterface* observation = Observation();
+    TimeNew();
     army_manager->GroupNewUnit(unit, observation);
+    TimeNext(time_am);
     strategy_manager->SaveOurUnits(unit);
+    TimeNext(time_sm);
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
-    switch (unit->unit_type.ToType()) {
-    case UNIT_TYPEID::TERRAN_SCV: {
-        const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
-        if (!mineral_target) {
-            break;
-        }
-        Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-        if (! UnitInScvMinerals(unit)) {
-            scv_minerals.push_back(unit);
-        }
-        break;
-    }
-    default: {
-        break;
-    }
-
-    }
+    TimeNew();
+    ExecAction::OnUnitIdle(unit, this);
+    TimeNext(time_bm);
 }
 
 void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
-
+    TimeNew();
     strategy_manager->RemoveDeadUnit(destroyed_unit);
+    TimeNext(time_sm);
 
-    workers.remove(destroyed_unit);
+    scv_building.remove(destroyed_unit);
+    scv_idle.remove(destroyed_unit);
     scv_minerals.remove(destroyed_unit);
     scv_vespene.remove(destroyed_unit);
     scouts.remove(destroyed_unit);
@@ -92,16 +107,20 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
         build_manager->InitNewPlan();
         return;
     }
+    TimeNew();
     for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
         if ((*it).first == destroyed_unit->unit_type.ToType()) {
             build_manager->InitNewPlan();
             break;
         }
     }
+    TimeNext(time_bm);
 }
 
 void Kurt::OnUnitEnterVision(const Unit* unit) {
+    TimeNew();
     strategy_manager->OnUnitEnterVision(unit);
+    TimeNext(time_sm);
 }
 
 bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
@@ -110,7 +129,8 @@ bool Kurt::UnitInList(std::list<const Unit*>& list, const Unit* unit) {
 
 bool Kurt::UnitAlreadyStored(const sc2::Unit* unit) {
     return
-        UnitInList(workers, unit) ||
+        UnitInList(scv_building, unit) ||
+        UnitInList(scv_idle, unit) ||
         UnitInList(scv_minerals, unit) ||
         UnitInList(scv_vespene, unit) ||
         UnitInList(scouts, unit) ||
@@ -126,11 +146,15 @@ bool Kurt::UnitInScvVespene(const sc2::Unit* unit) {
 }
 
 void Kurt::ExecuteSubplan() {
+    TimeNext(time_bm);
     strategy_manager->ExecuteSubplan();
+    TimeNext(time_sm);
 }
 
 void Kurt::SendBuildOrder(BPState* const build_order) {
+    TimeNext(time_sm);
     build_manager->SetGoal(build_order);
+    TimeNext(time_bm);
 }
 
 Kurt::CombatMode Kurt::GetCombatMode() {
@@ -185,112 +209,6 @@ bool Kurt::IsStructure(const Unit* unit) {
     return is_structure;
 }
 
-bool Kurt::TryBuildStructure(ABILITY_ID ability_type_for_structure,
-    Point2D location,
-    const Unit* unit) {
-    const ObservationInterface* observation = Observation();
-
-    // If a unit already is building a supply structure of this type, do nothing.
-    // Also get an scv to build the structure.
-    std::vector<const Unit*> units_to_build;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-
-    Actions()->UnitCommand(unit,
-        ability_type_for_structure,
-        location);
-    return true;
-}
-
-
-const Unit* Kurt::getUnitOfType(UNIT_TYPEID unit_typeid) {
-    const ObservationInterface* observation = Observation();
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    return units.front();
-}
-
-
-Point2D Kurt::randomLocationNearUnit(const Unit* unit) {
-    float rx = GetRandomScalar();
-    float ry = GetRandomScalar();
-    Point2D location = Point2D(unit->pos.x + rx * 15.0f, unit->pos.y + ry * 15.0f);
-    return location;
-
-}
-
-
-bool Kurt::TryBuildSupplyDepot() {
-    const ObservationInterface* observation = Observation();
-
-    // If we are not supply capped, don't build a supply depot.
-    if (observation->GetFoodUsed() <= observation->GetFoodCap() - 2) {
-        return false;
-    }
-    // Try and build a depot. Find a random SCV and give it the order.
-    const Unit* unit = getUnitOfType(UNIT_TYPEID::TERRAN_SCV);
-    return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, randomLocationNearUnit(unit), unit);
-}
-
-bool Kurt::TryBuildRefinary() {
-    const ObservationInterface* observation = Observation();
-
-    // As soon as we have enough gold we build a refinary
-    if (observation->GetMinerals() < 100) {
-        return false;
-    }
-    const Unit* vespene_target = FindNearestVespeneGeyser();
-    // Try and build a depot. Find a random SCV and give it the order.
-
-    // rmove false
-    return false;
-
-}
-
-const Unit* Kurt::FindNearestMineralPatch(const Point2D& start) {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
-    float distance = std::numeric_limits<float>::max();
-    const Unit* target = nullptr;
-    for (const auto& u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
-            float d = DistanceSquared2D(u->pos, start);
-            if (d < distance) {
-                distance = d;
-                target = u;
-            }
-        }
-    }
-    return target;
-}
-
-const Unit* Kurt::FindNearestVespeneGeyser() {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
-    Units allied_units = Observation()->GetUnits(Unit::Alliance::Ally);
-    float distance = std::numeric_limits<float>::max();
-    const Unit* command_center = nullptr;
-    const Unit* vespene_geyser = nullptr;
-    // Look for a command center among allied units
-    for (const auto& ally : allied_units) {
-        if (ally->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER) {
-            command_center = ally;
-            // look for closest free vespene gayser of that command center
-            for (const auto& unit : units) {
-                if (unit->build_progress == 0) {
-                    float d = DistanceSquared2D(unit->pos, command_center->pos);
-                    if (d < distance) {
-                        distance = d;
-                        vespene_geyser = unit;
-                    }
-                }
-            }
-        }
-        // return if we have found a suitable vespene geyser close to a command center
-        if (command_center && vespene_geyser) {
-            return vespene_geyser;
-        }
-    }
-    //        std::cout << "NO VESPENE FOUND" << std::endl;
-    return nullptr;
-}
-
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
 std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;
@@ -310,6 +228,17 @@ AbilityData *Kurt::GetAbility(ABILITY_ID id) {
 
 UnitTypeData *Kurt::GetUnitType(UNIT_TYPEID id) {
     return &unit_types.at(id);
+}
+
+void Kurt::TimeNew() {
+    clock_start = std::chrono::steady_clock::now();
+}
+
+void Kurt::TimeNext(double & time_count) {
+    clock_end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> time_span = clock_end - clock_start;
+    time_count += time_span.count();
+    clock_start = clock_end;
 }
 
 #undef DEBUG // Stop debug prints from leaking

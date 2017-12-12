@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "action_enum.h"
 #include "action_repr.h"
+#include "exec_action.h"
 #include "kurt.h"
 
 #include <sc2api/sc2_api.h>
@@ -132,6 +133,7 @@ BPState::BPState(Kurt * const kurt) {
                 continue;
             }
             ACTION action = ActionRepr::convert_api_our.at(ability);
+            ActiveAction aa(action);
             ActionRepr ar = ActionRepr::values.at(action);
             for (auto pair : ar.consumed) {
                 UNIT_TYPEID type = pair.first;
@@ -139,7 +141,11 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAmount(type, amount);
                 IncreaseUnitAvailableAmount(type, amount);
             }
-            AddAction(action);
+            double time = aa.time_left - ExecAction::TimeSinceOrderSent(unit, kurt);
+            if (time < 0) {
+                time = 0;
+            }
+            AddAction(action, time);
         }
     }
 
@@ -239,7 +245,7 @@ void BPState::SimulatePlan(BPPlan * plan) {
     CompleteAllActions();
 }
 
-void BPState::AddAction(ACTION action) {
+void BPState::AddAction(ACTION action, double time) {
     UpdateUntilAvailable(action);
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto pair : ar.consumed) {
@@ -258,7 +264,15 @@ void BPState::AddAction(ACTION action) {
         int amount = pair.second;
         IncreaseUnitProdAmount(type, amount);
     }
+    int food_diff = GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP) +
+        GetUnitAmount(UNIT_FAKEID::FOOD_CAP) - 200;
+    food_diff = std::max(0, food_diff);
+    IncreaseUnitProdAmount(UNIT_FAKEID::FOOD_CAP, -food_diff);
+
     ActiveAction aa(action);
+    if (time >= 0) {
+        aa.time_left = time;
+    }
     for (auto it = actions.begin(); it != actions.end(); ++it) {
         ActiveAction other = *it;
         if (aa < other) {
@@ -294,6 +308,9 @@ bool BPState::CompleteFirstAction() {
         IncreaseUnitAvailableAmount(type, amount);
         IncreaseUnitProdAmount(type, -amount);
     }
+    int food_cap = std::min(200, GetUnitAmount(UNIT_FAKEID::FOOD_CAP));
+    SetUnitAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
+    SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
     return true;
 }
 
@@ -305,8 +322,18 @@ bool BPState::CanExecuteNow(ACTION action) const {
         }
     }
     for (auto pair : ar.consumed) {
-        if (pair.second > GetUnitAvailableAmount(pair.first)) {
-            return false;
+        UNIT_TYPEID type = pair.first;
+        int amount = pair.second;
+        if (type == UNIT_FAKEID::FOOD_USED) {
+            // subtract amount because negative food_used requirements
+            if (GetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED) - amount >
+                    GetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP)) {
+                return false;
+            }
+        } else {
+            if (amount > GetUnitAvailableAmount(type)) {
+                return false;
+            }
         }
     }
     for (auto pair : ar.borrowed) {
@@ -320,14 +347,21 @@ bool BPState::CanExecuteNow(ACTION action) const {
 bool BPState::CanExecuteNowOrSoon(ACTION action) const {
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto p : ar.required) {
-        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
         int amount = pair.second;
-        if (amount > GetUnitAvailableAmount(type) + GetUnitProdAmount(type)) {
+        if (type == UNIT_FAKEID::FOOD_USED) {
+            // subtract amount because negative food_used requirements
+            if (GetUnitAmount(UNIT_FAKEID::FOOD_USED) - amount >
+                    GetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP) +
+                    GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP)) {
+                return false;
+            }
+        } else if (amount > GetUnitAmount(type) + GetUnitProdAmount(type)) {
             if (type == UNIT_FAKEID::MINERALS &&
                     GetMineralRate() > 0) {
                 continue;
@@ -340,7 +374,7 @@ bool BPState::CanExecuteNowOrSoon(ACTION action) const {
         }
     }
     for (auto p : ar.borrowed) {
-        if (p.second > GetUnitAvailableAmount(p.first) + GetUnitProdAmount(p.first)) {
+        if (p.second > GetUnitAmount(p.first) + GetUnitProdAmount(p.first)) {
             return false;
         }
     }
@@ -351,6 +385,17 @@ std::vector<ACTION> BPState::AvailableActions() const {
     std::vector<ACTION> aa;
     for (auto pair : ActionRepr::values) {
         ACTION action = pair.first;
+        if (CanExecuteNowOrSoon(action)) {
+            aa.push_back(action);
+        }
+    }
+    return aa;
+}
+
+std::vector<ACTION> BPState::AvailableActions(
+        std::set<ACTION> & selectable_actions) const {
+    std::vector<ACTION> aa;
+    for (auto action : selectable_actions) {
         if (CanExecuteNowOrSoon(action)) {
             aa.push_back(action);
         }
@@ -466,7 +511,9 @@ void BPState::Print() {
     std::cout << "Minerals: " << GetMinerals();
     std::cout << ", Vespene: " << GetVespene();
     std::cout << ", Food: " << GetFoodUsed();
-    std::cout << "/" << GetFoodCap() << std::endl;
+    std::cout << "/" << GetFoodCap();
+    std::cout << " (" << GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP) << ")";
+    std::cout << std::endl;
 
     auto PrintUnit = [] (BPState * state, UNIT_TYPEID type) {
         if (    type == UNIT_FAKEID::MINERALS ||

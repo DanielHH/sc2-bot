@@ -2,6 +2,11 @@
 
 #include <sc2api/sc2_api.h>
 #include <list>
+#include <vector>
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
 #include "BPState.h"
 
 class WorldRepresentation;
@@ -9,7 +14,8 @@ class WorldRepresentation;
 class Kurt : public sc2::Agent {
 
 public:
-    std::list<const sc2::Unit*> workers;
+    std::list<const sc2::Unit*> scv_building;
+    std::list<const sc2::Unit*> scv_idle;
     std::list<const sc2::Unit*> scv_minerals;
     std::list<const sc2::Unit*> scv_vespene;
     std::list<const sc2::Unit*> scouts;
@@ -75,21 +81,20 @@ public:
     /* Returns true if unit is a structure */
     static bool IsStructure(const sc2::Unit* unit);
 
-    bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
-        sc2::Point2D location,
-        const sc2::Unit* unit);
-    const sc2::Unit* getUnitOfType(sc2::UNIT_TYPEID unit_typeid);
-    sc2::Point2D randomLocationNearUnit(const sc2::Unit* unit);
-    bool TryBuildSupplyDepot();
-    bool TryBuildRefinary();
-    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
-    const sc2::Unit* FindNearestVespeneGeyser();
-    
     /* Returns data about an ability */
     static sc2::AbilityData *GetAbility(sc2::ABILITY_ID);
 
     /* Returns data about a certain type of unit */
     static sc2::UnitTypeData *GetUnitType(sc2::UNIT_TYPEID);
+
+    /* Starts the timer. */
+    void TimeNew();
+
+    /* Count the time since last call to either TimeNew or TimeNext and
+     * adds the duration to given variable sent in as parameter.
+     */
+    void TimeNext(double & time_count);
+
 
 private:
     CombatMode current_combat_mode;
@@ -98,4 +103,11 @@ private:
     static std::map<sc2::ABILITY_ID, sc2::AbilityData> abilities;
     static std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> unit_ability_map;
     static void SetUpDataMaps(const sc2::ObservationInterface *);
+
+    /* Clocks used for measuring the execution time. */
+    std::chrono::steady_clock::time_point clock_start, clock_end;
+    /* Time spent executing respective manager. */
+    double time_am = 0, time_bm = 0, time_sm = 0;
+    /* The time (in game seconds) between every print and reset of exec time.*/
+    const int time_interval = 10;
 };

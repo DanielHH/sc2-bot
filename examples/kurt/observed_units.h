@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sc2api\sc2_api.h>
+#include <sc2api/sc2_api.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -49,6 +49,7 @@ public:
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
     ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
+
     ObservedUnits* GetBestCounterUnit();
 
     /* Returns a string that prints type and amount of observed units */

@@ -2,6 +2,7 @@
 
 #include <sc2api/sc2_api.h>
 #include <map>
+#include <set>
 #include <vector>
 #include <list>
 
@@ -36,7 +37,7 @@ public:
     void SimulatePlan(BPPlan * const);
 
     /* Updates this state and add the action. */
-    void AddAction(ACTION);
+    void AddAction(ACTION action, double time_left = -1);
 
     /* Updates this state with completing all active actions. */
     void CompleteAllActions();
@@ -53,10 +54,14 @@ public:
      */
     bool CanExecuteNowOrSoon(ACTION) const;
 
-    /* Returns a list of actions that can be performed
-     * from this state.
-     */
+    /* Returns a list of actions that can be performed from this state. */
     std::vector<ACTION> AvailableActions() const;
+
+    /* Returns a list of actions that can be performed from this state,
+     * from given list of actions to choose from.
+     */
+    std::vector<ACTION> AvailableActions(
+            std::set<ACTION> & selectable_actions) const;
 
     /* Returns the amount of given units in this BPState */
     int GetUnitAmount(sc2::UNIT_TYPEID) const;

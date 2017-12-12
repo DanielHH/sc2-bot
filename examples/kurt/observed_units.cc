@@ -6,7 +6,7 @@
 using namespace std;
 using namespace sc2;
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -21,7 +21,9 @@ const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
     UNIT_TYPEID::TERRAN_RAVEN, UNIT_TYPEID::TERRAN_BANSHEE, UNIT_TYPEID::TERRAN_BATTLECRUISER, UNIT_TYPEID::TERRAN_POINTDEFENSEDRONE,
     UNIT_TYPEID::ZERG_OVERLORD, UNIT_TYPEID::ZERG_OVERLORDCOCOON, UNIT_TYPEID::ZERG_OVERLORDTRANSPORT, UNIT_TYPEID::ZERG_TRANSPORTOVERLORDCOCOON,
     UNIT_TYPEID::ZERG_OVERSEER, UNIT_TYPEID::ZERG_MUTALISK, UNIT_TYPEID::ZERG_CORRUPTOR, UNIT_TYPEID::ZERG_BROODLORD,
-    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER
+    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER, UNIT_TYPEID::PROTOSS_OBSERVER, UNIT_TYPEID::PROTOSS_WARPPRISM,
+    UNIT_TYPEID::PROTOSS_PHOENIX, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_ORACLE, UNIT_TYPEID::PROTOSS_CARRIER,
+    UNIT_TYPEID::PROTOSS_TEMPEST, UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE, UNIT_TYPEID::PROTOSS_MOTHERSHIP
 };
 
 map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
@@ -221,6 +223,31 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
         PRINT("Strongest unit: You are waek my son")
     }
     return strongest_unit;
+}
+
+ObservedUnits* ObservedUnits::GetBestCounterUnit() {
+    ObservedUnits* best_counter_unit = nullptr;
+    UNIT_TYPEID strongest_enemy_type;
+    ObservedUnits* current_counter_unit = new ObservedUnits();
+    for (auto strongest_enemy = saved_units.begin(); strongest_enemy != saved_units.end(); ++strongest_enemy) {
+        strongest_enemy_type = strongest_enemy->first;
+        vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
+        bool counter_unit_is_flying;
+        for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
+            current_counter_unit->AddUnits(*counter_unit_type, 1);
+            counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), counter_unit_type) == 1;
+            if ((cp.a2a + cp.g2a < cp.a2g + cp.g2g) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
+                best_counter_unit = current_counter_unit;
+            }
+            else if ((cp.a2a + cp.g2a > cp.a2g + cp.g2g) && !counter_unit_is_flying) {
+                best_counter_unit = current_counter_unit;
+            }
+            if (best_counter_unit = nullptr) {
+                best_counter_unit = current_counter_unit;
+            }
+        }
+    }
+    return best_counter_unit;
 }
 
 string ObservedUnits::ToString() {
