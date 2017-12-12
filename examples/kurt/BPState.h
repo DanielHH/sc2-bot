@@ -32,9 +32,10 @@ public:
 
     /* Updates this state by adding all actions in given plan
      * and run CompleteAllActions.
+     * Returns true if all actions was added successfully, false otherwise.
      */
-    void SimulatePlan(BPPlan &);
-    void SimulatePlan(BPPlan * const);
+    bool SimulatePlan(BPPlan &);
+    bool SimulatePlan(BPPlan * const);
 
     /* Updates this state and add the action. */
     void AddAction(ACTION action, double time_left = -1);

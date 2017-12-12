@@ -89,7 +89,13 @@ std::map<ACTION, ActionRepr> ActionRepr::values = {
 
     // Research
 
-    // Other
+    // The FLY commands is NOT meaant to be used in the search
+    // but only in the simulation of a current state
+    { ACTION::FLY_COMMAND_CENTER, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}},{}, 3) },
+    { ACTION::FLY_ORBITAL_COMMAND, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}},{}, 3) },
+    { ACTION::FLY_BARRACKS, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_BARRACKS, 1}, {UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1}},{}, 3) },
+    { ACTION::FLY_FACTORY, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_FACTORY, 1}, {UNIT_FAKEID::TERRAN_ANY_FACTORY, 1}},{}, 3) },
+    { ACTION::FLY_STARPORT, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_STARPORT, 1}, {UNIT_FAKEID::TERRAN_ANY_STARPORT, 1}},{}, 3) },
 };
 
 std::map<ACTION, ABILITY_ID> ActionRepr::convert_our_api = {};

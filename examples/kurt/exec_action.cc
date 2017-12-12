@@ -406,15 +406,6 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         Unit const *target_unit;
         switch (Kurt::GetAbility(ability)->target) {
         case sc2::AbilityData::Target::None:
-            if (ability == ABILITY_ID::TRAIN_SCV) {
-                // TODO Fix a better check if there is space for another scv
-                BPState curr(kurt);
-                if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) * 16 <=
-                    kurt->scv_minerals.size() + kurt->scv_building.size()) {
-                    return false;
-                }
-            }
-
             action_interface->UnitCommand(u, ability, true);
             break;
         case sc2::AbilityData::Target::Point:
