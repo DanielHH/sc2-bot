@@ -224,7 +224,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
     else {
         // progression mode!
         best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 2);
-        PRINT("Strongest unit: You are waek my son")
+        PRINT("Strongest unit: You are super strong!")
     }
     //return strongest_unit;
     return best_counter_unit;
@@ -236,19 +236,30 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
     bool counter_unit_is_flying;
     ObservedUnits* current_counter_unit = new ObservedUnits();
+
+    float enemy_air_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
+    float enemy_ground_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
+
+    // Loop through counter units and find the strongest one
     for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
-        current_counter_unit->AddUnits(*counter_unit_type, 1);
+        current_counter_unit->AddUnits(*counter_unit_type, 1); // TODO: Alla counter units läggs till?
         counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
-        if (((strongest_enemy_cp->a2a + strongest_enemy_cp->g2a) < (strongest_enemy_cp->a2g + strongest_enemy_cp->g2g)) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
+
+        // Try to find a flying counter unit if the enemy has weak anti-air
+        // and a ground counter unit if they have weak ground cp
+        if ((enemy_air_cp < enemy_ground_cp) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
             best_counter_unit = current_counter_unit;
         }
-        else if ((strongest_enemy_cp->a2a + strongest_enemy_cp->g2a) > (strongest_enemy_cp->a2g + strongest_enemy_cp->g2g) && !counter_unit_is_flying) {
+        else if ((enemy_air_cp > enemy_ground_cp) && !counter_unit_is_flying) {
             best_counter_unit = current_counter_unit;
         }
+
+        // If no "good" counter unit was found, just take the last one in the list
         if (best_counter_unit == nullptr) {
             best_counter_unit = current_counter_unit;
         }
     }
+
     float add_cp = 0;
     const ObservedUnits::CombatPower* counter_unit_cp = best_counter_unit->GetCombatPower();
     if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
@@ -257,15 +268,19 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     else {
         add_cp = counter_unit_cp->a2g + counter_unit_cp->g2g;
     }
+
     float counter_cp = 0;
     float relevant_enemy_cp = 0;
+
     if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
         relevant_enemy_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
     }
     else {
         relevant_enemy_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
     }
+
     int number_of_counter_units = 0;
+
     while (counter_cp < 2*relevant_enemy_cp) {
         counter_cp += add_cp;
         number_of_counter_units += 1;
