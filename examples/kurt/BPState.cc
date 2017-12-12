@@ -78,6 +78,10 @@ BPState::BPState(Kurt * const kurt) {
             AddAction(ACTION::FLY_ORBITAL_COMMAND);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+            }
         case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
@@ -93,6 +97,10 @@ BPState::BPState(Kurt * const kurt) {
             AddAction(ACTION::FLY_BARRACKS);
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+            }
         case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
@@ -105,6 +113,10 @@ BPState::BPState(Kurt * const kurt) {
             AddAction(ACTION::FLY_FACTORY);
             break;
         case UNIT_TYPEID::TERRAN_STARPORT:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+            }
         case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
