@@ -363,9 +363,19 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
     QueryInterface *query = kurt->Query();
     ObservationInterface const *obs = kurt->Observation();
 
-    auto is_idle_or_scv = [](Unit const &unit) {
-        return unit.orders.empty()
-            || unit.unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV;
+    auto is_idle_or_scv = [obs](Unit const &unit) {
+        if (unit.unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) return true;
+        Unit const *addon_unit = obs->GetUnit(unit.add_on_tag);
+        if (addon_unit && addon_unit->build_progress >= 1) {
+            switch (addon_unit->unit_type.ToType()) {
+            case UNIT_TYPEID::TERRAN_REACTOR:
+            case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
+            case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
+            case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
+                return unit.orders.size() <= 1;
+            }
+        }
+        return unit.orders.empty();
     };
 
     for (const Unit *u : obs->GetUnits(Unit::Alliance::Self, is_idle_or_scv)) {
