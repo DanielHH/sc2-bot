@@ -250,6 +250,10 @@ void Kurt::TimeNext(double & time_count) {
     clock_start = clock_end;
 }
 
+Point2D Kurt::RandomPoint(Point2D const &origin, float x_dist, float y_dist) {
+    return { origin.x + GetRandomScalar() * x_dist, origin.y + GetRandomScalar() * y_dist };
+}
+
 #undef DEBUG // Stop debug prints from leaking
 #undef TEST
 #undef PRINT

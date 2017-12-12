@@ -98,6 +98,9 @@ public:
     /* Returns true if position is pathable by a certain unit */
     bool CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos);
 
+    /* Creates a Point within a certain distance of a given point.
+     */
+    static sc2::Point2D RandomPoint(sc2::Point2D const &, float, float);
 
 private:
     CombatMode current_combat_mode;
