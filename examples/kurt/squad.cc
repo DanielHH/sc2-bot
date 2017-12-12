@@ -7,8 +7,10 @@ Squad::Squad(Kurt* parent_kurt) {
 void Squad::attackMove(sc2::Point2D point) {
     if (isGrouped()) {
         // attack
-        for (const sc2::Unit* unit: members) {
-            kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, point);
+        if (kurt->Observation()->GetGameLoop() % 24 == 0) {
+            for (const sc2::Unit* unit: members) {
+                kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, point);
+            }
         }
     } else if (!members.empty()) {
         groupUp();
@@ -67,10 +69,11 @@ void Squad::groupUp() {
             meetup_point = new_meetup_point;
         }
     }
-    
-    for (const sc2::Unit* unit : members) {
-        if (sc2::Distance2D(unit->pos, meetup_point) >= SQUAD_DISTANCE / 2 && kurt->Observation()->GetGameLoop() % 24 == 0) {
-            kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::MOVE, meetup_point);
+    if (kurt->Observation()->GetGameLoop() % 24 == 0) {
+        for (const sc2::Unit* unit : members) {
+            if (sc2::Distance2D(unit->pos, meetup_point) >= SQUAD_DISTANCE / 2) {
+                kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::MOVE, meetup_point);
+            }
         }
     }
 }

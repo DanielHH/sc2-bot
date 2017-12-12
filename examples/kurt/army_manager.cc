@@ -130,9 +130,8 @@ void ArmyManager::Defend() {
     if (!defendCellPriorityQueue->queue.empty()) {
         WorldCell* cell_to_attack = defendCellPriorityQueue->queue.at(0);
         Point2D point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
-        
-        for(const Unit* unit: kurt->army_units){
-            kurt->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, point_to_attack);
+        for (Squad* squad : squads) {
+            squad->attackMove(point_to_attack);
         }
     }
     
