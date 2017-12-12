@@ -77,12 +77,11 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             AddAction(ACTION::FLY_ORBITAL_COMMAND);
             break;
-        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-            break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
-        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
+        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            break;
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
@@ -92,12 +91,9 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             AddAction(ACTION::FLY_BARRACKS);
-        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
-        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
+        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             break;
@@ -108,12 +104,8 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             AddAction(ACTION::FLY_FACTORY);
             break;
-        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-            break;
         case UNIT_TYPEID::TERRAN_STARPORT:
-        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             break;
