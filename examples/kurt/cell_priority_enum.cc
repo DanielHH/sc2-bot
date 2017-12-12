@@ -1,3 +1,3 @@
 #pragma once
 
-enum CellPriorityMode { ARMY, SCOUT, HARASS };
+enum CellPriorityMode { ATTACK, SCOUT, HARASS, DEFEND };

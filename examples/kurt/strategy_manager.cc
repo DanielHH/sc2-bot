@@ -29,6 +29,7 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     //current_plan = RushPlan(kurt);
     current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
+    //current_plan = DefendGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
 
