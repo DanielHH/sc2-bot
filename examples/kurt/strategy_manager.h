@@ -47,4 +47,5 @@ private:
 
     /* Returns a BPstate with some amount of units that counters the currently strongest enemy unit */
     BPState* CounterEnemyUnit();
+
 };

@@ -147,7 +147,6 @@ void StrategyManager::CalculateCombatMode() {
     PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
     PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
 
-
     if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
@@ -232,11 +231,11 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     float max_cp_difference;
     int number_of_strongest_units;
 
-    ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
-    ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
+    //ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
+    //ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
-    BPState* counter_order = new BPState();
-    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
+    BPState* counter_order = enemy_units.GetStrongestUnit(our_units);
+    //counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }
 

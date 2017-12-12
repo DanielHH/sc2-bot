@@ -6,7 +6,7 @@
 using namespace std;
 using namespace sc2;
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -140,7 +140,7 @@ map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
     return &saved_units;
 }
 
-ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
+BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
     ObservedUnits* strongest_unit = nullptr;
     map<UNIT_TYPEID, int> *const enemy_units_map = enemy_units.GetSavedUnits();
     float max_cp_difference = 0;
@@ -215,15 +215,82 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
             }
         PRINT("Done comparing")
     }
-    
+
+    BPState* best_counter_unit = new BPState();
     if (strongest_unit != nullptr) {
+        best_counter_unit = GetBestCounterUnit2(strongest_unit, strongest_unit_type, max_cp_difference);
         PRINT("Strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
     }
     else {
+        // progression mode!
+        best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 2);
         PRINT("Strongest unit: You are waek my son")
     }
-    return strongest_unit;
+    //return strongest_unit;
+    return best_counter_unit;
 }
+
+BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference) {
+    ObservedUnits* best_counter_unit = nullptr;
+    const ObservedUnits::CombatPower* strongest_enemy_cp = strongest_enemy->GetCombatPower();
+    vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
+    bool counter_unit_is_flying;
+    ObservedUnits* current_counter_unit = new ObservedUnits();
+    for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
+        current_counter_unit->AddUnits(*counter_unit_type, 1);
+        counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
+        if (((strongest_enemy_cp->a2a + strongest_enemy_cp->g2a) < (strongest_enemy_cp->a2g + strongest_enemy_cp->g2g)) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
+            best_counter_unit = current_counter_unit;
+        }
+        else if ((strongest_enemy_cp->a2a + strongest_enemy_cp->g2a) > (strongest_enemy_cp->a2g + strongest_enemy_cp->g2g) && !counter_unit_is_flying) {
+            best_counter_unit = current_counter_unit;
+        }
+        if (best_counter_unit == nullptr) {
+            best_counter_unit = current_counter_unit;
+        }
+    }
+    float add_cp = 0;
+    const ObservedUnits::CombatPower* counter_unit_cp = best_counter_unit->GetCombatPower();
+    if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
+        add_cp = counter_unit_cp->a2a + counter_unit_cp->g2a;
+    }
+    else {
+        add_cp = counter_unit_cp->a2g + counter_unit_cp->g2g;
+    }
+    float counter_cp = 0;
+    float relevant_enemy_cp = 0;
+    if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
+        relevant_enemy_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
+    }
+    else {
+        relevant_enemy_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
+    }
+    int number_of_counter_units = 0;
+    while (counter_cp < 2*relevant_enemy_cp) {
+        counter_cp += add_cp;
+        number_of_counter_units += 1;
+    }
+    UNIT_TYPEID best_counter_type = best_counter_unit->saved_units.begin()->first;
+   // best_counter_unit->AddUnits(best_counter_type, number_of_counter_units);
+    //return best_counter_unit;
+    BPState* counter_order = new BPState();
+    counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
+    return counter_order;
+}
+
+
+/*
+float ObservedUnits::GetRelevantCP(const sc2::UNIT_TYPEID unit_type) {
+    float relevant_cp = 0;
+    const ObservedUnits::CombatPower* cp = 
+    if (count(flying_units.begin(), flying_units.end(), unit_type) == 1) {
+        relevant_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
+    }
+    else {
+        relevant_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
+    }
+}*/
+
 
 ObservedUnits* ObservedUnits::GetBestCounterUnit() {
     ObservedUnits* best_counter_unit = nullptr;

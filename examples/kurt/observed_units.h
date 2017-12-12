@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sc2api/sc2_api.h>
+#include "kurt.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -50,9 +51,10 @@ public:
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
     /* Returns the strongest unit relative to the enemy units in the enemies parameter */
-    ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
+    BPState* GetStrongestUnit(ObservedUnits enemies);
 
     ObservedUnits* GetBestCounterUnit();
+    BPState* GetBestCounterUnit2(ObservedUnits* strongest_unit, sc2::UNIT_TYPEID strongest_enemy_type, float max_cp_difference);
 
     int GetNumberOfAirUnits();
 
