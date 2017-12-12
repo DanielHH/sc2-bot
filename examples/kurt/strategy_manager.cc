@@ -27,8 +27,8 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
 
     //current_plan = CreateDefaultGamePlan(kurt);
-    current_plan = RushPlan(kurt);
-    //current_plan = VespeneGasTycoon(kurt);
+    //current_plan = RushPlan(kurt);
+    current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
@@ -138,8 +138,15 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
 };
 
 void StrategyManager::CalculateCombatMode() {
+    Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
+    PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
+    PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
+    PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
+    PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
+
 
     if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
         kurt->SetCombatMode(Kurt::ATTACK);
@@ -228,7 +235,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
 
     BPState* counter_order = new BPState();
-    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
+    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
     return counter_order;
 }
 

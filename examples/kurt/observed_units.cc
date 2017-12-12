@@ -225,6 +225,44 @@ ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
     return strongest_unit;
 }
 
+int ObservedUnits::GetNumberOfAirUnits() {
+    int number_of_air_units = 0;
+    UNIT_TYPEID unit_type;
+    int amount;
+    bool is_flying;
+
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+       unit_type = saved_unit->first;
+       amount = saved_unit->second;
+       is_flying = count(flying_units.begin(), flying_units.end(), unit_type) == 1;
+
+       if (is_flying) {
+           number_of_air_units += amount;
+       }
+    }
+
+    return number_of_air_units;
+}
+
+int ObservedUnits::GetNumberOfGroundUnits() {
+    int number_of_ground_units = 0;
+    UNIT_TYPEID unit_type;
+    int amount;
+    bool is_flying;
+
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+        unit_type = saved_unit->first;
+        amount = saved_unit->second;
+        is_flying = count(flying_units.begin(), flying_units.end(), unit_type) == 1;
+
+        if (!is_flying) {
+            number_of_ground_units += amount;
+        }
+    }
+
+    return number_of_ground_units;
+}
+
 string ObservedUnits::ToString() {
     string str;
 

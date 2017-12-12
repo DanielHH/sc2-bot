@@ -18,9 +18,10 @@ public:
         float a2a; // Air to air DPS
     };
 
-    ObservedUnits();
-
+    // A map with health data for all units already seen
     static std::map <sc2::UNIT_TYPEID, float> unit_max_health;
+
+    ObservedUnits();
 
     /* Takes a Units (vector) and adds units if more than prevoius are observed */
     void AddUnits(const sc2::Units* units);
@@ -50,6 +51,10 @@ public:
 
     /* Returns the strongest unit relative to the enemy units in the enemies parameter */
     ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
+
+    int GetNumberOfAirUnits();
+
+    int GetNumberOfGroundUnits();
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();

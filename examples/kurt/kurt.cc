@@ -50,7 +50,9 @@ void Kurt::OnStep() {
 
     TimeNew();
     world_rep->UpdateWorldRep();
-    army_manager->OnStep(observation);
+    if (step % 5 == 0) {
+        army_manager->OnStep(observation);
+    }
     TimeNext(time_am);
     ExecAction::OnStep(this);
     build_manager->OnStep(observation);
