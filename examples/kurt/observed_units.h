@@ -49,6 +49,7 @@ public:
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
     ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
+    ObservedUnits* GetBestCounterUnit();
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();
