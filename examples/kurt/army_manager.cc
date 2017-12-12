@@ -25,7 +25,7 @@ ArmyManager::ArmyManager(Kurt* parent_kurt) {
 }
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
-    if (kurt->Observation()->GetGameLoop() % 48 == 0) {
+    if (kurt->Observation()->GetGameLoop() % 24 == 0) {
         scoutCellPriorityQueue->Update();
         armyCellPriorityQueue->Update();
         defendCellPriorityQueue->Update();
