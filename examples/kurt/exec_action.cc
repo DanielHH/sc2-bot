@@ -52,6 +52,33 @@ void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
 
+    //
+    // Update scv to not gather minerals at overfull commandcenters
+    //
+    int step = kurt->Observation()->GetGameLoop();
+    int delay = 1 * STEPS_PER_SEC;
+    int index = 0;
+    for (auto it = kurt->scv_minerals.begin(); it != kurt->scv_minerals.end(); ++it) {
+        ++index;
+        if (step % delay != index) {
+            continue;
+        }
+        const Unit * scv = *it;
+        Unit const * commandcenter = FindNearestUnitOfType(
+                UNIT_TYPEID::TERRAN_COMMANDCENTER,
+                Point2D(scv->pos.x, scv->pos.y),
+                kurt->Observation(),
+                Unit::Alliance::Self);
+        if (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters) {
+            Unit const * field = FindNextMineralField(kurt->Observation());
+            if (field != nullptr) {
+                kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, field);
+            }
+        }
+    }
+    //
+    // Try asign a scv to a mineral field or vespene geyser
+    //
     if (! kurt->scv_idle.empty()) {
         Unit const * scv = kurt->scv_idle.front();
         Unit const * target = FindNextMineralField(kurt->Observation());
@@ -452,7 +479,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         case sc2::AbilityData::Target::Point:
             switch (ability) {
             case ABILITY_ID::BUILD_COMMANDCENTER: 
-                if (!FindNextCommandcenterLoc(obs, query, target_point)) {
+                if (!FindNextCommandcenterLoc(obs, query, u->pos, target_point)) {
                     return false;
                 }
                 break;
@@ -611,14 +638,16 @@ Unit const * ExecAction::FindNextMineralField(
 bool ExecAction::FindNextCommandcenterLoc(
         ObservationInterface const * obs,
         QueryInterface * query,
-        Point2D & location) {
+        Point3D const & nearby,
+        Point2D & ans) {
     Units commandcenters = obs->GetUnits(IsCommandcenter);
-    std::vector<int> order(commandcenter_locations.size());
+    float closest2 = INFINITY;
     for (int i = 0; i < commandcenter_locations.size(); ++i) {
-        order[i] = i;
-    }
-    for (int i = 0; i < commandcenter_locations.size(); ++i) {
-        Point3D point3D = commandcenter_locations[order[i]];
+        Point3D point3D = commandcenter_locations[i];
+        float dist2 = DistanceSquared3D(nearby, point3D);
+        if (dist2 >= closest2) {
+            continue;
+        }
         bool taken = false;
         for (Unit const * commandcenter : commandcenters) {
             if (DistanceSquared3D(commandcenter->pos, point3D) < 0.1) {
@@ -633,11 +662,11 @@ bool ExecAction::FindNextCommandcenterLoc(
         if (! query->Placement(ABILITY_ID::BUILD_COMMANDCENTER, point2D)) {
             continue;
         }
-        location.x = point2D.x;
-        location.y = point2D.y;
-        return true;
+        ans.x = point2D.x;
+        ans.y = point2D.y;
+        closest2 = dist2;
     }
-    return false;
+    return closest2 < INFINITY;
 }
 
 Unit const * ExecAction::FindNearestUnitOfType(
