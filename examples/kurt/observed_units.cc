@@ -235,7 +235,7 @@ ObservedUnits* ObservedUnits::GetBestCounterUnit() {
         bool counter_unit_is_flying;
         for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
             current_counter_unit->AddUnits(*counter_unit_type, 1);
-            counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), counter_unit_type) == 1;
+            counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
             if ((cp.a2a + cp.g2a < cp.a2g + cp.g2g) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
                 best_counter_unit = current_counter_unit;
             }
