@@ -97,7 +97,7 @@ public:
 
     /* Creates a Point within a certain distance of a given point.
      */
-    static sc2::Point2D RandomPoint(sc2::Point2D const &, double, double);
+    static sc2::Point2D RandomPoint(sc2::Point2D const &, float, float);
 
 private:
     CombatMode current_combat_mode;
