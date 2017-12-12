@@ -107,10 +107,13 @@ void ArmyManager::Defend() {
 
 void ArmyManager::Attack() {
     if (!armyCellPriorityQueue->queue.empty()) {
-        WorldCell* cell_to_attack = armyCellPriorityQueue->queue.at(0);
-        Point2D point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
-        for(Squad squad: squads) {
-            squad.attackMove(point_to_attack);
+        WorldCell* cell_to_attack;
+        Point2D point_to_attack;
+        for (int i = 0; i < squads.size(); i++) {
+            Squad* squad = squads.at(i);
+            cell_to_attack = armyCellPriorityQueue->queue.at(i % 2);
+            point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+            squad->attackMove(point_to_attack);
         }
     }
 }
@@ -122,24 +125,38 @@ void ArmyManager::Harass() {
 // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
 bool ArmyManager::TryGetScout() {
     bool scout_found = false;
+    Squad* squad;
     const Unit* scout;
-    
-    for (const Unit* unit : kurt->army_units){
-        if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_MARINE) {
-            // Marine found, but keep looking.
-            scout = unit;
-            scout_found = true;
-        } else if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_REAPER) {
-            // We found a reaper, we are done!
-            scout = unit;
-            scout_found = true;
-            break;
+    if (!squads.empty()) {
+        for (int i = squads.size()-1; i >= 0; i--) {
+            Squad* tmp_squad = squads.at(i);
+            if (tmp_squad->members.empty()) { // remove empty squad
+                squads.erase(std::find(squads.begin(), squads.end(), tmp_squad));
+                delete tmp_squad;
+            } else {
+                for (const Unit* unit : squads.at(i)->members){
+                    if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_MARINE) {
+                        // Marine found, but keep looking.
+                        scout = unit;
+                        squad = squads.at(i);
+                        scout_found = true;
+                    } else if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_REAPER) {
+                        // We found a reaper, we are done!
+                        scout = unit;
+                        squad = squads.at(i);
+                        scout_found = true;
+                        break;
+                    }
+                }
+            }
         }
     }
+    
     if (scout_found) {
         // Add the found scout to scouts and remove it from army
         kurt->scouts.push_back(scout);
         kurt->army_units.remove(scout);
+        squad->members.erase(std::find(squad->members.begin(), squad->members.end(), scout));
         scout_found = true;
     } else {
         // no army scout found look for an SCV.
@@ -154,11 +171,11 @@ bool ArmyManager::TryGetScout() {
 }
 
 void ArmyManager::PutUnitInSquad(const Unit* unit) {
-    if (squads.empty() || squads.back().members.size() == Squad::SQUAD_SIZE) {
-        Squad new_squad = Squad(kurt);
+    if (squads.empty() || squads.back()->members.size() == Squad::SQUAD_SIZE) {
+        Squad* new_squad = new Squad(kurt);
         squads.push_back(new_squad);
     }
-    squads.back().members.push_back(unit);
+    squads.back()->members.push_back(unit);
 }
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {

@@ -13,5 +13,6 @@ public:
     Squad(Kurt* parent_kurt);
     sc2::Units members;
     const static int SQUAD_SIZE = 6;
+    const static int SQUAD_DISTANCE = 4;
     void attackMove(sc2::Point2D point);
 };

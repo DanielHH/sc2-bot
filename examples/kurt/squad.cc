@@ -28,7 +28,7 @@ bool Squad::isGrouped() {
         for (const sc2::Unit* unit_a : members) {
             if (unit_a != unit_leader) {
                 // check distance
-                if (sc2::Distance2D(unit_a->pos, unit_leader->pos) > 4) {
+                if (sc2::Distance2D(unit_a->pos, unit_leader->pos) > SQUAD_DISTANCE) {
                     squad_grouped = false;
                     break;
                 }
@@ -69,7 +69,7 @@ void Squad::groupUp() {
     }
     
     for (const sc2::Unit* unit : members) {
-        if (sc2::Distance2D(unit->pos, meetup_point) > 4) {
+        if (sc2::Distance2D(unit->pos, meetup_point) > SQUAD_DISTANCE) {
             kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::MOVE, meetup_point);
         }
     }

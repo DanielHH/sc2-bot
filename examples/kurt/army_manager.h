@@ -26,7 +26,7 @@ private:
     Kurt* kurt;
     CellPriorityQueue* scoutCellPriorityQueue;
     CellPriorityQueue* armyCellPriorityQueue;
-    std::vector<Squad> squads;
+    std::vector<Squad*> squads;
     std::vector<DangerPoint*> danger_points;
     float scout_safe_distance = 15;
     int danger_time = 1;
