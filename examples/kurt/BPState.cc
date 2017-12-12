@@ -192,6 +192,12 @@ BPState::BPState(Kurt * const kurt) {
             if (time < 0) {
                 time = 0;
             }
+            if (! CanExecuteNowOrSoon(action)) {
+                Print();
+                std::cout << "Error: BPState: BPState(KURT): " <<
+                    "Could not add action to model, action: " << action << std::endl;
+                throw std::runtime_error("BPPlan: BPPlan(KURT), add action failed");
+            }
             AddAction(action, time);
         }
     }
