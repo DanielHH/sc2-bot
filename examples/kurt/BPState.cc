@@ -219,7 +219,17 @@ void BPState::UpdateUntilAvailable(ACTION action) {
     ActionRepr ar = ActionRepr::values.at(action);
     UNIT_TYPEID minerals = UNIT_FAKEID::MINERALS;
     UNIT_TYPEID vespene = UNIT_FAKEID::VESPENE;
+    unsigned long int num_iterations_waited = 0;
+    unsigned long int last_print = 0;
     while (! CanExecuteNow(action)) {
+        if (num_iterations_waited++ > 2000 && num_iterations_waited > last_print + 100) {
+            last_print = num_iterations_waited;
+            std::cerr << "UpdateUntilAvailable: " << num_iterations_waited << " iterations\n";
+        }
+        if (!CanExecuteNowOrSoon(action)) {
+            std::cerr << "You dumb bro" << std::endl;
+            throw nullptr;
+        }
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
             minerals_time = 1 / GetMineralRate() *
