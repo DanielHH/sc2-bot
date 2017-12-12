@@ -1,5 +1,6 @@
 #include "observed_units.h"
 #include "kurt.h"
+#include "countertable.h"
 #include <algorithm>
 
 using namespace std;
@@ -20,7 +21,9 @@ const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
     UNIT_TYPEID::TERRAN_RAVEN, UNIT_TYPEID::TERRAN_BANSHEE, UNIT_TYPEID::TERRAN_BATTLECRUISER, UNIT_TYPEID::TERRAN_POINTDEFENSEDRONE,
     UNIT_TYPEID::ZERG_OVERLORD, UNIT_TYPEID::ZERG_OVERLORDCOCOON, UNIT_TYPEID::ZERG_OVERLORDTRANSPORT, UNIT_TYPEID::ZERG_TRANSPORTOVERLORDCOCOON,
     UNIT_TYPEID::ZERG_OVERSEER, UNIT_TYPEID::ZERG_MUTALISK, UNIT_TYPEID::ZERG_CORRUPTOR, UNIT_TYPEID::ZERG_BROODLORD,
-    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER
+    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER, UNIT_TYPEID::PROTOSS_OBSERVER, UNIT_TYPEID::PROTOSS_WARPPRISM,
+    UNIT_TYPEID::PROTOSS_PHOENIX, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_ORACLE, UNIT_TYPEID::PROTOSS_CARRIER,
+    UNIT_TYPEID::PROTOSS_TEMPEST, UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE, UNIT_TYPEID::PROTOSS_MOTHERSHIP
 };
 
 map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
@@ -45,8 +48,13 @@ void ObservedUnits::AddUnits(const Units* units) {
     calculateCP();
 }
 
-void ObservedUnits::AddUnit(const Unit* unit) {
-    saved_units[unit->unit_type] += 1;
+void ObservedUnits::AddUnits(const sc2::UNIT_TYPEID unit_type, const int amount) {
+    saved_units[unit_type] += amount;
+    calculateCP();
+}
+
+void ObservedUnits::AddUnits(const Unit* unit, const int amount) {
+    saved_units[unit->unit_type] += amount;
     calculateCP();
 }
 
@@ -66,8 +74,9 @@ void ObservedUnits::calculateCP() {
 
     for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
         unit_data = Kurt::GetUnitType(unit->first);
+        bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
+
         for (auto weapon : unit_data->weapons) {
-            bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
             weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
             if (weapon.type == Weapon::TargetType::Any) { // Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
                 // GroundToBoth
@@ -130,6 +139,92 @@ float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
 map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
     return &saved_units;
 }
+
+ObservedUnits* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
+    ObservedUnits* strongest_unit = nullptr;
+    map<UNIT_TYPEID, int> *const enemy_units_map = enemy_units.GetSavedUnits();
+    float max_cp_difference = 0;
+    UNIT_TYPEID strongest_unit_type;
+
+    PRINT("Finding strongest unit...")
+    // Go through all unit types and find which type is the strongest against the units in enemy_units
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+        UNIT_TYPEID current_unit_type = saved_unit->first;
+        int number_of_units = saved_unit->second;
+
+        // Create a new ObservedUnits for only the current type of unit, to get their cp and health easy
+        ObservedUnits* current_unit = new ObservedUnits();
+        current_unit->AddUnits(current_unit_type, number_of_units);
+
+        const CombatPower* current_unit_cp = current_unit->GetCombatPower();
+
+        PRINT("Checking unit: " + Kurt::GetUnitType(current_unit_type)->name)
+
+        if (protoss_countertable.count(current_unit_type) == 0) {
+            string unit_not_in_ct = Kurt::GetUnitType(current_unit_type)->name;
+            PRINT("Unit is not in countertable: " << unit_not_in_ct)
+                continue;
+        }
+
+        vector<UNIT_TYPEID> counter_unit_types = protoss_countertable.at(current_unit_type); // Get all units good at countering the current unit
+        ObservedUnits counter_units = ObservedUnits();
+
+        PRINT("Iterating through counter units...")
+            // Save the amount of each counter unit the enemy currently have
+            for (auto counter_unit = counter_unit_types.begin(); counter_unit != counter_unit_types.end(); ++counter_unit) {
+                if ((enemy_units_map->count(*counter_unit)) == 1) {
+                    int number_of_counter_units = enemy_units_map->at(*counter_unit);
+                    counter_units.AddUnits(*counter_unit, number_of_counter_units);
+                }
+            }
+        PRINT("Done iterating")
+
+        const ObservedUnits::CombatPower* counter_units_cp = counter_units.GetCombatPower();
+
+        bool current_unit_is_flying = count(flying_units.begin(), flying_units.end(), current_unit_type) == 1;
+        PRINT("Found is flying")
+
+        float current_unit_total_cp = 0;
+        float counter_unit_total_cp = 0;
+        float cp_difference = 0;
+
+        // Combine the combat power of all our counter units
+        if (current_unit_is_flying) {
+            counter_unit_total_cp = counter_units_cp->a2a + counter_units_cp->g2a;
+        }
+        else {
+            counter_unit_total_cp = counter_units_cp->a2g + counter_units_cp->g2g;
+        }
+
+        // Combine the combat power of the current unit
+        current_unit_total_cp = current_unit_cp->a2a + current_unit_cp->a2g + current_unit_cp->g2a + current_unit_cp->g2g;
+
+        cp_difference = current_unit_total_cp - counter_unit_total_cp;
+
+        PRINT("Comparing cp difference...")
+            if (cp_difference > max_cp_difference) {
+                if (strongest_unit != nullptr) {
+                    delete strongest_unit;
+                }
+                max_cp_difference = cp_difference;
+                strongest_unit = current_unit;
+                strongest_unit_type = current_unit_type; //Just for print
+            }
+            else {
+                delete current_unit;
+            }
+        PRINT("Done comparing")
+    }
+    
+    if (strongest_unit != nullptr) {
+        PRINT("Strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
+    }
+    else {
+        PRINT("Strongest unit: You are waek my son")
+    }
+    return strongest_unit;
+}
+
 string ObservedUnits::ToString() {
     string str;
 

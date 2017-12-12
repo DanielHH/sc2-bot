@@ -47,6 +47,7 @@ void Kurt::OnGameStart() {
 void Kurt::OnStep() {
     const ObservationInterface* observation = Observation();
     int step = observation->GetGameLoop();
+
     TimeNew();
     world_rep->UpdateWorldRep();
     army_manager->OnStep(observation);

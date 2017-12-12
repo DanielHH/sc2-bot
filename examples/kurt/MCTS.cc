@@ -38,12 +38,15 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     basic_plan.AddBasicPlan(root, goal);
 
     BPState tmp(root);
-    tmp.SimulatePlan(basic_plan);
-    double time = tmp.GetTime() - root->GetTime();
-    double mineral_rate = tmp.GetMineralRate();
-    double vespene_rate = tmp.GetVespeneRate();
-    int mineral_stock = tmp.GetMinerals();
-    int vespene_stock = tmp.GetVespene();
+    double time = -1, mineral_rate = 0, vespene_rate = 0;
+    int mineral_stock = 0, vespene_stock = 0;
+    if (tmp.SimulatePlan(basic_plan)) {
+        time = tmp.GetTime() - root->GetTime();
+        mineral_rate = tmp.GetMineralRate();
+        vespene_rate = tmp.GetVespeneRate();
+        mineral_stock = tmp.GetMinerals();
+        vespene_stock = tmp.GetVespene();
+    }
     // The min border is needed since the reward is relative the basic plan.
     // If e.g. basic_vespene_rate is 0, all higher rates gets the same reward.
     basic_time = std::max(40.0, time);
@@ -54,8 +57,12 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
 
     root->parent = nullptr;
     root->iter_amount = 1;
-    root->reward = CalcReward(
-            time, mineral_rate, vespene_rate, mineral_stock, vespene_stock);
+    if (time == -1) {
+        root->reward = 0;
+    } else {
+        root->reward = CalcReward(time, mineral_rate, vespene_rate,
+                mineral_stock, vespene_stock);
+    }
     root->reward_stop = root->reward;
 
     BPState init_state;
@@ -168,14 +175,16 @@ void MCTS::SearchOnce() {
     BPPlan tail;
     tail.AddBasicPlan(new_state, goal);
     BPState tmp(new_state);
-    tmp.SimulatePlan(tail);
-    double time = tmp.GetTime() - root->GetTime();
-    double mineral_rate = tmp.GetMineralRate();
-    double vespene_rate = tmp.GetVespeneRate();
-    int mineral_stock = tmp.GetMinerals();
-    int vespene_stock = tmp.GetVespene();
-    double reward = CalcReward(
-            time, mineral_rate, vespene_rate, mineral_stock, vespene_stock);
+    double reward = 0;
+    if (tmp.SimulatePlan(tail)) {
+        double time = tmp.GetTime() - root->GetTime();
+        double mineral_rate = tmp.GetMineralRate();
+        double vespene_rate = tmp.GetVespeneRate();
+        int mineral_stock = tmp.GetMinerals();
+        int vespene_stock = tmp.GetVespene();
+        reward = CalcReward(time, mineral_rate, vespene_rate,
+                mineral_stock, vespene_stock);
+    }
     /*
      * Backpropagation phase.
      */

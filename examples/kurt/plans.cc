@@ -56,26 +56,20 @@ GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
 
 GamePlan* RushPlan(Kurt* kurt) {
     GamePlan* plan = new GamePlan(kurt);
-    // Build order of 3 marines
+
     BPState* first_build_order = new BPState();
     BPState* second_build_order = new BPState();
-    BPState* third_build_order = new BPState();
 
-    // Increase production with some more scvs
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 16);
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
-    
     // Create 7 marines to use in the rush
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);
-
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 7);
+    
     // Continue produce marines and reapers as reinforcements to the rush force
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 20);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 20);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 10);
 
     plan->AddStatBuildOrderNode(first_build_order);
-    plan->AddStatBuildOrderNode(second_build_order);
     plan->AddStatCombatNode(Kurt::ATTACK); // Send the marines to attack
-    plan->AddStatBuildOrderNode(third_build_order);
+    plan->AddStatBuildOrderNode(second_build_order);
 
     return plan;
 }

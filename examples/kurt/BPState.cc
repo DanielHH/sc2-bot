@@ -63,32 +63,70 @@ BPState::BPState(Kurt * const kurt) {
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
             break;
-        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
+        case UNIT_TYPEID::TERRAN_COMMANDCENTERFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_COMMAND_CENTER);
+            break;
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_ORBITAL_COMMAND);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
-        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+            }
+        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
-        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_BARRACKSFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            AddAction(ACTION::FLY_BARRACKS);
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
-        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+            }
+        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             break;
-        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
+        case UNIT_TYPEID::TERRAN_FACTORYFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            AddAction(ACTION::FLY_FACTORY);
             break;
         case UNIT_TYPEID::TERRAN_STARPORT:
-        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+            }
+        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            break;
+        case UNIT_TYPEID::TERRAN_STARPORTFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            AddAction(ACTION::FLY_STARPORT);
             break;
         }
     }
@@ -105,14 +143,16 @@ BPState::BPState(Kurt * const kurt) {
     }
 
     int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
+            kurt->scv_minerals.size() + kurt->scv_building.size());
     SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
+    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
+            kurt->scv_minerals.size() + kurt->scv_building.size());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
@@ -120,7 +160,7 @@ BPState::BPState(Kurt * const kurt) {
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
     int num_mineral_worker_slots = 16 * GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER) -
-        GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
+        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
     SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
     SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
 
@@ -183,12 +223,12 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
             minerals_time = 1 / GetMineralRate() *
-                std::max(0, ar.consumed[minerals] - GetUnitAvailableAmount(minerals));
+                std::max(0, ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals));
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
             vespene_time = 1 / GetVespeneRate() *
-                std::max(0, ar.consumed[vespene] - GetUnitAvailableAmount(vespene));
+                std::max(0, ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
         if (! actions.empty()) {
@@ -231,18 +271,30 @@ void BPState::SimpleUpdate(double delta_time) {
     time += delta_time;
 }
 
-void BPState::SimulatePlan(BPPlan & plan) {
+bool BPState::SimulatePlan(BPPlan & plan) {
     for (auto it = plan.begin(); it != plan.end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            AddAction(action);
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
-void BPState::SimulatePlan(BPPlan * plan) {
+bool BPState::SimulatePlan(BPPlan * plan) {
     for (auto it = plan->begin(); it != plan->end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            AddAction(action);
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
 void BPState::AddAction(ACTION action, double time) {

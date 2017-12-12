@@ -94,6 +94,16 @@ std::string ActionToName(ACTION action) {
         return "TRAIN_POINT_DEFENSE_DRONE";
     case ACTION::TRAIN_AUTO_TURRET:
         return "TRAIN_AUTO_TURRET";
+    case ACTION::FLY_COMMAND_CENTER:
+        return "FLY_COMMAND_CENTER";
+    case ACTION::FLY_ORBITAL_COMMAND:
+        return "FLY_ORBITAL_COMMAND";
+    case ACTION::FLY_BARRACKS:
+        return "FLY_BARRACKS";
+    case ACTION::FLY_FACTORY:
+        return "FLY_FACTORY";
+    case ACTION::FLY_STARPORT:
+        return "FLY_STARPORT";
     default:
         return "UNKNOWN";
     }
