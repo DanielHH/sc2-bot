@@ -25,13 +25,13 @@ ArmyManager::ArmyManager(Kurt* parent_kurt) {
 }
 
 void ArmyManager::OnStep(const ObservationInterface* observation) {
-    if (kurt->Observation()->GetGameLoop() % 4 == 0) {
+    if (kurt->Observation()->GetGameLoop() % 48 == 0) {
         scoutCellPriorityQueue->Update();
         armyCellPriorityQueue->Update();
         defendCellPriorityQueue->Update();
     }
-
-    if (kurt->scouts.empty()) {
+    
+    if (kurt->scouts.size() < 2) {
         ArmyManager::TryGetScout();
     } else {
         ArmyManager::ScoutSmartPath();
@@ -53,56 +53,91 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
 
 void ArmyManager::PlanSmartScoutPath(){
     // THREAT MAP
-    const Unit* scout = kurt->scouts.front();
-    for (const Unit* enemy: kurt->Observation()->GetUnits(Unit::Alliance::Enemy)) {
-        if (kurt->IsArmyUnit(enemy)) {
-            danger_points.push_back(new DangerPoint(enemy->pos, kurt->Observation()->GetGameLoop()));
-        }
-    }
-    sc2::Point2D target;
-    float shortest_distance = INFINITY;
-    for (int i = danger_points.size()-1; i >= 0; i--) {
-        DangerPoint* point = danger_points.at(i);
-        if (point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()) < danger_time * 24) {
-            if(Distance2D(scout->pos, point->GetPoint()) < scout_safe_distance) {
-                float scout_x = scout->pos.x;
-                float scout_y = scout->pos.y;
-                
-                float enemy_x = point->GetPoint().x;
-                float enemy_y = point->GetPoint().y;
-                
-                float delta_x =  scout_x - enemy_x;
-                float delta_y = scout_y - enemy_y;
-                float length_normal_enemy = sqrt(pow(delta_x, 2) + pow(delta_y, 2));
-                float scalar_normal = scout_safe_distance/length_normal_enemy;
-                if (length_normal_enemy < shortest_distance) {
-                    target = Point2D(enemy_x + delta_x * scalar_normal, enemy_y + delta_y*scalar_normal);
-                    shortest_distance = length_normal_enemy;
-                }
+    //const Unit* scout = kurt->scouts.front();
+    
+    for (const Unit* scout : kurt->scouts){
+        for (const Unit* enemy: kurt->Observation()->GetUnits(Unit::Alliance::Enemy)) {
+            if (kurt->IsArmyUnit(enemy)) {
+                danger_points.push_back(new DangerPoint(enemy->pos, kurt->Observation()->GetGameLoop()));
             }
-        } else {
-            danger_points.erase(std::find(danger_points.begin(), danger_points.end(), point));
-            delete point;
         }
-    }
-    if (shortest_distance < INFINITY) {
-        kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,target);
+        sc2::Point2D target;
+        float shortest_distance = INFINITY;
+        for (int i = danger_points.size()-1; i >= 0; i--) {
+            DangerPoint* point = danger_points.at(i);
+            if (point->SeenGameStepsAgo(kurt->Observation()->GetGameLoop()) < danger_time * 24) {
+                if(Distance2D(scout->pos, point->GetPoint()) < scout_safe_distance) {
+                    float scout_x = scout->pos.x;
+                    float scout_y = scout->pos.y;
+                    
+                    float enemy_x = point->GetPoint().x;
+                    float enemy_y = point->GetPoint().y;
+                    
+                    float delta_x =  scout_x - enemy_x;
+                    float delta_y = scout_y - enemy_y;
+                    float length_normal_enemy = sqrt(pow(delta_x, 2) + pow(delta_y, 2));
+                    float scalar_normal = scout_safe_distance/length_normal_enemy;
+                    if (length_normal_enemy < shortest_distance) {
+                        target = Point2D(enemy_x + delta_x * scalar_normal, enemy_y + delta_y*scalar_normal);
+                        shortest_distance = length_normal_enemy;
+                    }
+                }
+            } else {
+                danger_points.erase(std::find(danger_points.begin(), danger_points.end(), point));
+                delete point;
+            }
+        }
+        if (shortest_distance < INFINITY) {
+            kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,target);
+        }
     }
 }
 
 void ArmyManager::ScoutSmartPath(){
-    const Unit* scout = kurt->scouts.front();
-    float scout_x = scout->pos.x;
-    float scout_y = scout->pos.y;
+    int cell_index = 0;
+    std::vector<sc2::Point2D> scout_points;
     
-    for (int i = 0; i < scoutCellPriorityQueue->queue.size(); i++) {
-        Point2D point_to_visit = (scoutCellPriorityQueue->queue.at(0))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
-        float x_distance = abs(point_to_visit.x - scout_x);
-        float y_distance = abs(point_to_visit.y - scout_y);
-        float euk_distance_to_unit = sqrt(pow(x_distance, 2) + pow(y_distance, 2));
-        kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
-        return;
+    for (int i = 0; i < scoutCellPriorityQueue->queue.size(); ++i) {
+        cell_index = 0;
+        Point2D point_to_visit = (scoutCellPriorityQueue->queue.at(i))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+        
+        if (i == 0) {
+            scout_points.push_back(point_to_visit);
+            continue;
+        }
+        
+        if (scout_points.size() < kurt->scouts.size()) {
+            for (Point2D scout_point: scout_points) {
+                if (Distance2D(point_to_visit, scout_point) > 3*kurt->world_rep->chunk_size) {
+                    scout_points.push_back(point_to_visit);
+                } else {
+                    break;
+                }
+            }
+        } else {
+            for (const sc2::Unit* scout : kurt->scouts) {
+                kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,scout_points.at(cell_index));
+                cell_index += 1;
+            }
+            return;
+        }
     }
+    
+    /*for (int i = 0; i < scoutCellPriorityQueue->queue.size(); ++i ) {
+        for (const sc2::Unit* scout : kurt->scouts) {
+            Point2D point_to_visit = (scoutCellPriorityQueue->queue.at(cell_index))->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
+            for (Point2D scout_point: scout_points) {
+                if (Distance2D(point_to_visit, scout_point) > 2*kurt->world_rep->chunk_size) {
+                    scout_points.push_back(point_to_visit);
+                }
+            }
+            if (scout_points.size() > 2) {
+                kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE,point_to_visit);
+            }
+            cell_index += 1;
+        }
+    }*/
+    
 }
 
 void ArmyManager::Defend() {
