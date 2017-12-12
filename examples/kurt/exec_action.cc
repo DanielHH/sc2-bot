@@ -20,6 +20,13 @@
 #define TEST(s)
 #endif // DEBUG
 
+#if __cplusplus == 201703L
+#define FALLTHROUGH [[fallthrough]]
+#else
+#define FALLTHROUGH
+#endif
+#define UNREACHABLE PRINT(__FILE__ << "." << __LINE__ << ": UNREACHABLE statement reached");assert(false);
+
 using namespace sc2;
 using std::vector;
 
@@ -141,6 +148,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             std::cout << "Error: exec_action: No case for action: " << ActionToName(action) << std::endl;
             return false;
         }
+        UNREACHABLE;
     case ACTION::BUILD_BARRACKS_REACTOR:
         for (auto it = reactor_builders.begin(); it != reactor_builders.end(); ++it) {
             Tag t = *it;
