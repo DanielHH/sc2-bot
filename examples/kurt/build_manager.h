@@ -37,9 +37,11 @@ private:
     BPPlan current_plan;
     MCTS * mcts = nullptr;
     int steps_until_replan = -1;
+    int old_steps_until_replan = -1;
 
     Kurt *const agent;
 
-    const int STEPS_BETWEEN_REPLAN = STEPS_PER_SEC * 1;
+    const int STEPS_BETWEEN_REPLAN_MAX = STEPS_PER_SEC * 10;
+    const int STEPS_BETWEEN_REPLAN_MIN = 2;
     const int SEARCH_ITER_PER_STEP = 30;
 };
