@@ -145,18 +145,18 @@ bool ArmyManager::TryGetScout() {
                         scout = unit;
                         squad = squads.at(i);
                         scout_found = true;
-                        break;
+                        goto REAPER_SCOUT;
                     }
                 }
             }
         }
     }
-    
+    REAPER_SCOUT:
     if (scout_found) {
         // Add the found scout to scouts and remove it from army
-        kurt->scouts.push_back(scout);
         kurt->army_units.remove(scout);
         squad->members.erase(std::find(squad->members.begin(), squad->members.end(), scout));
+        kurt->scouts.push_back(scout);
         scout_found = true;
     } else {
         // no army scout found look for an SCV.
@@ -171,11 +171,50 @@ bool ArmyManager::TryGetScout() {
 }
 
 void ArmyManager::PutUnitInSquad(const Unit* unit) {
-    if (squads.empty() || squads.back()->members.size() == Squad::SQUAD_SIZE) {
+    if (squads.empty()) {
         Squad* new_squad = new Squad(kurt);
         squads.push_back(new_squad);
     }
-    squads.back()->members.push_back(unit);
+    if (unit->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
+        bool reaper_in_squad = false;
+        for (int i = squads.size()-1; i >= 0; i--) {
+            Squad* tmp_squad = squads.at(i);
+            if (tmp_squad->members.size() < Squad::SQUAD_SIZE && !tmp_squad->members.empty() && tmp_squad->members.at(0)->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
+                tmp_squad->members.push_back(unit);
+                reaper_in_squad = true;
+            }
+        }
+        if (!reaper_in_squad) {
+            if (squads.back()->members.empty()) {
+                squads.back()->members.push_back(unit);
+            } else {
+                Squad* new_squad = new Squad(kurt);
+                squads.push_back(new_squad);
+                new_squad->members.push_back(unit);
+            }
+        }
+    } else {
+        bool unit_in_squad = false;
+        for (int i = squads.size()-1; i >= 0; i--) {
+            Squad* tmp_squad = squads.at(i);
+            if (tmp_squad->members.empty()) {
+                tmp_squad->filled_up = false;
+                tmp_squad->members.push_back(unit);
+                unit_in_squad = true;
+            } else if (tmp_squad->members.size() < Squad::SQUAD_SIZE && tmp_squad->members.at(0)->unit_type != UNIT_TYPEID::TERRAN_REAPER && !tmp_squad->filled_up) {
+                tmp_squad->members.push_back(unit);
+                unit_in_squad = true;
+                if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
+                    tmp_squad->filled_up = true;
+                }
+            }
+        }
+        if (!unit_in_squad) {
+            Squad* new_squad = new Squad(kurt);
+            squads.push_back(new_squad);
+            new_squad->members.push_back(unit);
+        }
+    }
 }
 
 void ArmyManager::GroupNewUnit(const Unit* unit, const ObservationInterface* observation) {

@@ -69,7 +69,7 @@ void Squad::groupUp() {
     }
     
     for (const sc2::Unit* unit : members) {
-        if (sc2::Distance2D(unit->pos, meetup_point) > SQUAD_DISTANCE) {
+        if (sc2::Distance2D(unit->pos, meetup_point) >= SQUAD_DISTANCE / 2 && kurt->Observation()->GetGameLoop() % 24 == 0) {
             kurt->Actions()->UnitCommand(unit, sc2::ABILITY_ID::MOVE, meetup_point);
         }
     }
