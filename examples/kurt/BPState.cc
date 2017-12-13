@@ -735,7 +735,7 @@ double BPState::ContainsPercentOf(BPState const * other) const {
     int tot, part;
     for (auto pair : other->unit_amount) {
         tot += pair.second;
-        part += GetUnitAmount(pair.first);
+        part += std::min(pair.second, GetUnitAmount(pair.first));
     }
     return part / (double) tot;
 }
