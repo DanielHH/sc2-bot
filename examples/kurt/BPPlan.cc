@@ -130,18 +130,39 @@ float BPPlan::TimeRequired(BPState * const from) {
 }
 
 void BPPlan::ExecuteStep(Kurt * const kurt, BPState * current_state) {
+    if (vector::empty()) {
+        return;
+    }
+    ObservationInterface const * obs = kurt->Observation();
     BPState * tmp;
     if (current_state == nullptr) {
         tmp = new BPState(kurt);
     } else {
         tmp = new BPState(current_state);
     }
-    for (int i = 0; i < std::min(1, (int) vector::size()); ++i) {
+    ACTION first_action = vector::operator[](0);
+    int minerals = obs->GetMinerals() -
+        ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::MINERALS);
+    int vespene = obs->GetVespene() -
+        ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::VESPENE);
+    int food = obs->GetFoodCap() - obs->GetFoodUsed() -
+        ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::FOOD_USED);
+    for (int i = 0; i < vector::size(); ++i) {
         ACTION action = vector::operator[](i);
         PRINT("Try to exec action " << action)
         if (tmp->CanExecuteNow(action) && ExecAction::Exec(kurt, action)) {
             std::cout<< "Executed action "<< ActionToName(action) << std::endl;
             vector::erase(vector::begin() + i);
+            break;
+        }
+        if (i + 1 >= vector::size()) {
+            break;
+        }
+        ACTION next_a = vector::operator[](i + 1);
+        minerals -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::MINERALS);
+        vespene -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::VESPENE);
+        food -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::FOOD_USED);
+        if (minerals < 0 || vespene < 0 || food < 0) {
             break;
         }
     }
