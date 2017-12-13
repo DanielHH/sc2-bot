@@ -141,38 +141,53 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+    const float attack_const = 10; // Lower values make the ai more agressive, but with riskier attacks
+    const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
+    float c;
     int attack_score = 0;
 
-    // True if army consists of more ground units then air units
-    bool is_most_ground = our_units.GetNumberOfGroundUnits / our_units.GetNumberOfAirUnits >= 1;
-    bool enemy_is_most_ground = enemy_units.GetNumberOfGroundUnits / enemy_units.GetNumberOfAirUnits >= 1;
-
-    // True if ground cp is higher than air cp
-    bool most_ground_cp = our_cp->GetGroundCp / our_cp->GetAirCp > 1;
-    bool enemy_most_ground_cp = enemy_cp->GetGroundCp / enemy_cp->GetAirCp > 1;
-
-    // If enemy is weaker against most of our units, +1 attack score
-    if (is_most_ground && !enemy_most_ground_cp) {
-        attack_score += 1;
+    if (current_combat_mode == Kurt::ATTACK) {
+        c = defend_const;
     }
-    else if (!is_most_ground && enemy_most_ground_cp) {
-        attack_score += 1;
+    else {
+        c = attack_const;
+    }
+    PRINT("\n-------Calculate CombatMode---------")
+
+    // Do our air units have much health relative to the enemy air DPS? 
+    if (our_units.GetAirHealth() > enemy_cp->GetAirCp() * c) {
+        PRINT("We have good air health!")
+        attack_score++;
+    }
+    // Do our ground units have much health relative to the enemy ground DPS? 
+    if (our_units.GetGroundHealth() > enemy_cp->GetGroundCp() * c) {
+        PRINT("We have good ground health!")
+        attack_score++;
+    }
+    // Do we have high air DPS relative to the enemy's air units' health?
+    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) {
+        PRINT("We have good air DPS!")
+        attack_score++;
+    }
+    // Do we have high ground DPS relative to the enemy's ground units' health?
+    if (enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) {
+        PRINT("We have good ground DPS!")
+        attack_score++;
     }
 
-    // If our cp is strongest against most of their units, +1 attack score
-    if (most_ground_cp && enemy_is_most_ground) {
-        attack_score += 1;
+    // If we win in at least 2 aspects of combat, we can try to attack.
+    // Else we have to retreat/continue to defend, and build up our army
+    if (attack_score >= 2 && current_combat_mode != Kurt::ATTACK) {
+        PRINT("ATTACK!")
+        kurt->SetCombatMode(Kurt::ATTACK);
     }
-    else if (!most_ground_cp && !enemy_is_most_ground) {
-        attack_score += 1;
+    else if (attack_score < 2 && current_combat_mode != Kurt::DEFEND) {
+        PRINT("RETREAT!")
+        kurt->SetCombatMode(Kurt::DEFEND);
     }
-
-    PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
-    PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
-    PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
-    PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
-
-    if ((our_cp->g2g + our_cp->g2a + our_cp->a2g + our_cp->a2a) >= (enemy_cp->g2g + enemy_cp->a2g + enemy_cp->g2a + enemy_cp->a2a)) {
+    
+    PRINT("---------------------\n")
+    /*if ((our_cp->g2g + our_cp->g2a + our_cp->a2g + our_cp->a2a) >= (enemy_cp->g2g + enemy_cp->a2g + enemy_cp->g2a + enemy_cp->a2a)) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
     }
@@ -183,7 +198,7 @@ void StrategyManager::CalculateCombatMode() {
     else {
         kurt->SetCombatMode(Kurt::HARASS);
         PRINT("COMBAT MODE: HARASS")
-    }
+    }*/
 };
 
 void StrategyManager::SetBuildGoal() {

@@ -140,6 +140,34 @@ float ObservedUnits::CalculateUnitTypeMaxHealth(UNIT_TYPEID unit_type) {
     return max_health_for_unit_type;
 }
 
+float ObservedUnits::GetAirHealth() {
+    float air_health = 0;
+    UNIT_TYPEID unit_type;
+
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+        unit_type = saved_unit->first;
+        if (count(flying_units.begin(), flying_units.end(), unit_type) == 1) {
+            air_health += CalculateUnitTypeMaxHealth(unit_type);
+        }
+    }
+
+    return air_health;
+}
+
+float ObservedUnits::GetGroundHealth() {
+    float ground_health = 0;
+    UNIT_TYPEID unit_type;
+
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+        unit_type = saved_unit->first;
+        if (count(flying_units.begin(), flying_units.end(), unit_type) == 0) {
+            ground_health += CalculateUnitTypeMaxHealth(unit_type);
+        }
+    }
+
+    return ground_health;
+}
+
 map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
     return &saved_units;
 }
