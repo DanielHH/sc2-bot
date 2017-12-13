@@ -50,7 +50,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
         PRINT(enemy_units.ToString())
         /*PRINT("------Enemy structures-------")
         PRINT(enemy_structures.ToString())*/
-        PRINT("-----------Our units--------------")
+        PRINT("-----------Our units-------------")
             PRINT("|Air health: " << to_string(our_units.GetAirHealth()) << "\t\t|")
             PRINT("|Ground health: " << to_string(our_units.GetGroundHealth()) << "\t|")
             PRINT("|Air DPS: " << to_string(our_cp->GetAirCp()) << "\t\t|")
@@ -89,7 +89,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
             PRINT("ENEMY BUILDING DESTROYED")
             enemy_structures.RemoveUnit(unit);
         }
-        else {
+        else if(Kurt::IsArmyUnit(unit)) {
             PRINT("ENEMY UNIT KILLED")
             enemy_units.RemoveUnit(unit);
         }
@@ -99,7 +99,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
             PRINT("OUR BUILDING DESTROYED")
             our_structures.RemoveUnit(unit);
         }
-        else if (unit->unit_type != UNIT_TYPEID::TERRAN_SCV) {
+        else if (Kurt::IsArmyUnit(unit)) {
             PRINT("OUR UNIT KILLED")
             our_units.RemoveUnit(unit);
         }
