@@ -23,6 +23,8 @@ ObservedUnits our_structures;
 ObservedUnits enemy_units;
 ObservedUnits enemy_structures;
 
+UNIT_TYPEID StrategyManager::best_counter_type;
+
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
     progression_mode = false;
@@ -59,6 +61,10 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("------Our structures---------")
             PRINT(our_structures.ToString())
             PRINT("-----------------------------\n\n")
+            UpdateCurrentBestCounterType();
+        if(best_counter_type != ObservedUnits::current_best_counter_type) {
+            ExecuteSubplan();
+        }
     }
 
 }
@@ -194,6 +200,10 @@ bool StrategyManager::GetProgressionMode() {
     return progression_mode;
 }
 
+void StrategyManager::UpdateCurrentBestCounterType() {
+    enemy_units.GetStrongestUnit(our_units, kurt);
+}
+
 
 BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har enemy x, enemy y counterunit-problemet
     PRINT("---------------------------")
@@ -250,6 +260,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     //ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
     BPState* counter_order = enemy_units.GetStrongestUnit(our_units, kurt);
+    best_counter_type = ObservedUnits::current_best_counter_type;
     //counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }

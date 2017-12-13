@@ -17,6 +17,8 @@ public:
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 
+    static sc2::UNIT_TYPEID best_counter_type;
+
     // New unit is saved in vector Units. (Call this function whenever a new unit is created)
     void SaveOurUnits(const sc2::Unit* unit);
 
@@ -28,6 +30,8 @@ public:
 
     /* Calculates a new plan to execute */
     void CalculateNewPlan();
+
+    void StrategyManager::UpdateCurrentBestCounterType();
 
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
     void CalculateCombatMode();

@@ -300,7 +300,7 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
 
     BPState* counter_order = new BPState();
     bool prog_mode = kurt->GetProgressionMode();
-    if (best_counter_type != current_best_counter_type) {
+    if (current_best_counter_type != best_counter_type) {
         current_best_counter_type = best_counter_type;
         if (prog_mode) {
             kurt->SetProgressionMode(false);
