@@ -20,14 +20,25 @@
 #define TEST(s)
 #endif // DEBUG
 
+#if __cplusplus == 201703L
+#define FALLTHROUGH [[fallthrough]]
+#else
+#define FALLTHROUGH
+#endif
+#define UNREACHABLE PRINT(__FILE__ << "." << __LINE__ << ": UNREACHABLE statement reached");assert(false);
+
 using namespace sc2;
 using std::vector;
+using std::set;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
 std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
+
+set<Tag> techlab_builders;
+set<Tag> reactor_builders;
 
 double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
     if (sent_order_time.count(unit) == 0) {
@@ -42,6 +53,37 @@ void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
 
+    //
+    // Update scv to not gather minerals at overfull commandcenters
+    //
+    // TODO Add support for TERRAN_ORBITALCOMMAND and TERRAN_PLANETARYFORTRESS
+    //
+    int step = kurt->Observation()->GetGameLoop();
+    int delay = 1 * STEPS_PER_SEC;
+    int index = 0;
+    for (auto it = kurt->scv_minerals.begin(); it != kurt->scv_minerals.end(); ++it) {
+        ++index;
+        if (step % delay != index) {
+            continue;
+        }
+        const Unit * scv = *it;
+        Unit const * commandcenter = FindNearestUnitOfType(
+                UNIT_TYPEID::TERRAN_COMMANDCENTER,
+                Point2D(scv->pos.x, scv->pos.y),
+                kurt->Observation(),
+                Unit::Alliance::Self);
+        if (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters ||
+                DistanceSquared3D(commandcenter->pos, scv->pos) >
+                BASE_RESOURCE_TEST_RANGE2) {
+            Unit const * field = FindNextMineralField(kurt->Observation());
+            if (field != nullptr) {
+                kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, field);
+            }
+        }
+    }
+    //
+    // Try asign a scv to a mineral field or vespene geyser
+    //
     if (! kurt->scv_idle.empty()) {
         Unit const * scv = kurt->scv_idle.front();
         Unit const * target = FindNextMineralField(kurt->Observation());
@@ -119,12 +161,62 @@ void ExecAction::OnUnitIdle(
     }
 }
 
+bool IsAddonAction(ACTION action) {
+    switch (action) {
+    case ACTION::BUILD_BARRACKS_REACTOR:
+    case ACTION::BUILD_FACTORY_REACTOR:
+    case ACTION::BUILD_STARPORT_REACTOR:
+    case ACTION::BUILD_BARRACKS_TECH_LAB:
+    case ACTION::BUILD_FACTORY_TECH_LAB:
+    case ACTION::BUILD_STARPORT_TECH_LAB:
+        return true;
+    }
+    return false;
+}
+
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     Units us;
     Unit const * target;
     ActionInterface * action_interface = kurt->Actions();
     QueryInterface *query = kurt->Query();
     ObservationInterface const *obs = kurt->Observation();
+
+    if (!IsAddonAction(action)) {
+        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return techlab_builders.count(u.tag) != 0; })) {
+            if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
+                action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+                techlab_builders.erase(fly_guy->tag);
+            } else {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(fly_guy->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::LAND, target_point, fly_guy)) {
+                        action_interface->UnitCommand(fly_guy, SC2Type<ABILITY_ID>(ABILITY_ID::LAND), target_point, true);
+                        techlab_builders.erase(fly_guy->tag);
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return reactor_builders.count(u.tag) != 0; })) {
+            if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
+                action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+                reactor_builders.erase(fly_guy->tag);
+            } else {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(fly_guy->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::LAND, target_point, fly_guy)) {
+                        action_interface->UnitCommand(fly_guy, SC2Type<ABILITY_ID>(ABILITY_ID::LAND), target_point, true);
+                        reactor_builders.erase(fly_guy->tag);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     switch (action) {
     default:
         //
@@ -138,57 +230,189 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             std::cout << "Error: exec_action: No case for action: " << ActionToName(action) << std::endl;
             return false;
         }
-    case ACTION::BUILD_BARRACKS_TECH_LAB:
-        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
-            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
-            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_BARRACKS, true);
-                return true;
+        UNREACHABLE;
+    case ACTION::BUILD_BARRACKS_REACTOR:
+        for (auto it = reactor_builders.begin(); it != reactor_builders.end(); ++it) {
+            Tag t = *it;
+            Unit const *u;
+            if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKSFLYING) {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::BUILD_REACTOR_BARRACKS, target_point, u)) {
+                        action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_BARRACKS), target_point, true);
+                        reactor_builders.erase(it);
+                        return true;
+                    }
+                }
             }
         }
-        return false;
-    case ACTION::BUILD_BARRACKS_REACTOR:
         for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
             vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
             if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_BARRACKS, true);
-                return true;
+                if (query->Placement(ABILITY_ID::BUILD_REACTOR_BARRACKS, u->pos, u)) {
+                    action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_BARRACKS, true);
+                    return true;
+                }
+                else {
+                    action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                    reactor_builders.insert(u->tag);
+                    return false;
+                }
+            }
+        }
+        return false;
+    case ACTION::BUILD_BARRACKS_TECH_LAB:
+        for (auto it = techlab_builders.begin(); it != techlab_builders.end(); ++it) {
+            Tag t = *it;
+            Unit const *u;
+            if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKSFLYING) {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::BUILD_TECHLAB_BARRACKS, target_point, u)) {
+                        action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_BARRACKS), target_point, true);
+                        techlab_builders.erase(it);
+                        return true;
+                    }
+                }
+            }
+        }
+        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
+            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
+                if (query->Placement(ABILITY_ID::BUILD_TECHLAB_BARRACKS, u->pos, u)) {
+                    action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_BARRACKS, true);
+                    return true;
+                }
+                else {
+                    action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                    techlab_builders.insert(u->tag);
+                    return false;
+                }
             }
         }
         return false;
     case ACTION::BUILD_FACTORY_REACTOR:
-        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
-            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
-            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_FACTORY, true);
-                return true;
+            for (auto it = reactor_builders.begin(); it != reactor_builders.end(); ++it) {
+                Tag t = *it;
+                Unit const *u;
+                if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORYFLYING) {
+                    Point2D target_point;
+                        for (float dist = 12; dist < 22; dist += 0.5) {
+                        target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                        if (query->Placement(ABILITY_ID::BUILD_REACTOR_FACTORY, target_point, u)) {
+                            action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_FACTORY), target_point, true);
+                            reactor_builders.erase(it);
+                            return true;
+                        }
+                    }
+                }
             }
-        }
-        return false;
-    case ACTION::BUILD_FACTORY_TECH_LAB:
-        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
-            vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
-            if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_FACTORY, true);
-                return true;
+            for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
+                vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+                if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
+                    if (query->Placement(ABILITY_ID::BUILD_REACTOR_FACTORY, u->pos, u)) {
+                        action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_FACTORY, true);
+                        return true;
+                    }
+                    else {
+                        action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                        reactor_builders.insert(u->tag);
+                        return false;
+                    }
+                }
             }
-        }
-        return false;
+            return false;
+        case ACTION::BUILD_FACTORY_TECH_LAB:
+            for (auto it = techlab_builders.begin(); it != techlab_builders.end(); ++it) {
+                Tag t = *it;
+                Unit const *u;
+                if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORYFLYING) {
+                    Point2D target_point;
+                        for (float dist = 12; dist < 22; dist += 0.5) {
+                        target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                        if (query->Placement(ABILITY_ID::BUILD_TECHLAB_FACTORY, target_point, u)) {
+                            action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_FACTORY), target_point, true);
+                            techlab_builders.erase(it);
+                            return true;
+                        }
+                    }
+                }
+            }
+            for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORY; })) {
+                vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
+                if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
+                    if (query->Placement(ABILITY_ID::BUILD_TECHLAB_FACTORY, u->pos, u)) {
+                        action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_FACTORY, true);
+                        return true;
+                    }
+                    else {
+                        action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                        techlab_builders.insert(u->tag);
+                        return false;
+                    }
+                }
+            }
+            return false;
     case ACTION::BUILD_STARPORT_REACTOR:
-        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKS; })) {
+        for (auto it = reactor_builders.begin(); it != reactor_builders.end(); ++it) {
+            Tag t = *it;
+            Unit const *u;
+            if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORTFLYING) {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::BUILD_REACTOR_STARPORT, target_point, u)) {
+                        action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_STARPORT), target_point, true);
+                        reactor_builders.erase(it);
+                        return true;
+                    }
+                }
+            }
+        }
+        for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORT; })) {
             vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
             if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_REACTOR; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_STARPORT, true);
-                return true;
+                if (query->Placement(ABILITY_ID::BUILD_REACTOR_STARPORT, u->pos, u)) {
+                    action_interface->UnitCommand(u, ABILITY_ID::BUILD_REACTOR_STARPORT, true);
+                    return true;
+                }
+                else {
+                    action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                    reactor_builders.insert(u->tag);
+                    return false;
+                }
             }
         }
         return false;
     case ACTION::BUILD_STARPORT_TECH_LAB:
+        for (auto it = techlab_builders.begin(); it != techlab_builders.end(); ++it) {
+            Tag t = *it;
+            Unit const *u;
+            if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORTFLYING) {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::BUILD_TECHLAB_STARPORT, target_point, u)) {
+                        action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_STARPORT), target_point, true);
+                        techlab_builders.erase(it);
+                        return true;
+                    }
+                }
+            }
+        }
         for (Unit const *u : obs->GetUnits(Unit::Alliance::Self, [](Unit const &u) {return u.unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORT; })) {
             vector<AvailableAbility> aas = query->GetAbilitiesForUnit(u, false).abilities;
             if (std::any_of(aas.begin(), aas.end(), [](AvailableAbility a) {return a.ability_id.ToType() == ABILITY_ID::BUILD_TECHLAB; })) {
-                action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_STARPORT, true);
-                return true;
+                if (query->Placement(ABILITY_ID::BUILD_TECHLAB_STARPORT, u->pos, u)) {
+                    action_interface->UnitCommand(u, ABILITY_ID::BUILD_TECHLAB_STARPORT, true);
+                    return true;
+                } else {
+                    action_interface->UnitCommand(u, ABILITY_ID::LIFT);
+                    techlab_builders.insert(u->tag);
+                    return false;
+                }
             }
         }
         return false;
@@ -247,9 +471,19 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability) {
     QueryInterface *query = kurt->Query();
     ObservationInterface const *obs = kurt->Observation();
 
-    auto is_idle_or_scv = [](Unit const &unit) {
-        return unit.orders.empty()
-            || unit.unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV;
+    auto is_idle_or_scv = [obs](Unit const &unit) {
+        if (unit.unit_type.ToType() == UNIT_TYPEID::TERRAN_SCV) return true;
+        Unit const *addon_unit = obs->GetUnit(unit.add_on_tag);
+        if (addon_unit && addon_unit->build_progress >= 1) {
+            switch (addon_unit->unit_type.ToType()) {
+            case UNIT_TYPEID::TERRAN_REACTOR:
+            case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
+            case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
+            case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
+                return unit.orders.size() <= 1;
+            }
+        }
+        return unit.orders.empty();
     };
 
     for (const Unit *u : obs->GetUnits(Unit::Alliance::Self, is_idle_or_scv)) {
@@ -285,36 +519,34 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         if (!can_afford_it) {
             continue;
         }
-        Point2D target_point(u->pos.x + GetRandomScalar() * 15
-            , u->pos.y + GetRandomScalar() * 15);
+        Point2D target_point(Kurt::RandomPoint(u->pos, 15, 15));
         Unit const *target_unit;
         switch (Kurt::GetAbility(ability)->target) {
         case sc2::AbilityData::Target::None:
-            if (ability == ABILITY_ID::TRAIN_SCV) {
-                // TODO Fix a better check if there is space for another scv
-                BPState curr(kurt);
-                if (curr.GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) * 16 <=
-                    kurt->scv_minerals.size() + kurt->scv_building.size()) {
-                    return false;
-                }
-            }
-
             action_interface->UnitCommand(u, ability, true);
             break;
         case sc2::AbilityData::Target::Point:
-            if (ability == ABILITY_ID::BUILD_COMMANDCENTER) {
-                if (!FindNextCommandcenterLoc(obs, query, target_point)) {
+            switch (ability) {
+            case ABILITY_ID::BUILD_COMMANDCENTER: 
+                if (!FindNextCommandcenterLoc(obs, query, u->pos, target_point)) {
                     return false;
                 }
-            }
-            else {
+                break;
+            default:
+            {
+                bool success = false;
                 // Assume we have to place a unit.
-                while (!query->Placement(ability, target_point, u)) {
-                    target_point = Point2D(u->pos.x + GetRandomScalar() * 15
-                        , u->pos.y + GetRandomScalar() * 15);
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    if (query->Placement(ability, target_point, u)) {
+                        success = true;
+                        break;
+                    }
+                    dist += 0.5;
                 }
+                if (!success) return false;
             }
-
+            }
             action_interface->UnitCommand(u, ability, target_point);
             break;
         case sc2::AbilityData::Target::Unit:
@@ -454,14 +686,16 @@ Unit const * ExecAction::FindNextMineralField(
 bool ExecAction::FindNextCommandcenterLoc(
         ObservationInterface const * obs,
         QueryInterface * query,
-        Point2D & location) {
+        Point3D const & nearby,
+        Point2D & ans) {
     Units commandcenters = obs->GetUnits(IsCommandcenter);
-    std::vector<int> order(commandcenter_locations.size());
+    float closest2 = INFINITY;
     for (int i = 0; i < commandcenter_locations.size(); ++i) {
-        order[i] = i;
-    }
-    for (int i = 0; i < commandcenter_locations.size(); ++i) {
-        Point3D point3D = commandcenter_locations[order[i]];
+        Point3D point3D = commandcenter_locations[i];
+        float dist2 = DistanceSquared3D(nearby, point3D);
+        if (dist2 >= closest2) {
+            continue;
+        }
         bool taken = false;
         for (Unit const * commandcenter : commandcenters) {
             if (DistanceSquared3D(commandcenter->pos, point3D) < 0.1) {
@@ -476,11 +710,11 @@ bool ExecAction::FindNextCommandcenterLoc(
         if (! query->Placement(ABILITY_ID::BUILD_COMMANDCENTER, point2D)) {
             continue;
         }
-        location.x = point2D.x;
-        location.y = point2D.y;
-        return true;
+        ans.x = point2D.x;
+        ans.y = point2D.y;
+        closest2 = dist2;
     }
-    return false;
+    return closest2 < INFINITY;
 }
 
 Unit const * ExecAction::FindNearestUnitOfType(

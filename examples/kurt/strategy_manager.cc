@@ -23,7 +23,7 @@ ObservedUnits our_structures;
 ObservedUnits enemy_units;
 ObservedUnits enemy_structures;
 
-UNIT_TYPEID StrategyManager::best_counter_type;
+UNIT_TYPEID StrategyManager::current_best_counter_type;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -51,10 +51,10 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("|Ground health: " << to_string(enemy_units.GetGroundHealth()) << "\t|")
             PRINT("|Air DPS: " << to_string(enemy_cp->GetAirCp()) << "\t\t|")
             PRINT("|Ground DPS: " << to_string(enemy_cp->GetGroundCp()) << "\t\t|")
-            PRINT(enemy_units.ToString())
-            /*PRINT("------Enemy structures-------")
-            PRINT(enemy_structures.ToString())*/
-            PRINT("-----------Our units--------------")
+        PRINT(enemy_units.ToString())
+        /*PRINT("------Enemy structures-------")
+        PRINT(enemy_structures.ToString())*/
+        PRINT("-----------Our units-------------")
             PRINT("|Air health: " << to_string(our_units.GetAirHealth()) << "\t\t|")
             PRINT("|Ground health: " << to_string(our_units.GetGroundHealth()) << "\t|")
             PRINT("|Air DPS: " << to_string(our_cp->GetAirCp()) << "\t\t|")
@@ -65,10 +65,6 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("---------------------------------\n")
 
             CalculateCombatMode();
-        UpdateCurrentBestCounterType();
-        if (best_counter_type != ObservedUnits::current_best_counter_type) {
-            CalculateNewPlan();
-        }
     } 
 
 }
@@ -77,6 +73,11 @@ void StrategyManager::OnUnitEnterVision(const Unit* unit) {
     // Save how much health each type of new unit have
     if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
         ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
+        UpdateCurrentBestCounterType();
+        if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+            progression_mode = false;
+            CalculateNewPlan();
+        }
     }
 }
 
@@ -100,7 +101,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
             PRINT("ENEMY BUILDING DESTROYED")
             enemy_structures.RemoveUnit(unit);
         }
-        else {
+        else if(Kurt::IsArmyUnit(unit)) {
             PRINT("ENEMY UNIT KILLED")
             enemy_units.RemoveUnit(unit);
         }
@@ -110,7 +111,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
             PRINT("OUR BUILDING DESTROYED")
             our_structures.RemoveUnit(unit);
         }
-        else if (unit->unit_type != UNIT_TYPEID::TERRAN_SCV) {
+        else if (Kurt::IsArmyUnit(unit)) {
             PRINT("OUR UNIT KILLED")
             our_units.RemoveUnit(unit);
         }
@@ -138,7 +139,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
             observed_structures.push_back(*observed_unit);
         }
         else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
-            observed_units.push_back(*observed_unit);
+            observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
         }
     }
 
@@ -210,7 +211,7 @@ void StrategyManager::SetBuildGoal() {
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
-    best_counter_type = ObservedUnits::current_best_counter_type;
+    current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
     kurt->SendBuildOrder(new_goal_state);
 };
 
@@ -282,7 +283,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     //ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
     BPState* counter_order = enemy_units.GetStrongestUnit(our_units, kurt);
-    best_counter_type = ObservedUnits::current_best_counter_type;
+    current_best_counter_type = ObservedUnits::current_best_counter_type;
     //counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }

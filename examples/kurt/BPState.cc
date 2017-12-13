@@ -24,6 +24,13 @@
 #define TEST(s)
 #endif // DEBUG
 
+#if __cplusplus == 201703L
+#define FALLTHROUGH [[fallthrough]]
+#else
+#define FALLTHROUGH
+#endif
+#define UNREACHABLE PRINT(__FILE__ << "." << __LINE__ << ": UNREACHABLE statement reached");assert(false);
+
 using namespace sc2;
 
 BPState::BPState() {
@@ -48,7 +55,11 @@ BPState::BPState(BPState * const state) {
 BPState::BPState(Kurt * const kurt) {
     const ObservationInterface* observation = kurt->Observation();
     std::vector<const Unit*> commandcenters;
-    for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+    Units units_self = observation->GetUnits(Unit::Alliance::Self);
+    //
+    // Add the majority of all our units
+    //
+    for (auto unit : units_self) {
         if (unit->build_progress < 1) {
             continue;
         }
@@ -56,42 +67,120 @@ BPState::BPState(Kurt * const kurt) {
         IncreaseUnitAmount(type, 1);
         IncreaseUnitAvailableAmount(type, 1);
         switch (type) {
+        case UNIT_TYPEID::TERRAN_REFINERY:
+            // TERRAN_REFINERY added later
+            IncreaseUnitAmount(type, -1);
+            IncreaseUnitAvailableAmount(type, -1);
+            break;
         case UNIT_TYPEID::TERRAN_COMMANDCENTER:
         case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
-        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
+        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS: {
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
+            int harvesters = std::min(unit->assigned_harvesters, unit->ideal_harvesters);
+            int townhall_h = unit->ideal_harvesters - harvesters;
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, harvesters);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, harvesters);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, townhall_h);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, townhall_h);
             break;
-        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 2);
+        }
+        case UNIT_TYPEID::TERRAN_COMMANDCENTERFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_COMMAND_CENTER);
+            break;
+        case UNIT_TYPEID::TERRAN_ORBITALCOMMANDFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
+            AddAction(ACTION::FLY_ORBITAL_COMMAND);
             break;
         case UNIT_TYPEID::TERRAN_BARRACKS:
-        case UNIT_TYPEID::TERRAN_BARRACKSTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, -1);
+            }
+            FALLTHROUGH;
+        case UNIT_TYPEID::TERRAN_BARRACKSREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
             break;
-        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 2);
+        case UNIT_TYPEID::TERRAN_BARRACKSFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1);
+            AddAction(ACTION::FLY_BARRACKS);
             break;
         case UNIT_TYPEID::TERRAN_FACTORY:
-        case UNIT_TYPEID::TERRAN_FACTORYTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, -1);
+            }
+            FALLTHROUGH;
+        case UNIT_TYPEID::TERRAN_FACTORYREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
             break;
-        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
-            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
-            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 2);
+        case UNIT_TYPEID::TERRAN_FACTORYFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_FACTORY, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_FACTORY, 1);
+            AddAction(ACTION::FLY_FACTORY);
             break;
         case UNIT_TYPEID::TERRAN_STARPORT:
-        case UNIT_TYPEID::TERRAN_STARPORTTECHLAB:
+            if (unit->add_on_tag != NullTag) {
+                IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+                IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, -1);
+            }
+            FALLTHROUGH;
+        case UNIT_TYPEID::TERRAN_STARPORTREACTOR:
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
             break;
+        case UNIT_TYPEID::TERRAN_STARPORTFLYING:
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_STARPORT, 1);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_STARPORT, 1);
+            AddAction(ACTION::FLY_STARPORT);
+            break;
         }
     }
+    //
+    // Only add refineries that are close to our base
+    //
+    for (auto unit : units_self) {
+        if (unit->build_progress < 1) {
+            continue;
+        }
+        UNIT_TYPEID type = unit->unit_type.ToType();
+        if (type == UNIT_TYPEID::TERRAN_REFINERY) {
+            for (auto center : commandcenters) {
+                if (DistanceSquared3D(center->pos, unit->pos) <
+                        BASE_RESOURCE_TEST_RANGE2) {
+                    IncreaseUnitAmount(type, 1);
+                    IncreaseUnitAvailableAmount(type, 1);
+                    int harvesters = std::min(unit->assigned_harvesters, unit->ideal_harvesters);
+                    int townhall_h = unit->ideal_harvesters - harvesters;
+                    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, harvesters);
+                    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, harvesters);
+                    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, townhall_h);
+                    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, townhall_h);
+                    break;
+                }
+            }
+        }
+    }
+    //
+    // Add nearby neutral resources
+    //
     for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
         UNIT_TYPEID type = neutral->unit_type.ToType();
         for (auto center : commandcenters) {
@@ -104,26 +193,24 @@ BPState::BPState(Kurt * const kurt) {
         }
     }
 
-    int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
+    //
+    // Add other non unit units
+    //
     SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_minerals.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    int num_mineral_worker_slots = 16 * GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER) -
-        GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
 
+    // SCV building structures are assigned as harvesters it seems
+//    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_building.size());
+
+    //
+    // Add active actions
+    //
     double start_time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
     time = start_time;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
@@ -145,27 +232,41 @@ BPState::BPState(Kurt * const kurt) {
             if (time < 0) {
                 time = 0;
             }
+            if (! CanExecuteNowOrSoon(action)) {
+                Print();
+                std::cout << "Error: BPState: BPState(KURT): " <<
+                    "Could not add action to model, action: " << action << std::endl;
+//                throw std::runtime_error("BPPlan: BPPlan(KURT), add action failed");
+                for (auto pair : ar.consumed) {
+                    UNIT_TYPEID type = pair.first;
+                    int amount = pair.second;
+                    IncreaseUnitAmount(type, -amount);
+                    IncreaseUnitAvailableAmount(type, -amount);
+                }
+                continue;
+            }
             AddAction(action, time);
         }
     }
 
+    //
+    // More special units
+    //
     int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+    int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
     int refinery_prod_amount = GetUnitProdAmount(UNIT_TYPEID::TERRAN_REFINERY);
     geyser_amount -= refinery_amount + refinery_prod_amount;
     SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
 
-    // Currently, an scv that starts building a refinery is added to the scv_vespene list.
-    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
-    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
-    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
-    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
-
+    //
+    // Test if time did increase during adding active actions
+    //
     if (start_time != time) {
         Print();
         std::cout << "Error: BPState: Constructor(Kurt*): " <<
             "Adding action updated time on state" << std::endl;
-        throw std::runtime_error("BPState: Invalid constructor.");
+//        throw std::runtime_error("BPState: Invalid constructor.");
     }
 }
 
@@ -175,20 +276,41 @@ BPState::~BPState() {
     }
 }
 
-void BPState::UpdateUntilAvailable(ACTION action) {
+bool BPState::UpdateUntilAvailable(ACTION action) {
     ActionRepr ar = ActionRepr::values.at(action);
     UNIT_TYPEID minerals = UNIT_FAKEID::MINERALS;
     UNIT_TYPEID vespene = UNIT_FAKEID::VESPENE;
+    unsigned long int num_iterations_waited = 0;
     while (! CanExecuteNow(action)) {
+        if (num_iterations_waited++ > 2000) {
+            Print();
+            std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                "Looping over 2000 iterations, action: " << action << std::endl;
+            return false;
+        }
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
-            minerals_time = 1 / GetMineralRate() *
-                std::max(0, ar.consumed[minerals] - GetUnitAvailableAmount(minerals));
+            int remaining = ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals);
+            if (remaining > 0) {
+                if (GetMineralRate() == 0) {
+                    std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                        "GetMineralRate() == 0, action: " << action << std::endl;
+                    return false;
+                }
+                minerals_time = remaining / GetMineralRate();
+            }
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
-            vespene_time = 1 / GetVespeneRate() *
-                std::max(0, ar.consumed[vespene] - GetUnitAvailableAmount(vespene));
+            int remaining = ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene);
+            if (remaining > 0) {
+                if (GetVespeneRate() == 0) {
+                    std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                        "GetVespeneRate() == 0, action: " << action << std::endl;
+                    return false;
+                }
+                vespene_time = remaining / GetVespeneRate();
+            }
         }
         double delta_time = std::max(minerals_time, vespene_time);
         if (! actions.empty()) {
@@ -201,16 +323,19 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         if (delta_time == INFINITY) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                "infinity, action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: Update INFINITY time");
+                "Infinity, action: " << action << std::endl;
+//            throw std::runtime_error("BPPlan: Update INFINITY time");
+            return false;
         } else if (delta_time == 0) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                "Action never available, action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: Update zero time");
+                "Zero, action: " << action << std::endl;
+//            throw std::runtime_error("BPPlan: Update zero time");
+            return false;
         }
         SimpleUpdate(delta_time);
     }
+    return true;
 }
 
 void BPState::SimpleUpdate(double delta_time) {
@@ -231,22 +356,40 @@ void BPState::SimpleUpdate(double delta_time) {
     time += delta_time;
 }
 
-void BPState::SimulatePlan(BPPlan & plan) {
+bool BPState::SimulatePlan(BPPlan & plan) {
     for (auto it = plan.begin(); it != plan.end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            if (! AddAction(action)) {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
-void BPState::SimulatePlan(BPPlan * plan) {
+bool BPState::SimulatePlan(BPPlan * plan) {
     for (auto it = plan->begin(); it != plan->end(); ++it) {
-        AddAction(*it);
+        ACTION action = *it;
+        if (CanExecuteNowOrSoon(action)) {
+            if (! AddAction(action)) {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
     CompleteAllActions();
+    return true;
 }
 
-void BPState::AddAction(ACTION action, double time) {
-    UpdateUntilAvailable(action);
+bool BPState::AddAction(ACTION action, double time) {
+    if (! UpdateUntilAvailable(action)) {
+        return false;
+    }
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
@@ -277,10 +420,11 @@ void BPState::AddAction(ACTION action, double time) {
         ActiveAction other = *it;
         if (aa < other) {
             actions.insert(it, aa);
-            return;
+            return true;
         }
     }
     actions.push_back(aa);
+    return true;
 }
 
 void BPState::CompleteAllActions() {
@@ -603,6 +747,15 @@ bool BPState::ContainsAllUnitsOf(BPState const &other) const {
         }
     }
     return true;
+}
+
+double BPState::ContainsPercentOf(BPState const * other) const {
+    int tot, part;
+    for (auto pair : other->unit_amount) {
+        tot += pair.second;
+        part += std::min(pair.second, GetUnitAmount(pair.first));
+    }
+    return part / (double) tot;
 }
 
 #undef DEBUG

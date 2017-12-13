@@ -2,6 +2,7 @@
 #include "world_cell.h"
 #include "cell_comp_scout.cc"
 #include "cell_comp_army.cc"
+#include "cell_comp_defend.cc"
 
 CellPriorityQueue::CellPriorityQueue(Kurt* parent_kurt, CellPriorityMode _mode) {
     kurt = parent_kurt;
@@ -19,7 +20,10 @@ void CellPriorityQueue::Update() {
         case SCOUT:
             std::sort(queue.begin(), queue.end(), CellCompScout(kurt));
             break;
-        case ARMY:
+        case DEFEND:
+            std::sort(queue.begin(), queue.end(), CellCompDefend(kurt));
+            break;
+        case ATTACK:
         case HARASS:
         default:
             std::sort(queue.begin(), queue.end(), CellCompArmy(kurt));

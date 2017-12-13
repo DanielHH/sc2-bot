@@ -17,7 +17,7 @@ public:
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 
-    static sc2::UNIT_TYPEID best_counter_type;
+    static sc2::UNIT_TYPEID current_best_counter_type;
 
     // New unit is saved in vector Units. (Call this function whenever a new unit is created)
     void SaveOurUnits(const sc2::Unit* unit);

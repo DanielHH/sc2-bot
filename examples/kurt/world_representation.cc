@@ -39,6 +39,8 @@ void WorldRepresentation::UpdateWorldRep() {
             world_representation.at(y).at(x)->SetGasAmount(0);
             cell->ClearBuildings();
             cell->ClearTroops();
+            cell->ClearAlliedTroops();
+            cell->ClearAlliedBuildings();
         }
     }
     for (const Unit* enemy : observed_enemy_units) {
@@ -56,6 +58,12 @@ void WorldRepresentation::UpdateWorldRep() {
         int ally_cell_y_pos = ally->pos.y / chunk_size;
         WorldCell* cell = kurt->world_rep->world_representation.at(ally_cell_y_pos).at(ally_cell_x_pos);
         cell->SetSeenOnGameStep(kurt->Observation()->GetGameLoop());
+        
+        if (kurt->IsStructure(ally)) {
+            cell->AddAlliedBuilding(ally);
+        } else if (kurt->IsArmyUnit(ally)) {
+            cell->AddAlliedTrooper(ally);
+        }
     }
     PopulateNeutralUnits();
 }

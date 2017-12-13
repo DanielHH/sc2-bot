@@ -6,6 +6,7 @@
 #include "cell_priority_queue.h"
 #include "danger_point.cc"
 #include <list>
+#include "squad.h"
 
 
 //using namespace sc2;
@@ -18,7 +19,6 @@ public:
 
     // Gets called every game step
     void OnStep(const sc2::ObservationInterface* observation);
-
     void GroupNewUnit(const sc2::Unit* unit, const sc2::ObservationInterface* observation);
 
 
@@ -26,6 +26,8 @@ private:
     Kurt* kurt;
     CellPriorityQueue* scoutCellPriorityQueue;
     CellPriorityQueue* armyCellPriorityQueue;
+    CellPriorityQueue* defendCellPriorityQueue;
+    std::vector<Squad*> squads;
     std::vector<DangerPoint*> danger_points;
     float scout_safe_distance = 15;
     int danger_time = 1;
@@ -35,7 +37,6 @@ private:
     void Defend();
     void PlanSmartScoutPath();
     bool TryGetScout();
-    bool CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos);
-    void PutUnitInGroup(const sc2::Unit* unit);
+    void PutUnitInSquad(const sc2::Unit* unit);
     void ScoutSmartPath();
 };

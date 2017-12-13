@@ -68,7 +68,7 @@ void ObservedUnits::RemoveUnit(const sc2::UNIT_TYPEID unit_type) {
     saved_units[unit_type] -= 1;
 }
 
-void ObservedUnits::calculateCP() {
+void ObservedUnits::calculateCP() { //TODO: Remove DPS with dead units.
     // Reset cp-data.
     cp.g2g = 0;
     cp.g2a = 0;
@@ -327,7 +327,7 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     PRINT("Best counter unit found: " << Kurt::GetUnitType(best_counter_type)->name)
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
 
-    BPState* counter_order = new BPState();
+    BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
     bool prog_mode = kurt->GetProgressionMode();
     if (current_best_counter_type != best_counter_type) {
         current_best_counter_type = best_counter_type;
@@ -337,11 +337,8 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     }
     else if (prog_mode) {
         counter_order->SetUnitAmount(sc2::UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
-        counter_order->SetUnitAmount(best_counter_type, 5);
     }
-    else {
-        counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
-    }
+    counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
     return counter_order;
 }
 

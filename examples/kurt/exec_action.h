@@ -46,7 +46,8 @@ public:
     static bool FindNextCommandcenterLoc(
             sc2::ObservationInterface const * obs,
             sc2::QueryInterface * query,
-            sc2::Point2D & location);
+            sc2::Point3D const & nearby,
+            sc2::Point2D & ans);
 
 private:
 
