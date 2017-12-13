@@ -29,6 +29,7 @@
 
 using namespace sc2;
 using std::vector;
+using std::set;
 
 std::map<Unit const*, int> ExecAction::sent_order_time;
 std::map<Unit const*, int> ExecAction::built_refinery_time;
@@ -36,8 +37,8 @@ std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
 
-vector<Tag> techlab_builders;
-vector<Tag> reactor_builders;
+set<Tag> techlab_builders;
+set<Tag> reactor_builders;
 
 double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
     if (sent_order_time.count(unit) == 0) {
@@ -160,12 +161,34 @@ void ExecAction::OnUnitIdle(
     }
 }
 
+bool IsAddonAction(ACTION action) {
+    switch (action) {
+    case ACTION::BUILD_BARRACKS_REACTOR:
+    case ACTION::BUILD_FACTORY_REACTOR:
+    case ACTION::BUILD_STARPORT_REACTOR:
+    case ACTION::BUILD_BARRACKS_TECH_LAB:
+    case ACTION::BUILD_FACTORY_TECH_LAB:
+    case ACTION::BUILD_STARPORT_TECH_LAB:
+        return true;
+    }
+    return false;
+}
+
 bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     Units us;
     Unit const * target;
     ActionInterface * action_interface = kurt->Actions();
     QueryInterface *query = kurt->Query();
     ObservationInterface const *obs = kurt->Observation();
+
+    if (!IsAddonAction(action)) {
+        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return techlab_builders.count(u.tag) + reactor_builders.count(u.tag) != 0; })) {
+            action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+        }
+        techlab_builders.clear();
+        reactor_builders.clear();
+    }
+
     switch (action) {
     default:
         //
@@ -206,7 +229,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                 }
                 else {
                     action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                    reactor_builders.push_back(u->tag);
+                    reactor_builders.insert(u->tag);
                     return false;
                 }
             }
@@ -238,7 +261,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                 }
                 else {
                     action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                    techlab_builders.push_back(u->tag);
+                    techlab_builders.insert(u->tag);
                     return false;
                 }
             }
@@ -270,7 +293,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                     }
                     else {
                         action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                        reactor_builders.push_back(u->tag);
+                        reactor_builders.insert(u->tag);
                         return false;
                     }
                 }
@@ -302,7 +325,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                     }
                     else {
                         action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                        techlab_builders.push_back(u->tag);
+                        techlab_builders.insert(u->tag);
                         return false;
                     }
                 }
@@ -334,7 +357,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                 }
                 else {
                     action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                    reactor_builders.push_back(u->tag);
+                    reactor_builders.insert(u->tag);
                     return false;
                 }
             }
@@ -365,7 +388,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                     return true;
                 } else {
                     action_interface->UnitCommand(u, ABILITY_ID::LIFT);
-                    techlab_builders.push_back(u->tag);
+                    techlab_builders.insert(u->tag);
                     return false;
                 }
             }
