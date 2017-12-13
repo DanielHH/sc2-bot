@@ -17,6 +17,14 @@ public:
         float g2a; // Ground to air DPS
         float a2g; // Air to ground DPS
         float a2a; // Air to air DPS
+
+        float const GetAirCp() const {
+            return g2a + a2a;
+        }
+
+        float GetGroundCp() const {
+            return g2g + a2g;
+        }
     };
 
     // A map with health data for all units already seen
@@ -49,6 +57,12 @@ public:
 
     /* Returns a float which represents the max health a group of units of a certain unittype can have. */
     float CalculateUnitTypeMaxHealth(sc2::UNIT_TYPEID unit_type);
+
+    /* Returns the total amount of health for the air untis */
+    float GetAirHealth();
+
+    /* Returns the total amount of health for the ground units */
+    float GetGroundHealth();
 
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
