@@ -129,14 +129,19 @@ GamePlan* DefendGamePlan(Kurt* kurt) {
     BPState* first_build_order = new BPState();
     BPState* second_build_order = new BPState();
     BPState* third_build_order = new BPState();
+    BPState* fourth_build_order = new BPState();
 
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 1);
-    plan->AddStatBuildOrderNode(first_build_order);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 8);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 8);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 5);
+    fourth_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+    
     plan->AddStatCombatNode(Kurt::DEFEND);
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 1);
+    plan->AddStatBuildOrderNode(first_build_order);
     plan->AddStatBuildOrderNode(second_build_order);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
-    plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddStatBuildOrderNode(third_build_order);
+    plan->AddStatBuildOrderNode(fourth_build_order);
     return plan;
 }
 #undef DEBUG // Stop debug prints from leaking

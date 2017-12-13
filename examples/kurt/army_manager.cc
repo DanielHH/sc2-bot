@@ -38,15 +38,14 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
         ArmyManager::PlanSmartScoutPath();
     }
     switch (kurt->GetCombatMode()) {
-        case Kurt::DEFEND:
-            ArmyManager::Defend();
-            break;
+
         case Kurt::ATTACK:
             ArmyManager::Attack();
             break;
         case Kurt::HARASS:
+        case Kurt::DEFEND:
         default:
-            ArmyManager::Harass();
+            ArmyManager::Defend();
             break;
     }
 }
