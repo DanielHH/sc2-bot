@@ -114,7 +114,7 @@ void ArmyManager::PlanSmartScoutPath(){
         Point2D start_pos = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
         Point2D goal = Point2D((int)picked_point.x, (int)picked_point.y); // convert float pos to grid pos
         std::vector<Node> open_list; // needs to be sorted after insert/update, best should be at back!
-        std::vector<Point2D> closed_list;
+        std::vector<Node> closed_list;
         //bstd::less<Point2D> foo;
         //foo.operator() = [](sc2::Point2D &lhs, sc2::Point2D &rhs){return true;};
         auto cmp = [](const Point2D&a, const Point2D& b) { return a.x < b.x; };
@@ -136,32 +136,34 @@ void ArmyManager::PlanSmartScoutPath(){
         open_list.push_back(Node(start_pos, f_score[start_pos]));
         g_score[start_pos] = 0;
         while (!open_list.empty()) {
-            Point2D current_pos = (open_list.back()).pos;
-            if (current_pos == goal) {
+            Node current_node = open_list.back();
+            //Point2D current_pos = (open_list.back()).pos;
+            if (current_node.pos == goal) {
                 // done, walk to it
             }
-            open_list.erase(std::find(open_list.begin(), open_list.end(), current_pos));
-            closed_list.push_back(current_pos);
+            //open_list.erase(std::find(open_list.begin(), open_list.end(), current_node));
+            open_list.pop_back();
+            closed_list.push_back(current_node);
             // loop over neighbours
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j > 2; j++) {
-                    Point2D neighbour = Point2D(current_pos.x+i, current_pos.x+j);
+                    Point2D neighbour = Point2D(current_node.pos.x+i, current_node.pos.x+j);
                     // check if neighbour in closed
-                    if (std::find_if(begin(closed_list), end(closed_list), [&](const Point2D &f) { return f.x == neighbour.x && f.y == neighbour.y; }) != end(closed_list)) {
+                    if (std::find_if(closed_list.begin(), closed_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(closed_list)) {
                         continue;
                     }
                     float distance = kurt->Query()->PathingDistance(scout, neighbour);
                     if (distance > 0.1f) { // pathable
-                        float tentative_g_score = g_score[current_pos] + distance;
+                        float tentative_g_score = g_score[current_node.pos] + distance;
                         if (tentative_g_score >= g_score[neighbour]) {
                             continue;		// This is not a better path.
                         }
                         // This path is the best until now. Record it!
                         g_score[neighbour] = tentative_g_score;
-                        camefrom[neighbour] = current_pos;
+                        camefrom[neighbour] = current_node.pos;
                         f_score[neighbour] = g_score[neighbour] + Distance2D(neighbour, goal);
                         // check if neighbour not in open
-                        if (!(std::find_if(begin(open_list), end(open_list), [&](const Point2D &f) { return f.x == neighbour.x && f.y == neighbour.y; }) != end(open_list))) {
+                        if (!(std::find_if(open_list.begin(), open_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(open_list))) {
                             
                             open_list.push_back(Node(neighbour, f_score[neighbour]));
                             std::sort(open_list.begin(), open_list.end(), NodeComp());
