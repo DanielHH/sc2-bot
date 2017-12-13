@@ -5,7 +5,7 @@
 
 //TODO: Remove destroyed structures from enemy_structures (or our_strucutreS)
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -172,7 +172,7 @@ void StrategyManager::CalculateCombatMode() {
     PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
     PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
 
-    if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
+    if ((our_cp->g2g + our_cp->g2a + our_cp->a2g + our_cp->a2a) >= (enemy_cp->g2g + enemy_cp->a2g + enemy_cp->g2a + enemy_cp->a2a)) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
     }

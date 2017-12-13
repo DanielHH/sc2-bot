@@ -44,6 +44,8 @@ public:
     /* Removes a unit from the observations */
     void RemoveUnit(const sc2::Unit* unit);
 
+    void RemoveUnit(const sc2::UNIT_TYPEID unit_type);
+
     /* Calculates the combat power (DPS in each category) for all units in saved_units */
     void calculateCP();
 
