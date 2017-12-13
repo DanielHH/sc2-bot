@@ -17,7 +17,7 @@ public:
     float TimeRequired(BPState * const);
 
     /* Executes as much of this plan as possible during one game tick */
-    void ExecuteStep(Kurt * const);
+    void ExecuteStep(Kurt * const, BPState * const current_state = nullptr);
 
     std::string ToString() const;
 };

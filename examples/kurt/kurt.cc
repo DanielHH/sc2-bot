@@ -110,10 +110,13 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
         return;
     }
     TimeNew();
-    for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
-        if ((*it).first == destroyed_unit->unit_type.ToType()) {
-            build_manager->InitNewPlan();
-            break;
+    if (build_manager->goal != nullptr) {
+        for (auto it = build_manager->goal->UnitsBegin();
+                it != build_manager->goal->UnitsEnd(); ++it) {
+            if ((*it).first == destroyed_unit->unit_type.ToType()) {
+                build_manager->InitNewPlan();
+                break;
+            }
         }
     }
     TimeNext(time_bm);
@@ -209,6 +212,15 @@ bool Kurt::IsStructure(const Unit* unit) {
     return is_structure;
 }
 
+bool Kurt::CanPathToLocation(const sc2::Unit* unit, sc2::Point2D& target_pos) {
+    // Send a pathing query from the unit to that point. Can also query from point to point,
+    // but using a unit tag wherever possible will be more accurate.
+    // Note: This query must communicate with the game to get a result which affects performance.
+    // Ideally batch up the queries (using PathingDistanceBatched) and do many at once.
+    float distance = Query()->PathingDistance(unit, target_pos);
+    return distance > 0.1f;
+}
+
 std::map<sc2::UNIT_TYPEID, sc2::UnitTypeData> Kurt::unit_types;
 std::map<sc2::ABILITY_ID, sc2::AbilityData> Kurt::abilities;
 std::map<sc2::UNIT_TYPEID, std::vector<sc2::ABILITY_ID>> Kurt::unit_ability_map;
@@ -239,6 +251,10 @@ void Kurt::TimeNext(double & time_count) {
     std::chrono::duration<double> time_span = clock_end - clock_start;
     time_count += time_span.count();
     clock_start = clock_end;
+}
+
+Point2D Kurt::RandomPoint(Point2D const &origin, float x_dist, float y_dist) {
+    return { origin.x + GetRandomScalar() * x_dist, origin.y + GetRandomScalar() * y_dist };
 }
 
 #undef DEBUG // Stop debug prints from leaking

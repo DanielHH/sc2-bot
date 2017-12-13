@@ -55,7 +55,13 @@ enum class ACTION {
     TRAIN_POINT_DEFENSE_DRONE,
     TRAIN_AUTO_TURRET,
 
-    // Other
+    // The FLY commands is NOT meaant to be used in the search
+    // but only in the simulation of a current state
+    FLY_COMMAND_CENTER,
+    FLY_ORBITAL_COMMAND,
+    FLY_BARRACKS,
+    FLY_FACTORY,
+    FLY_STARPORT,
 };
 
 std::string ActionToName(ACTION action);

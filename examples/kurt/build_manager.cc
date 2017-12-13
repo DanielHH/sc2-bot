@@ -87,6 +87,10 @@ void TestMCTS(BPState * const start, BPState * const goal) {
 }
 
 void BuildManager::OnStep(const ObservationInterface* observation) {
+    // The first tick is lacking data.
+    if (observation->GetGameLoop() == 0) {
+        return;
+    }
     // If there is no goal in life, what is the point of living?
     if (goal == nullptr) {
         return;
@@ -100,26 +104,77 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
             delete mcts;
             mcts = nullptr;
         }
-    }
-    if (mcts == nullptr) {
+        steps_until_replan = STEPS_BETWEEN_REPLAN_MIN;
+        old_steps_until_replan = STEPS_BETWEEN_REPLAN_MIN;
+        current_plan.resize(0);
         mcts = new MCTS(&current_state, goal);
-    }
-    mcts->Search(SEARCH_ITER_PER_STEP);
-    if (steps_until_replan <= 0) {
-        current_plan = mcts->BestPlan();
+    } else if (steps_until_replan == 0) {
+        int next_steps_until_replan;
+        if (current_plan.empty()) {
+            next_steps_until_replan = old_steps_until_replan * 2;
+        } else {
+            next_steps_until_replan = old_steps_until_replan - 1;
+        }
+        next_steps_until_replan = std::max(
+                next_steps_until_replan, STEPS_BETWEEN_REPLAN_MIN);
+        next_steps_until_replan = std::min(
+                next_steps_until_replan, STEPS_BETWEEN_REPLAN_MAX);
+        old_steps_until_replan = next_steps_until_replan;
+        steps_until_replan = next_steps_until_replan;
+
+        BPPlan next_plan;
+        next_plan.insert(next_plan.end(), current_plan.begin(), current_plan.end());
+        current_plan.resize(0);
+        BPPlan additional_plan = mcts->BestPlan();
+        next_plan.insert(next_plan.end(),
+                additional_plan.begin(), additional_plan.end());
         delete mcts;
         mcts = nullptr;
-        steps_until_replan = STEPS_BETWEEN_REPLAN;
+
+        bool abort = false;
+        double search_start = current_state.GetTime() +
+            steps_until_replan * SEC_PER_STEP;
+        BPState test_state(current_state);
+        for (int i = 0; i < next_plan.size(); ++i) {
+            ACTION action = next_plan[i];
+            if (test_state.CanExecuteNowOrSoon(action)) {
+                test_state.AddAction(action);
+                if (test_state.GetTime() <= search_start) {
+                    current_plan.push_back(action);
+                } else {
+                    break;
+                }
+            } else {
+                abort = true;
+                break;
+            }
+        }
+        if (! abort) {
+            BPState search_from(current_state);
+            if (search_from.SimulatePlan(current_plan)) {
+                mcts = new MCTS(&search_from, goal);
+            } else {
+                abort = true;
+            }
+        }
+        if (abort) {
+            steps_until_replan = STEPS_BETWEEN_REPLAN_MIN;
+            old_steps_until_replan = STEPS_BETWEEN_REPLAN_MIN;
+            current_plan.resize(0);
+            mcts = new MCTS(&current_state, goal);
+        }
 
         PRINT("--- Created new plan ---")
         TEST(current_state.Print();)
         PRINT(current_plan)
+        PRINT("next_steps_until_replan: " << next_steps_until_replan)
     }
+    mcts->Search(SEARCH_ITER_PER_STEP);
     --steps_until_replan;
     //
     // Execute the current plan
     //
-    current_plan.ExecuteStep(agent);
+    current_plan.ExecuteStep(agent, &current_state);
     //
     // Test if a goal is reached
     //
@@ -160,6 +215,10 @@ void BuildManager::SetGoal(BPState * const goal_) {
     }
     goal = goal_;
     BPState curr(agent);
+    if (goal->GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0 &&
+            curr.GetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS) <= 2) {
+        goal->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    }
     for (auto it = goal->UnitsBegin(); it != goal->UnitsEnd(); ++it) {
         goal->IncreaseUnitAmount(it->first, curr.GetUnitAmount(it->first));
     }

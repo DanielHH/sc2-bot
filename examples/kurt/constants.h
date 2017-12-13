@@ -3,6 +3,7 @@
 #include "sc2api/sc2_api.h"
 
 const uint32_t STEPS_PER_SEC = 24;
+const double SEC_PER_STEP = 1 / (double) STEPS_PER_SEC;
 
 const double MINERALS_PER_SEC_PER_SCV = 1.08;
 const double VESPENE_PER_SEC_PER_SCV = 1.68;

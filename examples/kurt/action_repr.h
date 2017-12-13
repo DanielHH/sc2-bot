@@ -9,10 +9,10 @@ class ActionRepr {
 public:
     
 
-    std::map<sc2::UNIT_TYPEID, int> required;
-    std::map<sc2::UNIT_TYPEID, int> consumed;
-    std::map<sc2::UNIT_TYPEID, int> borrowed;
-    std::map<sc2::UNIT_TYPEID, int> produced;
+    std::map<sc2::UNIT_TYPEID, int> const required;
+    std::map<sc2::UNIT_TYPEID, int> const consumed;
+    std::map<sc2::UNIT_TYPEID, int> const borrowed;
+    std::map<sc2::UNIT_TYPEID, int> const produced;
 
     double time_required;
 
@@ -23,6 +23,8 @@ public:
     static void InitConvertMap();
 
     static ACTION CreatesUnit(sc2::UNIT_TYPEID unit);
+
+    static int ConsumedUnits(ACTION action, sc2::UNIT_TYPEID unit);
 
 private:
     ActionRepr(std::map<sc2::UNIT_TYPEID, int> const &,
