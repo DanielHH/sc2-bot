@@ -67,6 +67,12 @@ BPState::BPState(Kurt * const kurt) {
         IncreaseUnitAmount(type, 1);
         IncreaseUnitAvailableAmount(type, 1);
         switch (type) {
+        case UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED:
+            IncreaseUnitAmount(type, -1);
+            IncreaseUnitAvailableAmount(type, -1);
+            IncreaseUnitAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1);
+            IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1);
+            break;
         case UNIT_TYPEID::TERRAN_REFINERY:
             // TERRAN_REFINERY added later
             IncreaseUnitAmount(type, -1);
