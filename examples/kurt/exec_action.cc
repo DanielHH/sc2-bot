@@ -186,6 +186,16 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
                 action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
                 techlab_builders.erase(fly_guy->tag);
+            } else {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(fly_guy->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::LAND, target_point, fly_guy)) {
+                        action_interface->UnitCommand(fly_guy, SC2Type<ABILITY_ID>(ABILITY_ID::LAND), target_point, true);
+                        techlab_builders.erase(fly_guy->tag);
+                        break;
+                    }
+                }
             }
         }
 
@@ -193,6 +203,16 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
                 action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
                 reactor_builders.erase(fly_guy->tag);
+            } else {
+                Point2D target_point;
+                for (float dist = 12; dist < 22; dist += 0.5) {
+                    target_point = Kurt::RandomPoint(fly_guy->pos, dist, dist);
+                    if (query->Placement(ABILITY_ID::LAND, target_point, fly_guy)) {
+                        action_interface->UnitCommand(fly_guy, SC2Type<ABILITY_ID>(ABILITY_ID::LAND), target_point, true);
+                        reactor_builders.erase(fly_guy->tag);
+                        break;
+                    }
+                }
             }
         }
     }
