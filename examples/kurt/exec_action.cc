@@ -217,8 +217,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             Unit const *u;
             if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKSFLYING) {
                 Point2D target_point;
-                float dist = 12;
-                for (int i = 0; i < 22; ++i) {
+                for (float dist = 12; dist < 22; dist += 0.5) {
                     target_point = Kurt::RandomPoint(u->pos, dist, dist);
                     if (query->Placement(ABILITY_ID::BUILD_REACTOR_BARRACKS, target_point, u)) {
                         action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_BARRACKS), target_point, true);
@@ -249,8 +248,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             Unit const *u;
             if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_BARRACKSFLYING) {
                 Point2D target_point;
-                float dist = 12;
-                for (int i = 0; i < 22; ++i) {
+                for (float dist = 12; dist < 22; dist += 0.5) {
                     target_point = Kurt::RandomPoint(u->pos, dist, dist);
                     if (query->Placement(ABILITY_ID::BUILD_TECHLAB_BARRACKS, target_point, u)) {
                         action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_BARRACKS), target_point, true);
@@ -281,8 +279,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                 Unit const *u;
                 if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORYFLYING) {
                     Point2D target_point;
-                    float dist = 12;
-                    for (int i = 0; i < 22; ++i) {
+                        for (float dist = 12; dist < 22; dist += 0.5) {
                         target_point = Kurt::RandomPoint(u->pos, dist, dist);
                         if (query->Placement(ABILITY_ID::BUILD_REACTOR_FACTORY, target_point, u)) {
                             action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_FACTORY), target_point, true);
@@ -313,8 +310,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
                 Unit const *u;
                 if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_FACTORYFLYING) {
                     Point2D target_point;
-                    float dist = 12;
-                    for (int i = 0; i < 22; ++i) {
+                        for (float dist = 12; dist < 22; dist += 0.5) {
                         target_point = Kurt::RandomPoint(u->pos, dist, dist);
                         if (query->Placement(ABILITY_ID::BUILD_TECHLAB_FACTORY, target_point, u)) {
                             action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_FACTORY), target_point, true);
@@ -345,8 +341,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             Unit const *u;
             if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORTFLYING) {
                 Point2D target_point;
-                float dist = 12;
-                for (int i = 0; i < 22; ++i) {
+                for (float dist = 12; dist < 22; dist += 0.5) {
                     target_point = Kurt::RandomPoint(u->pos, dist, dist);
                     if (query->Placement(ABILITY_ID::BUILD_REACTOR_STARPORT, target_point, u)) {
                         action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_REACTOR_STARPORT), target_point, true);
@@ -377,8 +372,7 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
             Unit const *u;
             if ((u = obs->GetUnit(t))->unit_type.ToType() == UNIT_TYPEID::TERRAN_STARPORTFLYING) {
                 Point2D target_point;
-                float dist = 12;
-                for (int i = 0; i < 22; ++i) {
+                for (float dist = 12; dist < 22; dist += 0.5) {
                     target_point = Kurt::RandomPoint(u->pos, dist, dist);
                     if (query->Placement(ABILITY_ID::BUILD_TECHLAB_STARPORT, target_point, u)) {
                         action_interface->UnitCommand(obs->GetUnit(*it), SC2Type<ABILITY_ID>(ABILITY_ID::BUILD_TECHLAB_STARPORT), target_point, true);
@@ -522,8 +516,7 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
             {
                 bool success = false;
                 // Assume we have to place a unit.
-                float dist = 12;
-                for (int i = 0; i < 22; ++i) {
+                for (float dist = 12; dist < 22; dist += 0.5) {
                     target_point = Kurt::RandomPoint(u->pos, dist, dist);
                     if (query->Placement(ability, target_point, u)) {
                         success = true;
