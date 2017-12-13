@@ -211,6 +211,10 @@ void BuildManager::SetGoal(BPState * const goal_) {
     }
     goal = goal_;
     BPState curr(agent);
+    if (goal->GetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0 &&
+            curr.GetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS) <= 2) {
+        goal->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    }
     for (auto it = goal->UnitsBegin(); it != goal->UnitsEnd(); ++it) {
         goal->IncreaseUnitAmount(it->first, curr.GetUnitAmount(it->first));
     }
