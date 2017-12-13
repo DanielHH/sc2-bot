@@ -51,6 +51,16 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
     }
 }
 
+bool operator<(const sc2::Point2D & lhs, const sc2::Point2D & rhs) {
+    if (lhs.x < rhs.x) {
+        return true;
+    } else if (lhs.x == rhs.x) {
+        return lhs.y < rhs.y;
+    } else {
+        return false;
+    }
+}
+
 void ArmyManager::PlanSmartScoutPath(){
     // THREAT MAP & A*
     for (const Unit* enemy: kurt->Observation()->GetUnits(Unit::Alliance::Enemy)) {
@@ -105,14 +115,19 @@ void ArmyManager::PlanSmartScoutPath(){
         Point2D goal = Point2D((int)picked_point.x, (int)picked_point.y); // convert float pos to grid pos
         std::vector<std::pair<Point2D, float>> open_list; // needs to be sorted after insert/update, best should be at back!
         std::vector<Point2D> closed_list;
+        std::less<Point2D> foo;
+        foo.operator() = [](sc2::Point2D &lhs, sc2::Point2D &rhs){return true;};
         std::map<Point2D, float> g_score;
         std::map<Point2D, float> f_score;
         std::map<Point2D, Point2D> camefrom;
         ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
         for (int x = 0; x < actual_world.width; x++) {
             for (int y = 0; y < actual_world.height; y++) {
+                
+                //g_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
+                //f_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
+                //g_score[Point2D(x, y)] = INFINITY;
                 g_score[Point2D(x, y)] = INFINITY;
-                f_score[Point2D(x, y)] = INFINITY;
             }
         }
         //add start (current) node to open

@@ -20,6 +20,7 @@ public:
     // Gets called every game step
     void OnStep(const sc2::ObservationInterface* observation);
     void GroupNewUnit(const sc2::Unit* unit, const sc2::ObservationInterface* observation);
+    
 
 
 private:
