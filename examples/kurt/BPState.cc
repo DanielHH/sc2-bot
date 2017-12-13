@@ -266,7 +266,7 @@ BPState::BPState(Kurt * const kurt) {
         Print();
         std::cout << "Error: BPState: Constructor(Kurt*): " <<
             "Adding action updated time on state" << std::endl;
-        throw std::runtime_error("BPState: Invalid constructor.");
+//        throw std::runtime_error("BPState: Invalid constructor.");
     }
 }
 
@@ -276,31 +276,35 @@ BPState::~BPState() {
     }
 }
 
-void BPState::UpdateUntilAvailable(ACTION action) {
+bool BPState::UpdateUntilAvailable(ACTION action) {
     ActionRepr ar = ActionRepr::values.at(action);
     UNIT_TYPEID minerals = UNIT_FAKEID::MINERALS;
     UNIT_TYPEID vespene = UNIT_FAKEID::VESPENE;
     unsigned long int num_iterations_waited = 0;
-    unsigned long int last_print = 0;
     while (! CanExecuteNow(action)) {
-        if (num_iterations_waited++ > 2000 && num_iterations_waited > last_print + 100) {
-            last_print = num_iterations_waited;
-            Print();
-            std::cerr << "UpdateUntilAvailable: " << num_iterations_waited << " iterations\n";
-        }
-        if (!CanExecuteNowOrSoon(action)) {
+        if (num_iterations_waited++ > 2000) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                "Action never available (test), action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: Update never available");
+                "Looping over 2000 iterations, action: " << action << std::endl;
+            return false;
         }
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
+            if (GetMineralRate() == 0) {
+                std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                    "GetMineralRate() == 0, action: " << action << std::endl;
+                return false;
+            }
             minerals_time = 1 / GetMineralRate() *
                 std::max(0, ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals));
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
+            if (GetVespeneRate() == 0) {
+                std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                    "GetVespeneRate() == 0, action: " << action << std::endl;
+                return false;
+            }
             vespene_time = 1 / GetVespeneRate() *
                 std::max(0, ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene));
         }
@@ -316,15 +320,18 @@ void BPState::UpdateUntilAvailable(ACTION action) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
                 "Infinity, action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: Update INFINITY time");
+//            throw std::runtime_error("BPPlan: Update INFINITY time");
+            return false;
         } else if (delta_time == 0) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
                 "Zero, action: " << action << std::endl;
-            throw std::runtime_error("BPPlan: Update zero time");
+//            throw std::runtime_error("BPPlan: Update zero time");
+            return false;
         }
         SimpleUpdate(delta_time);
     }
+    return true;
 }
 
 void BPState::SimpleUpdate(double delta_time) {
@@ -349,7 +356,9 @@ bool BPState::SimulatePlan(BPPlan & plan) {
     for (auto it = plan.begin(); it != plan.end(); ++it) {
         ACTION action = *it;
         if (CanExecuteNowOrSoon(action)) {
-            AddAction(action);
+            if (! AddAction(action)) {
+                return false;
+            }
         } else {
             return false;
         }
@@ -362,7 +371,9 @@ bool BPState::SimulatePlan(BPPlan * plan) {
     for (auto it = plan->begin(); it != plan->end(); ++it) {
         ACTION action = *it;
         if (CanExecuteNowOrSoon(action)) {
-            AddAction(action);
+            if (! AddAction(action)) {
+                return false;
+            }
         } else {
             return false;
         }
@@ -371,8 +382,10 @@ bool BPState::SimulatePlan(BPPlan * plan) {
     return true;
 }
 
-void BPState::AddAction(ACTION action, double time) {
-    UpdateUntilAvailable(action);
+bool BPState::AddAction(ACTION action, double time) {
+    if (! UpdateUntilAvailable(action)) {
+        return false;
+    }
     ActionRepr ar = ActionRepr::values.at(action);
     for (auto pair : ar.consumed) {
         UNIT_TYPEID type = pair.first;
@@ -403,10 +416,11 @@ void BPState::AddAction(ACTION action, double time) {
         ActiveAction other = *it;
         if (aa < other) {
             actions.insert(it, aa);
-            return;
+            return true;
         }
     }
     actions.push_back(aa);
+    return true;
 }
 
 void BPState::CompleteAllActions() {

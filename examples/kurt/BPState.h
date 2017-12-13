@@ -27,8 +27,9 @@ public:
 
     /* Updates this state until given action can be executed in this state.
      * If the action can be executed now, this update does nothing.
+     * Returns true if success, false on failure.
      */
-    void UpdateUntilAvailable(ACTION);
+    bool UpdateUntilAvailable(ACTION);
 
     /* Updates this state by adding all actions in given plan
      * and run CompleteAllActions.
@@ -37,8 +38,10 @@ public:
     bool SimulatePlan(BPPlan &);
     bool SimulatePlan(BPPlan * const);
 
-    /* Updates this state and add the action. */
-    void AddAction(ACTION action, double time_left = -1);
+    /* Updates this state and add the action.
+     * Returns true if success, false on failure.
+     */
+    bool AddAction(ACTION action, double time_left = -1);
 
     /* Updates this state with completing all active actions. */
     void CompleteAllActions();
