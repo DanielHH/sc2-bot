@@ -290,23 +290,27 @@ bool BPState::UpdateUntilAvailable(ACTION action) {
         }
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
-            if (GetMineralRate() == 0) {
-                std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                    "GetMineralRate() == 0, action: " << action << std::endl;
-                return false;
+            int remaining = ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals);
+            if (remaining > 0) {
+                if (GetMineralRate() == 0) {
+                    std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                        "GetMineralRate() == 0, action: " << action << std::endl;
+                    return false;
+                }
+                minerals_time = remaining / GetMineralRate();
             }
-            minerals_time = 1 / GetMineralRate() *
-                std::max(0, ar.consumed.at(minerals) - GetUnitAvailableAmount(minerals));
         }
         double vespene_time = 0;
         if (ar.consumed.count(vespene) != 0) {
-            if (GetVespeneRate() == 0) {
-                std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                    "GetVespeneRate() == 0, action: " << action << std::endl;
-                return false;
+            int remaining = ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene);
+            if (remaining > 0) {
+                if (GetVespeneRate() == 0) {
+                    std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                        "GetVespeneRate() == 0, action: " << action << std::endl;
+                    return false;
+                }
+                vespene_time = remaining / GetVespeneRate();
             }
-            vespene_time = 1 / GetVespeneRate() *
-                std::max(0, ar.consumed.at(vespene) - GetUnitAvailableAmount(vespene));
         }
         double delta_time = std::max(minerals_time, vespene_time);
         if (! actions.empty()) {
