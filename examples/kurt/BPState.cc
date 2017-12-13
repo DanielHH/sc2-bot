@@ -237,11 +237,14 @@ void BPState::UpdateUntilAvailable(ACTION action) {
     while (! CanExecuteNow(action)) {
         if (num_iterations_waited++ > 2000 && num_iterations_waited > last_print + 100) {
             last_print = num_iterations_waited;
+            Print();
             std::cerr << "UpdateUntilAvailable: " << num_iterations_waited << " iterations\n";
         }
         if (!CanExecuteNowOrSoon(action)) {
-            std::cerr << "You dumb bro" << std::endl;
-            throw nullptr;
+            Print();
+            std::cout << "Error: BPState: UpdateUntilAvailable: " <<
+                "Action never available (test), action: " << action << std::endl;
+            throw std::runtime_error("BPPlan: Update never available");
         }
         double minerals_time = 0;
         if (ar.consumed.count(minerals) != 0) {
@@ -264,12 +267,12 @@ void BPState::UpdateUntilAvailable(ACTION action) {
         if (delta_time == INFINITY) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                "infinity, action: " << action << std::endl;
+                "Infinity, action: " << action << std::endl;
             throw std::runtime_error("BPPlan: Update INFINITY time");
         } else if (delta_time == 0) {
             Print();
             std::cout << "Error: BPState: UpdateUntilAvailable: " <<
-                "Action never available, action: " << action << std::endl;
+                "Zero, action: " << action << std::endl;
             throw std::runtime_error("BPPlan: Update zero time");
         }
         SimpleUpdate(delta_time);

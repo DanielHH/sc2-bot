@@ -55,6 +55,8 @@ void ExecAction::OnStep(Kurt * kurt) {
     //
     // Update scv to not gather minerals at overfull commandcenters
     //
+    // TODO Add support for TERRAN_ORBITALCOMMAND and TERRAN_PLANETARYFORTRESS
+    //
     int step = kurt->Observation()->GetGameLoop();
     int delay = 1 * STEPS_PER_SEC;
     int index = 0;
@@ -69,7 +71,9 @@ void ExecAction::OnStep(Kurt * kurt) {
                 Point2D(scv->pos.x, scv->pos.y),
                 kurt->Observation(),
                 Unit::Alliance::Self);
-        if (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters) {
+        if (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters ||
+                DistanceSquared3D(commandcenter->pos, scv->pos) >
+                BASE_RESOURCE_TEST_RANGE2) {
             Unit const * field = FindNextMineralField(kurt->Observation());
             if (field != nullptr) {
                 kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, field);
