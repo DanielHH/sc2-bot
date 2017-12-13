@@ -26,12 +26,12 @@ ObservedUnits enemy_structures;
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
 
-    current_plan = CreateDefaultGamePlan(kurt);
+    //current_plan = CreateDefaultGamePlan(kurt);
     //current_plan = RushPlan(kurt);
     //current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan = DefendGamePlan(kurt);
-    //current_plan->ExecuteNextNode();
+    current_plan->ExecuteNextNode();
 }
 
 void StrategyManager::OnStep(const ObservationInterface* observation) {

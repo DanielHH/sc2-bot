@@ -132,15 +132,15 @@ GamePlan* DefendGamePlan(Kurt* kurt) {
     BPState* fourth_build_order = new BPState();
 
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 8);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 8);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 5);
+    fourth_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+    
+    plan->AddStatCombatNode(Kurt::DEFEND);
     plan->AddStatBuildOrderNode(first_build_order);
-    plan->AddStatCombatNode(Kurt::DEFEND);
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
     plan->AddStatBuildOrderNode(second_build_order);
-    plan->AddStatCombatNode(Kurt::ATTACK);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
-    plan->AddStatCombatNode(Kurt::DEFEND);
     plan->AddStatBuildOrderNode(third_build_order);
-    fourth_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 5);
     plan->AddStatBuildOrderNode(fourth_build_order);
     return plan;
 }
