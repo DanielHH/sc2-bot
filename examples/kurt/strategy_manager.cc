@@ -42,30 +42,34 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     SaveSpottedEnemyUnits(observation);
 
     if (current_game_loop % 400 == 0) {
-        PRINT("------Enemy units-----------")
-            PRINT("\t|Total max health: " + to_string(enemy_units.GetTotalMaxHealth()) + "\t|")
-            PRINT("\t|g2g CP: " + to_string(enemy_units.GetCombatPower()->g2g) + "\t|")
-            PRINT("\t|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a) + "\t|")
-            PRINT("\t|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g) + "\t|")
-            PRINT("\t|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a) + "\t|")
+
+        const ObservedUnits::CombatPower* our_cp = our_units.GetCombatPower();
+        const ObservedUnits::CombatPower* enemy_cp = enemy_units.GetCombatPower();
+
+        PRINT("-----------Enemy units-----------")
+            PRINT("|Air health: " << to_string(enemy_units.GetAirHealth()) << "\t\t|")
+            PRINT("|Ground health: " << to_string(enemy_units.GetGroundHealth()) << "\t|")
+            PRINT("|Air DPS: " << to_string(enemy_cp->GetAirCp()) << "\t\t|")
+            PRINT("|Ground DPS: " << to_string(enemy_cp->GetGroundCp()) << "\t\t|")
             PRINT(enemy_units.ToString())
-            PRINT("------Enemy structures-------")
-            PRINT(enemy_structures.ToString())
-            PRINT("------Our units--------------")
-            PRINT("\t|Total max health: " + to_string(our_units.GetTotalMaxHealth()))
-            PRINT("\t|g2g CP: " + to_string(our_units.GetCombatPower()->g2g) + "\t|")
-            PRINT("\t|g2a CP: " + to_string(our_units.GetCombatPower()->g2a) + "\t|")
-            PRINT("\t|a2g CP: " + to_string(our_units.GetCombatPower()->a2g) + "\t|")
-            PRINT("\t|a2a CP: " + to_string(our_units.GetCombatPower()->a2a) + "\t|")
+            /*PRINT("------Enemy structures-------")
+            PRINT(enemy_structures.ToString())*/
+            PRINT("-----------Our units--------------")
+            PRINT("|Air health: " << to_string(our_units.GetAirHealth()) << "\t\t|")
+            PRINT("|Ground health: " << to_string(our_units.GetGroundHealth()) << "\t|")
+            PRINT("|Air DPS: " << to_string(our_cp->GetAirCp()) << "\t\t|")
+            PRINT("|Ground DPS: " << to_string(our_cp->GetGroundCp()) << "\t\t|")
             PRINT(our_units.ToString())
-            PRINT("------Our structures---------")
-            PRINT(our_structures.ToString())
-            PRINT("-----------------------------\n\n")
-            UpdateCurrentBestCounterType();
-        if(best_counter_type != ObservedUnits::current_best_counter_type) {
-            ExecuteSubplan();
+            /*PRINT("------Our structures---------")
+            PRINT(our_structures.ToString())*/
+            PRINT("---------------------------------\n")
+
+            CalculateCombatMode();
+        UpdateCurrentBestCounterType();
+        if (best_counter_type != ObservedUnits::current_best_counter_type) {
+            CalculateNewPlan();
         }
-    }
+    } 
 
 }
 
@@ -133,7 +137,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
         if (kurt->IsStructure(*observed_unit)) {
             observed_structures.push_back(*observed_unit);
         }
-        else {
+        else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
             observed_units.push_back(*observed_unit);
         }
     }
@@ -149,46 +153,64 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+    const float attack_const = 10; // Lower values make the ai more agressive, but with riskier attacks
+    const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
+    float c;
+    int attack_score = 0;
 
-    PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
-        PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
-        PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
-        PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
-
-    float our_anti_ground = our_cp->g2g + our_cp->a2g;
-    float our_anti_air = our_cp->g2a + our_cp->a2a;
-    float enemy_anti_ground = enemy_cp->g2g + enemy_cp->a2g;
-    float enemy_anti_air = enemy_cp->g2a + enemy_cp->a2a;
-
-    if (our_anti_ground > enemy_anti_ground && our_anti_air > enemy_anti_air) {
-        kurt->SetCombatMode(Kurt::ATTACK);
-        PRINT("COMBAT MODE: ATTACK")
-    }
-    else if (our_cp->g2g < enemy_cp->g2g && our_cp->g2a < enemy_cp->a2g && our_cp->a2g < enemy_cp->g2a && our_cp->a2a < enemy_cp->a2a) {
-        kurt->SetCombatMode(Kurt::DEFEND);
-        PRINT("COMBAT MODE: DEFEND")
+    if (current_combat_mode == Kurt::ATTACK) {
+        c = defend_const;
     }
     else {
-        kurt->SetCombatMode(Kurt::HARASS);
-        PRINT("COMBAT MODE: HARASS")
+        c = attack_const;
     }
+    PRINT("\n-------Calculate CombatMode---------")
+
+    // Do our air units have much health relative to the enemy air DPS? 
+    if (our_units.GetAirHealth() > enemy_cp->GetAirCp() * c) {
+        PRINT("We have good air health!")
+        attack_score++;
+    }
+    // Do our ground units have much health relative to the enemy ground DPS? 
+    if (our_units.GetGroundHealth() > enemy_cp->GetGroundCp() * c) {
+        PRINT("We have good ground health!")
+        attack_score++;
+    }
+    // Do we have high air DPS relative to the enemy's air units' health?
+    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) {
+        PRINT("We have good air DPS!")
+        attack_score++;
+    }
+    // Do we have high ground DPS relative to the enemy's ground units' health?
+    if (enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) {
+        PRINT("We have good ground DPS!")
+        attack_score++;
+    }
+
+    // If we win in at least 2 aspects of combat, we can try to attack.
+    // Else we have to retreat/continue to defend, and build up our army
+    if (attack_score >= 2 && current_combat_mode != Kurt::ATTACK) {
+        PRINT("ATTACK!")
+        kurt->SetCombatMode(Kurt::ATTACK);
+    }
+    else if (attack_score < 2 && current_combat_mode != Kurt::DEFEND) {
+        PRINT("RETREAT!")
+        kurt->SetCombatMode(Kurt::DEFEND);
+    }
+    
+    PRINT("---------------------\n")
 };
 
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-
     BPState* new_goal_state = new BPState();
 
-   /* if (our_cp->g2g < 80 || our_cp->g2a < 80) {
-        new_goal_state->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
-    }
-    else {
-        new_goal_state = CounterEnemyUnit();
-    }*/
-    PRINT("---------------------------")
-    PRINT("In SetBuildGoal")
-    new_goal_state = CounterEnemyUnit();
+    // TODO: Add missle turrets if enemy has many air units
+
+    // Add some amount of the currently best counter unit to the build order
+    new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
+    best_counter_type = ObservedUnits::current_best_counter_type;
     kurt->SendBuildOrder(new_goal_state);
 };
 

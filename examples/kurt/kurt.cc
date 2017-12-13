@@ -168,17 +168,15 @@ void Kurt::SetCombatMode(CombatMode new_combat_mode) {
 }
 
 void Kurt::CalculateCombatMode() {
-    PRINT("Dynamic combat mode")
     strategy_manager->CalculateCombatMode();
 }
 
 void Kurt::CalculateBuildOrder() {
-    PRINT("Dynamic build order")
     strategy_manager->SetBuildGoal();
 }
 
 void Kurt::CalculateNewPlan() {
-    PRINT("Creating new plan...")
+    PRINT("\Creating new plan...")
         strategy_manager->CalculateNewPlan();
 }
 
