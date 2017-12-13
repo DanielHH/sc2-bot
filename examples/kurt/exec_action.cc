@@ -182,11 +182,19 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     ObservationInterface const *obs = kurt->Observation();
 
     if (!IsAddonAction(action)) {
-        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return techlab_builders.count(u.tag) + reactor_builders.count(u.tag) != 0; })) {
-            action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return techlab_builders.count(u.tag) != 0; })) {
+            if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
+                action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+                techlab_builders.erase(fly_guy->tag);
+            }
         }
-        techlab_builders.clear();
-        reactor_builders.clear();
+
+        for (Unit const *fly_guy : obs->GetUnits([](Unit const &u) {return reactor_builders.count(u.tag) != 0; })) {
+            if (query->Placement(AbilityID(ABILITY_ID::LAND), fly_guy->pos, fly_guy)) {
+                action_interface->UnitCommand(fly_guy, ABILITY_ID::LAND, fly_guy->pos);
+                reactor_builders.erase(fly_guy->tag);
+            }
+        }
     }
 
     switch (action) {
