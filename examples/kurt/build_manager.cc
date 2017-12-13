@@ -87,6 +87,10 @@ void TestMCTS(BPState * const start, BPState * const goal) {
 }
 
 void BuildManager::OnStep(const ObservationInterface* observation) {
+    // The first tick is lacking data.
+    if (observation->GetGameLoop() == 0) {
+        return;
+    }
     // If there is no goal in life, what is the point of living?
     if (goal == nullptr) {
         return;
