@@ -182,6 +182,15 @@ void Kurt::CalculateNewPlan() {
         strategy_manager->CalculateNewPlan();
 }
 
+void Kurt::SetProgressionMode(bool new_progression_mode) {
+    strategy_manager->SetProgressionMode(new_progression_mode);
+}
+
+bool Kurt::GetProgressionMode() {
+    bool progression_mode = strategy_manager->GetProgressionMode();
+    return progression_mode;
+}
+
 bool Kurt::IsArmyUnit(const Unit* unit) {
     if (IsStructure(unit)) {
         return false;

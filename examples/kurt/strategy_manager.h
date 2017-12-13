@@ -35,9 +35,14 @@ public:
     // Decides what units should be built.
     void SetBuildGoal();
 
+    void SetProgressionMode(bool new_progression_mode);
+
+    bool GetProgressionMode();
+
 private:
     Kurt* kurt;
     GamePlan* current_plan;
+    bool progression_mode;
 
     /*
     Splits up observed enemy units into enemy_structures and enemy_units vectors. This saves the minimal

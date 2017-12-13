@@ -25,6 +25,7 @@ ObservedUnits enemy_structures;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
+    progression_mode = false;
 
     //current_plan = CreateDefaultGamePlan(kurt);
     //current_plan = RushPlan(kurt);
@@ -45,20 +46,21 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("\t|g2a CP: " + to_string(enemy_units.GetCombatPower()->g2a) + "\t|")
             PRINT("\t|a2g CP: " + to_string(enemy_units.GetCombatPower()->a2g) + "\t|")
             PRINT("\t|a2a CP: " + to_string(enemy_units.GetCombatPower()->a2a) + "\t|")
-        PRINT(enemy_units.ToString())
-        PRINT("------Enemy structures-------")
-        PRINT(enemy_structures.ToString())
-        PRINT("------Our units--------------")
+            PRINT(enemy_units.ToString())
+            PRINT("------Enemy structures-------")
+            PRINT(enemy_structures.ToString())
+            PRINT("------Our units--------------")
             PRINT("\t|Total max health: " + to_string(our_units.GetTotalMaxHealth()))
             PRINT("\t|g2g CP: " + to_string(our_units.GetCombatPower()->g2g) + "\t|")
             PRINT("\t|g2a CP: " + to_string(our_units.GetCombatPower()->g2a) + "\t|")
             PRINT("\t|a2g CP: " + to_string(our_units.GetCombatPower()->a2g) + "\t|")
             PRINT("\t|a2a CP: " + to_string(our_units.GetCombatPower()->a2a) + "\t|")
-        PRINT(our_units.ToString())
-        PRINT("------Our structures---------")
-        PRINT(our_structures.ToString())
-        PRINT("-----------------------------\n\n")
-    } 
+            PRINT(our_units.ToString())
+            PRINT("------Our structures---------")
+            PRINT(our_structures.ToString())
+            PRINT("-----------------------------\n\n")
+    }
+
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -143,11 +145,16 @@ void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
 
     PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
-    PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
-    PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
-    PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
+        PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
+        PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
+        PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
 
-    if ((our_cp->g2g + our_cp->g2a + our_cp->a2g + our_cp->a2a) >= (enemy_cp->g2g + enemy_cp->a2g + enemy_cp->g2a + enemy_cp->a2a)) {
+    float our_anti_ground = our_cp->g2g + our_cp->a2g;
+    float our_anti_air = our_cp->g2a + our_cp->a2a;
+    float enemy_anti_ground = enemy_cp->g2g + enemy_cp->a2g;
+    float enemy_anti_air = enemy_cp->g2a + enemy_cp->a2a;
+
+    if (our_anti_ground > enemy_anti_ground && our_anti_air > enemy_anti_air) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
     }
@@ -178,6 +185,14 @@ void StrategyManager::SetBuildGoal() {
     new_goal_state = CounterEnemyUnit();
     kurt->SendBuildOrder(new_goal_state);
 };
+
+void StrategyManager::SetProgressionMode(bool new_progression_mode) {
+    progression_mode = new_progression_mode;
+}
+
+bool StrategyManager::GetProgressionMode() {
+    return progression_mode;
+}
 
 
 BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har enemy x, enemy y counterunit-problemet
@@ -234,7 +249,7 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     //ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
     //ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
-    BPState* counter_order = enemy_units.GetStrongestUnit(our_units);
+    BPState* counter_order = enemy_units.GetStrongestUnit(our_units, kurt);
     //counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }

@@ -75,6 +75,10 @@ public:
     /* Calculate a new plan */
     void CalculateNewPlan();
 
+    void SetProgressionMode(bool new_progression_mode);
+
+    bool GetProgressionMode();
+
     /* Returns true if unit is an terran army unit */
     static bool IsArmyUnit(const sc2::Unit* unit);
 
