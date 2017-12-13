@@ -78,11 +78,17 @@ void Kurt::OnUnitCreated(const Unit* unit) {
         return;
     }
     const ObservationInterface* observation = Observation();
+    ActionInterface * action_interface = Actions();
     TimeNew();
     army_manager->GroupNewUnit(unit, observation);
     TimeNext(time_am);
     strategy_manager->SaveOurUnits(unit);
     TimeNext(time_sm);
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SUPPLYDEPOT:
+        action_interface->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+        break;
+    }
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
