@@ -105,37 +105,38 @@ void ArmyManager::PlanSmartScoutPath(){
         };
         
         struct NodeComp {
-            bool operator()(Node* lhs, Node* rhs) {
-                return lhs->score > rhs->score;
+            bool operator()(Node lhs, Node rhs) {
+                return lhs.score > rhs.score;
             }
         };
         
         
         Point2D start_pos = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
         Point2D goal = Point2D((int)picked_point.x, (int)picked_point.y); // convert float pos to grid pos
-        std::vector<std::pair<Point2D, float>> open_list; // needs to be sorted after insert/update, best should be at back!
+        std::vector<Node> open_list; // needs to be sorted after insert/update, best should be at back!
         std::vector<Point2D> closed_list;
-        std::less<Point2D> foo;
-        foo.operator() = [](sc2::Point2D &lhs, sc2::Point2D &rhs){return true;};
-        std::map<Point2D, float> g_score;
-        std::map<Point2D, float> f_score;
-        std::map<Point2D, Point2D> camefrom;
+        //bstd::less<Point2D> foo;
+        //foo.operator() = [](sc2::Point2D &lhs, sc2::Point2D &rhs){return true;};
+        auto cmp = [](const Point2D&a, const Point2D& b) { return a.x < b.x; };
+        std::map<Point2D, float, decltype(cmp)> g_score(cmp);
+        std::map<Point2D, float, decltype(cmp)> f_score(cmp);
+        std::map<Point2D, Point2D, decltype(cmp)> camefrom(cmp);
         ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
         for (int x = 0; x < actual_world.width; x++) {
             for (int y = 0; y < actual_world.height; y++) {
                 
                 //g_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
                 //f_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
-                //g_score[Point2D(x, y)] = INFINITY;
+                g_score[Point2D(x, y)] = INFINITY;
                 g_score[Point2D(x, y)] = INFINITY;
             }
         }
         //add start (current) node to open
         f_score[start_pos] = Distance2D(start_pos, goal);
-        open_list.push_back(std::make_pair(start_pos, f_score[start_pos]));
+        open_list.push_back(Node(start_pos, f_score[start_pos]));
         g_score[start_pos] = 0;
         while (!open_list.empty()) {
-            Point2D current_pos = open_list.back().first;
+            Point2D current_pos = (open_list.back()).pos;
             if (current_pos == goal) {
                 // done, walk to it
             }
@@ -161,7 +162,8 @@ void ArmyManager::PlanSmartScoutPath(){
                         f_score[neighbour] = g_score[neighbour] + Distance2D(neighbour, goal);
                         // check if neighbour not in open
                         if (!(std::find_if(begin(open_list), end(open_list), [&](const Point2D &f) { return f.x == neighbour.x && f.y == neighbour.y; }) != end(open_list))) {
-                            open_list.push_back(std::make_pair(neighbour, f_score[neighbour]));
+                            
+                            open_list.push_back(Node(neighbour, f_score[neighbour]));
                             std::sort(open_list.begin(), open_list.end(), NodeComp());
                         }
                     }
