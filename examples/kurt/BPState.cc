@@ -55,7 +55,11 @@ BPState::BPState(BPState * const state) {
 BPState::BPState(Kurt * const kurt) {
     const ObservationInterface* observation = kurt->Observation();
     std::vector<const Unit*> commandcenters;
-    for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
+    Units units_self = observation->GetUnits(Unit::Alliance::Self);
+    //
+    // Add the majority of all our units
+    //
+    for (auto unit : units_self) {
         if (unit->build_progress < 1) {
             continue;
         }
@@ -63,13 +67,25 @@ BPState::BPState(Kurt * const kurt) {
         IncreaseUnitAmount(type, 1);
         IncreaseUnitAvailableAmount(type, 1);
         switch (type) {
+        case UNIT_TYPEID::TERRAN_REFINERY:
+            // TERRAN_REFINERY added later
+            IncreaseUnitAmount(type, -1);
+            IncreaseUnitAvailableAmount(type, -1);
+            break;
         case UNIT_TYPEID::TERRAN_COMMANDCENTER:
         case UNIT_TYPEID::TERRAN_ORBITALCOMMAND:
-        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS:
+        case UNIT_TYPEID::TERRAN_PLANETARYFORTRESS: {
             IncreaseUnitAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1);
             commandcenters.push_back(unit);
+            int harvesters = std::min(unit->assigned_harvesters, unit->ideal_harvesters);
+            int townhall_h = unit->ideal_harvesters - harvesters;
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, harvesters);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, harvesters);
+            IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, townhall_h);
+            IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, townhall_h);
             break;
+        }
         case UNIT_TYPEID::TERRAN_COMMANDCENTERFLYING:
             IncreaseUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
             IncreaseUnitAvailableAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
@@ -137,6 +153,34 @@ BPState::BPState(Kurt * const kurt) {
             break;
         }
     }
+    //
+    // Only add refineries that are close to our base
+    //
+    for (auto unit : units_self) {
+        if (unit->build_progress < 1) {
+            continue;
+        }
+        UNIT_TYPEID type = unit->unit_type.ToType();
+        if (type == UNIT_TYPEID::TERRAN_REFINERY) {
+            for (auto center : commandcenters) {
+                if (DistanceSquared3D(center->pos, unit->pos) <
+                        BASE_RESOURCE_TEST_RANGE2) {
+                    IncreaseUnitAmount(type, 1);
+                    IncreaseUnitAvailableAmount(type, 1);
+                    int harvesters = std::min(unit->assigned_harvesters, unit->ideal_harvesters);
+                    int townhall_h = unit->ideal_harvesters - harvesters;
+                    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, harvesters);
+                    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, harvesters);
+                    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, townhall_h);
+                    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, townhall_h);
+                    break;
+                }
+            }
+        }
+    }
+    //
+    // Add nearby neutral resources
+    //
     for (auto neutral : observation->GetUnits(Unit::Alliance::Neutral)) {
         UNIT_TYPEID type = neutral->unit_type.ToType();
         for (auto center : commandcenters) {
@@ -149,28 +193,24 @@ BPState::BPState(Kurt * const kurt) {
         }
     }
 
-    int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
-            kurt->scv_minerals.size() + kurt->scv_building.size());
-    SetUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
+    //
+    // Add other non unit units
+    //
     SetUnitAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS,
-            kurt->scv_minerals.size() + kurt->scv_building.size());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, kurt->scv_vespene.size());
     SetUnitAvailableAmount(UNIT_FAKEID::MINERALS, observation->GetMinerals());
     SetUnitAvailableAmount(UNIT_FAKEID::VESPENE, observation->GetVespene());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, observation->GetFoodCap());
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_USED, observation->GetFoodUsed());
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, 3 * refinery_amount - kurt->scv_vespene.size());
-    int num_mineral_worker_slots = 16 * GetUnitAvailableAmount(UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER) -
-        GetUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS);
-    SetUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
-    SetUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, num_mineral_worker_slots);
 
+    // SCV building structures are assigned as harvesters it seems
+//    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_MINERALS, kurt->scv_building.size());
+
+    //
+    // Add active actions
+    //
     double start_time = observation->GetGameLoop() / (double) STEPS_PER_SEC;
     time = start_time;
     for (auto unit : observation->GetUnits(Unit::Alliance::Self)) {
@@ -196,24 +236,32 @@ BPState::BPState(Kurt * const kurt) {
                 Print();
                 std::cout << "Error: BPState: BPState(KURT): " <<
                     "Could not add action to model, action: " << action << std::endl;
-                throw std::runtime_error("BPPlan: BPPlan(KURT), add action failed");
+//                throw std::runtime_error("BPPlan: BPPlan(KURT), add action failed");
+                for (auto pair : ar.consumed) {
+                    UNIT_TYPEID type = pair.first;
+                    int amount = pair.second;
+                    IncreaseUnitAmount(type, -amount);
+                    IncreaseUnitAvailableAmount(type, -amount);
+                }
+                continue;
             }
             AddAction(action, time);
         }
     }
 
+    //
+    // More special units
+    //
     int geyser_amount = GetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
+    int refinery_amount = GetUnitAmount(UNIT_TYPEID::TERRAN_REFINERY);
     int refinery_prod_amount = GetUnitProdAmount(UNIT_TYPEID::TERRAN_REFINERY);
     geyser_amount -= refinery_amount + refinery_prod_amount;
     SetUnitAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
     SetUnitAvailableAmount(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, geyser_amount);
 
-    // Currently, an scv that starts building a refinery is added to the scv_vespene list.
-    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
-    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_SCV_VESPENE, -refinery_prod_amount);
-    IncreaseUnitAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
-    IncreaseUnitAvailableAmount(UNIT_FAKEID::TERRAN_TOWNHALL_SCV_VESPENE, refinery_prod_amount);
-
+    //
+    // Test if time did increase during adding active actions
+    //
     if (start_time != time) {
         Print();
         std::cout << "Error: BPState: Constructor(Kurt*): " <<
@@ -681,6 +729,15 @@ bool BPState::ContainsAllUnitsOf(BPState const &other) const {
         }
     }
     return true;
+}
+
+double BPState::ContainsPercentOf(BPState const * other) const {
+    int tot, part;
+    for (auto pair : other->unit_amount) {
+        tot += pair.second;
+        part += GetUnitAmount(pair.first);
+    }
+    return part / (double) tot;
 }
 
 #undef DEBUG
