@@ -108,10 +108,13 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
         return;
     }
     TimeNew();
-    for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
-        if ((*it).first == destroyed_unit->unit_type.ToType()) {
-            build_manager->InitNewPlan();
-            break;
+    if (build_manager->goal != nullptr) {
+        for (auto it = build_manager->goal->UnitsBegin();
+                it != build_manager->goal->UnitsEnd(); ++it) {
+            if ((*it).first == destroyed_unit->unit_type.ToType()) {
+                build_manager->InitNewPlan();
+                break;
+            }
         }
     }
     TimeNext(time_bm);
