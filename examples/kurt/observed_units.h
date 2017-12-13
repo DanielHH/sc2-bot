@@ -17,6 +17,14 @@ public:
         float g2a; // Ground to air DPS
         float a2g; // Air to ground DPS
         float a2a; // Air to air DPS
+
+        float GetAirCp() {
+            return g2a + a2a;
+        }
+
+        float GetGroundCp() {
+            return g2g + a2g;
+        }
     };
 
     // A map with health data for all units already seen

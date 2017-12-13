@@ -141,6 +141,31 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+    int attack_score = 0;
+
+    // True if army consists of more ground units then air units
+    bool is_most_ground = our_units.GetNumberOfGroundUnits / our_units.GetNumberOfAirUnits >= 1;
+    bool enemy_is_most_ground = enemy_units.GetNumberOfGroundUnits / enemy_units.GetNumberOfAirUnits >= 1;
+
+    // True if ground cp is higher than air cp
+    bool most_ground_cp = our_cp->GetGroundCp / our_cp->GetAirCp > 1;
+    bool enemy_most_ground_cp = enemy_cp->GetGroundCp / enemy_cp->GetAirCp > 1;
+
+    // If enemy is weaker against most of our units, +1 attack score
+    if (is_most_ground && !enemy_most_ground_cp) {
+        attack_score += 1;
+    }
+    else if (!is_most_ground && enemy_most_ground_cp) {
+        attack_score += 1;
+    }
+
+    // If our cp is strongest against most of their units, +1 attack score
+    if (most_ground_cp && enemy_is_most_ground) {
+        attack_score += 1;
+    }
+    else if (!most_ground_cp && !enemy_is_most_ground) {
+        attack_score += 1;
+    }
 
     PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
     PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
