@@ -155,6 +155,17 @@ ACTION ActionRepr::CreatesUnit(UNIT_TYPEID unit) {
     }
 }
 
+int ActionRepr::ConsumedUnits(ACTION action, UNIT_TYPEID unit) {
+    if (values.count(action) == 0) {
+        return 0;
+    }
+    std::map<UNIT_TYPEID, int> const * consumed = &values.at(action).consumed;
+    if (consumed->count(unit) == 0) {
+        return 0;
+    }
+    return consumed->at(unit);
+}
+
 #undef DEBUG
 #undef PRINT
 #undef TEST

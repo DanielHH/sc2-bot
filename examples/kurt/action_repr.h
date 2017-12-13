@@ -24,6 +24,8 @@ public:
 
     static ACTION CreatesUnit(sc2::UNIT_TYPEID unit);
 
+    static int ConsumedUnits(ACTION action, sc2::UNIT_TYPEID unit);
+
 private:
     ActionRepr(std::map<sc2::UNIT_TYPEID, int> const &,
         std::map<sc2::UNIT_TYPEID, int> const &,
