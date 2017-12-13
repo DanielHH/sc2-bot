@@ -5,7 +5,7 @@
 
 //TODO: Remove destroyed structures from enemy_structures (or our_strucutreS)
 
-//#define DEBUG // Comment out to disable debug prints in this file.
+#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -28,9 +28,8 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
 
     //current_plan = CreateDefaultGamePlan(kurt);
     //current_plan = RushPlan(kurt);
-    //current_plan = VespeneGasTycoon(kurt);
+    current_plan = VespeneGasTycoon(kurt);
     //current_plan = DynamicGamePlan(kurt);
-    current_plan = DefendGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
 
@@ -63,6 +62,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
+    // Save how much health each type of new unit have
     if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
         ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
     }
@@ -132,35 +132,22 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
 
     // Save any newly observed structures
     enemy_structures.AddUnits(&observed_structures);
-    //SaveSpottedEnemyUnitsHelper(&observed_structures, &enemy_structures);
 
     //Save any newly observed units
     enemy_units.AddUnits(&observed_units);
-    //SaveSpottedEnemyUnitsHelper(&observed_units, &enemy_units);
 };
 
-//TODO: Not needed anny more?
-void StrategyManager::SaveSpottedEnemyUnitsHelper(Units* new_units, Units* saved_units) {
-    // For every observed enemy, check if a unit of the same type is already saved in saved_units.
-    // If there is, count the new unit as already seen and don't add it to the saved_units vector.
-    for (auto saved_unit = saved_units->begin(); saved_unit != saved_units->end(); ++saved_unit) {
-        for (auto new_unit = new_units->begin(); new_unit != new_units->end(); ++new_unit) {
-            if ((*saved_unit)->unit_type == (*new_unit)->unit_type) {
-                new_units->erase(new_unit);
-                break;
-            }
-        }
-    }
-
-    // Save the observed units that didn't get filtered out as already seen.
-    saved_units->insert(saved_units->end(), new_units->begin(), new_units->end());
-}
-
 void StrategyManager::CalculateCombatMode() {
+    Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
 
-    if (our_cp->g2g >= enemy_cp->g2g && our_cp->g2a >= enemy_cp->a2g && our_cp->a2g >= enemy_cp->g2a && our_cp->a2a >= enemy_cp->a2a) {
+    PRINT("Enemy ground units: " << to_string(enemy_units.GetNumberOfGroundUnits()))
+    PRINT("Enemy air units: " << to_string(enemy_units.GetNumberOfAirUnits()))
+    PRINT("Our ground units: " << to_string(our_units.GetNumberOfGroundUnits()))
+    PRINT("Our air units: " << to_string(our_units.GetNumberOfAirUnits()))
+
+    if ((our_cp->g2g + our_cp->g2a + our_cp->a2g + our_cp->a2a) >= (enemy_cp->g2g + enemy_cp->a2g + enemy_cp->g2a + enemy_cp->a2a)) {
         kurt->SetCombatMode(Kurt::ATTACK);
         PRINT("COMBAT MODE: ATTACK")
     }
@@ -173,11 +160,6 @@ void StrategyManager::CalculateCombatMode() {
         PRINT("COMBAT MODE: HARASS")
     }
 };
-
-void StrategyManager::SetGamePlan() {
-    delete current_plan;
-    current_plan = DynamicGamePlan(kurt);
-}
 
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
@@ -249,10 +231,11 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
     float max_cp_difference;
     int number_of_strongest_units;
 
-    ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
+    //ObservedUnits* strongest_enemy_unit = enemy_units.GetStrongestUnit(our_units);
+    //ObservedUnits* best_counter_unit = our_units.GetBestCounterUnit();
 
-    BPState* counter_order = new BPState();
-    counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
+    BPState* counter_order = enemy_units.GetStrongestUnit(our_units);
+    //counter_order->SetUnitAmount(UNIT_TYPEID::TERRAN_THOR, 3);
     return counter_order;
 }
 
@@ -325,16 +308,13 @@ BPState* StrategyManager::CounterEnemyUnit() { //TODO: Fixa så att vi inte har e
             final_is_flying = is_flying;
             final_unit_to_counter = unit_to_counter;
         }
-<<<<<<< HEAD
         
     PRINT("----------------------------");
     PRINT("diff_cp: " << diff_cp);
     PRINT("final_enemy_cp: " << final_enemy_cp);
     PRINT("enemy_max_health: " << enemy_max_health);
-=======
-    }
 
->>>>>>> 49db4116d0b2219b7a5f1835636690e9dcc6ace7
+    }
     if (diff_cp > 0) {
         string str_futc = Kurt::GetUnitType(final_unit_to_counter)->name;
         PRINT("----------------------------")

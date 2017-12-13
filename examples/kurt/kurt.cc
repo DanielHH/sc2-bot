@@ -13,7 +13,7 @@
 #include "exec_action.h"
 #include "constants.h"
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -50,7 +50,9 @@ void Kurt::OnStep() {
 
     TimeNew();
     world_rep->UpdateWorldRep();
-    army_manager->OnStep(observation);
+    if (step % 5 == 0) {
+        army_manager->OnStep(observation);
+    }
     TimeNext(time_am);
     ExecAction::OnStep(this);
     build_manager->OnStep(observation);

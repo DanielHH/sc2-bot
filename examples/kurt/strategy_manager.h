@@ -45,18 +45,7 @@ private:
     */
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
 
-    /* Saves the minimal amount of units we know the enemy have */
-    void SaveSpottedEnemyUnitsHelper(sc2::Units* new_units, sc2::Units* saved_units);
-
-    //
-    void SetGamePlan();
-
+    /* Returns a BPstate with some amount of units that counters the currently strongest enemy unit */
     BPState* CounterEnemyUnit();
-
-    //UNUSED FUNCTIONS
-    // Returns true if Enemy structure is observed.
-    bool FindEnemyStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
-
-    void CheckCombatStyle(const sc2::Unit* unit, std::map<std::string, sc2::Units> map);
 
 };

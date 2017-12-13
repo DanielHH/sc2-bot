@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sc2api/sc2_api.h>
+#include "kurt.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -18,9 +19,10 @@ public:
         float a2a; // Air to air DPS
     };
 
-    ObservedUnits();
-
+    // A map with health data for all units already seen
     static std::map <sc2::UNIT_TYPEID, float> unit_max_health;
+
+    ObservedUnits();
 
     /* Takes a Units (vector) and adds units if more than prevoius are observed */
     void AddUnits(const sc2::Units* units);
@@ -33,6 +35,8 @@ public:
 
     /* Removes a unit from the observations */
     void RemoveUnit(const sc2::Unit* unit);
+
+    void RemoveUnit(const sc2::UNIT_TYPEID unit_type);
 
     /* Calculates the combat power (DPS in each category) for all units in saved_units */
     void calculateCP();
@@ -48,7 +52,15 @@ public:
 
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
-    ObservedUnits* GetStrongestUnit(ObservedUnits enemies);
+    /* Returns the strongest unit relative to the enemy units in the enemies parameter */
+    BPState* GetStrongestUnit(ObservedUnits enemies);
+
+    ObservedUnits* GetBestCounterUnit();
+    BPState* GetBestCounterUnit2(ObservedUnits* strongest_unit, sc2::UNIT_TYPEID strongest_enemy_type, float max_cp_difference);
+
+    int GetNumberOfAirUnits();
+
+    int GetNumberOfGroundUnits();
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();
