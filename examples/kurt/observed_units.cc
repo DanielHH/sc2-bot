@@ -27,11 +27,11 @@ const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
 };
 
 map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
+UNIT_TYPEID ObservedUnits::current_best_counter_type;
 
 ObservedUnits::ObservedUnits() {
     cp = CombatPower();
 }
-UNIT_TYPEID ObservedUnits::current_best_counter_type;
 
 void ObservedUnits::AddUnits(const Units* units) {
     map<UNIT_TYPEID, int> new_units;
