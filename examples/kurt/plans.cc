@@ -105,8 +105,19 @@ GamePlan* VespeneGasTycoon(Kurt* kurt) {
     return plan;
 }
 
+GamePlan* FlyingScout(Kurt* kurt) {
+    GamePlan* plan = new GamePlan(kurt);
+
+    BPState* first_build_order = new BPState();
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 5);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 1);
+
+    plan->AddStatBuildOrderNode(first_build_order);
+
+    return plan;
+}
+
 GamePlan* DynamicGamePlan(Kurt* kurt) {
-    dynamic_flag = true;
     GamePlan* plan = new GamePlan(kurt);
 
     plan->AddDynBuildOrderNode();

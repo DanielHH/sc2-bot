@@ -3,8 +3,6 @@
 #include "game_plan.h"
 #include <sc2api/sc2_api.h>
 
-static bool dynamic_flag = false;
-
 /* The default plan */
 GamePlan* CreateDefaultGamePlan(Kurt* kurt);
 
@@ -21,6 +19,8 @@ GamePlan* VespeneGasTycoon(Kurt* kurt);
 /* Automatically decides what units to build, and then decides
 whether to attack, defend or harass with the new units */
 GamePlan* DynamicGamePlan(Kurt* kurt);
+
+GamePlan* FlyingScout(Kurt* kurt);
 
 // Teste defend plan
 GamePlan* DefendGamePlan(Kurt* kurt);

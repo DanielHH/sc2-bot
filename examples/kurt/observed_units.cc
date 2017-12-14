@@ -78,7 +78,7 @@ void ObservedUnits::calculateCP() { //TODO: Remove DPS with dead units.
     cp.a2a = 0;
 
     UnitTypeData* unit_data;
-    float weapon_dps;
+    float weapon_dps = 0;
 
     for (auto unit = saved_units.begin(); unit != saved_units.end(); ++unit) {
         unit_data = Kurt::GetUnitType(unit->first);
@@ -255,7 +255,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     if (strongest_unit != nullptr) {
         PRINT("Enemys strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
         PRINT("Enemy is flying: " << to_string(count(flying_units.begin(), flying_units.end(), strongest_unit_type) == 1))
-        best_counter_unit = GetBestCounterUnit2(strongest_unit, strongest_unit_type, max_cp_difference, kurt);
+        best_counter_unit = GetBestCounterUnit(strongest_unit, strongest_unit_type, max_cp_difference, kurt);
     }
     else {
         // TODO: progression mode!
@@ -270,15 +270,18 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     return best_counter_unit;
 }
 
-BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference, Kurt* kurt) {
+BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference, Kurt* kurt) {
+    PRINT("------------------------")
+    PRINT("In GetBestCounterUnit")
     ObservedUnits* best_counter_unit = nullptr;
     const ObservedUnits::CombatPower* strongest_enemy_cp = strongest_enemy->GetCombatPower();
     vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
     bool counter_unit_is_flying;
+    PRINT("CHECK 1")
 
     float enemy_air_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
     float enemy_ground_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
-
+    PRINT("CHECK 2")
     // Loop through counter units and find the strongest one
     for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
         ObservedUnits* current_counter_unit = new ObservedUnits();
@@ -301,6 +304,7 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
             delete current_counter_unit;
         }
     }
+    PRINT("CHECK 3")
 
     float add_cp = 0;
     const ObservedUnits::CombatPower* counter_unit_cp = best_counter_unit->GetCombatPower();
@@ -310,30 +314,28 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     else {
         add_cp = counter_unit_cp->a2g + counter_unit_cp->g2g;
     }
-
     float counter_cp = 0;
     float relevant_enemy_cp = 0;
-
+    
     if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
         relevant_enemy_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
     }
     else {
         relevant_enemy_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
     }
-
     int number_of_counter_units = 0;
-
-    while (counter_cp < 2*relevant_enemy_cp) { //TODO: add health
+    while (counter_cp < relevant_enemy_cp) { //TODO: add health
         counter_cp += add_cp;
         number_of_counter_units += 1;
     }
 
+    PRINT("MIDDLE STUFF")
     UNIT_TYPEID best_counter_type = best_counter_unit->saved_units.begin()->first;
     delete best_counter_unit; // best_counter_units not needed any more
-
+    PRINT("BEFORE PRINTS!")
     PRINT("Best counter unit found: " << Kurt::GetUnitType(best_counter_type)->name)
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
-
+    PRINT("AFTER PRINTS!")
     BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
     bool prog_mode = kurt->GetProgressionMode();
     if (current_best_counter_type != best_counter_type) {
@@ -347,45 +349,6 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     }
     counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
     return counter_order;
-}
-
-
-/*
-float ObservedUnits::GetRelevantCP(const sc2::UNIT_TYPEID unit_type) {
-    float relevant_cp = 0;
-    const ObservedUnits::CombatPower* cp = 
-    if (count(flying_units.begin(), flying_units.end(), unit_type) == 1) {
-        relevant_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
-    }
-    else {
-        relevant_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
-    }
-}*/
-
-
-ObservedUnits* ObservedUnits::GetBestCounterUnit() {
-    ObservedUnits* best_counter_unit = nullptr;
-    UNIT_TYPEID strongest_enemy_type;
-    ObservedUnits* current_counter_unit = new ObservedUnits();
-    for (auto strongest_enemy = saved_units.begin(); strongest_enemy != saved_units.end(); ++strongest_enemy) {
-        strongest_enemy_type = strongest_enemy->first;
-        vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
-        bool counter_unit_is_flying;
-        for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
-            current_counter_unit->AddUnits(*counter_unit_type, 1);
-            counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
-            if ((cp.a2a + cp.g2a < cp.a2g + cp.g2g) && counter_unit_is_flying) { //if enemy_unit's anti-air is weaker than anti-ground
-                best_counter_unit = current_counter_unit;
-            }
-            else if ((cp.a2a + cp.g2a > cp.a2g + cp.g2g) && !counter_unit_is_flying) {
-                best_counter_unit = current_counter_unit;
-            }
-            if (best_counter_unit = nullptr) {
-                best_counter_unit = current_counter_unit;
-            }
-        }
-    }
-    return best_counter_unit;
 }
 
 int ObservedUnits::GetNumberOfAirUnits() {
