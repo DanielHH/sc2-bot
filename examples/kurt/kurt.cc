@@ -171,6 +171,13 @@ void Kurt::SendBuildOrder(BPState* const build_order) {
     TimeNext(time_bm);
 }
 
+void Kurt::AddToBuildOrder(BPState* const build_order) {
+    TimeNext(time_sm);
+    build_manager->AddToGoal(build_order);
+    TimeNext(time_bm);
+}
+
+
 Kurt::CombatMode Kurt::GetCombatMode() {
     return current_combat_mode;
 }

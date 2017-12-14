@@ -40,6 +40,8 @@ public:
     // Decides what units should be built.
     void SetBuildGoal();
 
+    void AddToBuildGoal();
+
     void SetProgressionMode(bool new_progression_mode);
 
     bool GetProgressionMode();
