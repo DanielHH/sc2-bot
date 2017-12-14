@@ -62,6 +62,9 @@ public:
     /* Gives the build manager a new goal to work against */
     void SendBuildOrder(BPState* const build_order);
 
+    /* Adds units to current goal in build manager */
+    void AddToBuildOrder(BPState* const build_order);
+
     /* Returns current combat mode*/
     CombatMode GetCombatMode();
 
