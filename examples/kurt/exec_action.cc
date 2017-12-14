@@ -72,9 +72,9 @@ void ExecAction::OnStep(Kurt * kurt) {
                 Point2D(scv->pos.x, scv->pos.y),
                 kurt->Observation(),
                 Unit::Alliance::Self);
-        if (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters ||
+        if (commandcenter != nullptr && (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters ||
                 DistanceSquared3D(commandcenter->pos, scv->pos) >
-                BASE_RESOURCE_TEST_RANGE2) {
+                BASE_RESOURCE_TEST_RANGE2)) {
             Unit const * field = FindNextMineralField(kurt->Observation());
             if (field != nullptr) {
                 kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, field);
@@ -140,6 +140,7 @@ void ExecAction::OnUnitIdle(
     Unit const * target;
     switch (unit->unit_type.ToType()) {
     case UNIT_TYPEID::TERRAN_SCV:
+        if (std::find(kurt->scouts.begin(), kurt->scouts.end(), unit) != kurt->scouts.end()) break;
         kurt->scv_building.remove(unit);
         kurt->scv_idle.remove(unit);
         kurt->scv_minerals.remove(unit);
