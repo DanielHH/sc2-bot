@@ -51,6 +51,14 @@ double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
 }
 
 void ExecAction::OnStep(Kurt * kurt) {
+    // The first tick is lacking data.
+    int step = kurt->Observation()->GetGameLoop();
+    if (step == 0) {
+        return;
+    }
+    //
+    // Update delays
+    //
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
     if (build_missile_tower_delay > 0) { --build_missile_tower_delay; }
@@ -60,12 +68,11 @@ void ExecAction::OnStep(Kurt * kurt) {
     //
     // TODO Add support for TERRAN_ORBITALCOMMAND and TERRAN_PLANETARYFORTRESS
     //
-    int step = kurt->Observation()->GetGameLoop();
-    int delay = 1 * STEPS_PER_SEC;
+    int delay = 2 * STEPS_PER_SEC;
     int index = 0;
     for (auto it = kurt->scv_minerals.begin(); it != kurt->scv_minerals.end(); ++it) {
         ++index;
-        if (step % delay != index) {
+        if ((step % delay) != (index % step)) {
             continue;
         }
         const Unit * scv = *it;
@@ -77,10 +84,11 @@ void ExecAction::OnStep(Kurt * kurt) {
         if (commandcenter != nullptr && (commandcenter->assigned_harvesters > commandcenter->ideal_harvesters ||
                 DistanceSquared3D(commandcenter->pos, scv->pos) >
                 BASE_RESOURCE_TEST_RANGE2)) {
-            Unit const * field = FindNextMineralField(kurt->Observation());
-            if (field != nullptr) {
-                kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, field);
+            kurt->scv_minerals.erase(it);
+            if (! kurt->UnitInList(kurt->scv_idle, scv)) {
+                kurt->scv_idle.push_back(scv);
             }
+            break;
         }
     }
     //
@@ -101,12 +109,22 @@ void ExecAction::OnStep(Kurt * kurt) {
                 }
             }
         }
-        if (target == nullptr) {
-            return;
+        if (target != nullptr) {
+            kurt->scv_idle.pop_front();
+            if (! kurt->UnitInScvMinerals(scv)) {
+                kurt->scv_minerals.push_back(scv);
+            }
+            kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, target);
         }
-        kurt->scv_idle.pop_front();
-        kurt->scv_minerals.push_back(scv);
-        kurt->Actions()->UnitCommand(scv, ABILITY_ID::SMART, target);
+    }
+    //
+    // Make all scv move after one army unit, heheh.
+    //
+    if (step % (2 * STEPS_PER_SEC) == 0 && ! kurt->army_units.empty()) {
+        Point2D target_point = kurt->army_units.front()->pos;
+        for (auto it = kurt->scv_idle.begin(); it != kurt->scv_idle.end(); ++it) {
+            kurt->Actions()->UnitCommand(*it, ABILITY_ID::MOVE, target_point);
+        }
     }
 }
 
