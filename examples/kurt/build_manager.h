@@ -21,6 +21,8 @@ public:
     void OnGameStart(const sc2::ObservationInterface* observation);
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
+    /* Adds all units in given state to the current goal. */
+    void AddToGoal(BPState * const);
 
     /* Called when a major change
      * (like a new goal or loosing a building) happens
