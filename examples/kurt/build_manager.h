@@ -43,5 +43,5 @@ private:
 
     const int STEPS_BETWEEN_REPLAN_MAX = STEPS_PER_SEC * 4;
     const int STEPS_BETWEEN_REPLAN_MIN = 2;
-    const int SEARCH_ITER_PER_STEP = 20;
+    const int SEARCH_ITER_PER_STEP = 8;
 };

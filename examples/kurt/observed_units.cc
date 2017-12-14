@@ -31,6 +31,7 @@ map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
 ObservedUnits::ObservedUnits() {
     cp = CombatPower();
 }
+UNIT_TYPEID ObservedUnits::current_best_counter_type;
 
 void ObservedUnits::AddUnits(const Units* units) {
     map<UNIT_TYPEID, int> new_units;
@@ -69,7 +70,7 @@ void ObservedUnits::RemoveUnit(const sc2::UNIT_TYPEID unit_type) {
 }
 
 // TODO: Check if calculation is wrong
-void ObservedUnits::calculateCP() {
+void ObservedUnits::calculateCP() { //TODO: Remove DPS with dead units.
     // Reset cp-data.
     cp.g2g = 0;
     cp.g2a = 0;
@@ -175,7 +176,7 @@ map <UNIT_TYPEID, int> *const ObservedUnits::GetSavedUnits() {
     return &saved_units;
 }
 
-BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
+BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) {
     ObservedUnits* strongest_unit = nullptr;
     map<UNIT_TYPEID, int> *const enemy_units_map = enemy_units.GetSavedUnits();
     float max_cp_difference = 0;
@@ -254,12 +255,13 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
     if (strongest_unit != nullptr) {
         PRINT("Enemys strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
         PRINT("Enemy is flying: " << to_string(count(flying_units.begin(), flying_units.end(), strongest_unit_type) == 1))
-        best_counter_unit = GetBestCounterUnit2(strongest_unit, strongest_unit_type, max_cp_difference);
+        best_counter_unit = GetBestCounterUnit2(strongest_unit, strongest_unit_type, max_cp_difference, kurt);
     }
     else {
         // TODO: progression mode!
         PRINT("Enemys strongest unit: Nothing to counter!")
-        best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 2);
+        kurt->SetProgressionMode(true);
+        best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
     }
     PRINT("---------------------------\n")
 
@@ -268,7 +270,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units) {
     return best_counter_unit;
 }
 
-BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference) {
+BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference, Kurt* kurt) {
     ObservedUnits* best_counter_unit = nullptr;
     const ObservedUnits::CombatPower* strongest_enemy_cp = strongest_enemy->GetCombatPower();
     vector<UNIT_TYPEID> counter_unit_types = countertable.at(strongest_enemy_type);
@@ -280,7 +282,7 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     // Loop through counter units and find the strongest one
     for (auto counter_unit_type = counter_unit_types.begin(); counter_unit_type != counter_unit_types.end(); ++counter_unit_type) {
         ObservedUnits* current_counter_unit = new ObservedUnits();
-        current_counter_unit->AddUnits(*counter_unit_type, 1); // TODO: Alla counter units läggs till?
+        current_counter_unit->AddUnits(*counter_unit_type, 1); 
         counter_unit_is_flying = count(flying_units.begin(), flying_units.end(), *counter_unit_type) == 1;
 
         // Try to find a flying counter unit if the enemy has weak anti-air
@@ -332,7 +334,17 @@ BPState* ObservedUnits::GetBestCounterUnit2(ObservedUnits* strongest_enemy, UNIT
     PRINT("Best counter unit found: " << Kurt::GetUnitType(best_counter_type)->name)
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
 
-    BPState* counter_order = new BPState();
+    BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
+    bool prog_mode = kurt->GetProgressionMode();
+    if (current_best_counter_type != best_counter_type) {
+        current_best_counter_type = best_counter_type;
+        if (prog_mode) {
+            kurt->SetProgressionMode(false);
+        }
+    }
+    else if (prog_mode) {
+        counter_order->SetUnitAmount(sc2::UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
+    }
     counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
     return counter_order;
 }
