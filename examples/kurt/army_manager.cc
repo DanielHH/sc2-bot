@@ -16,6 +16,9 @@
 #define TEST(s)
 #endif // DEBUG
 
+bool second_scout = false;
+int number_of_scouts = 1;
+
 using namespace sc2;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -31,7 +34,12 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
         defendCellPriorityQueue->Update();
     }
     
-    if (kurt->scouts.size() < 2) {
+    if(kurt->Observation()->GetGameLoop() > 4000) {
+        // at around three minutes we add another scout
+        number_of_scouts = 2;
+    }
+    
+    if (kurt->scouts.size() < number_of_scouts) {
         ArmyManager::TryGetScout();
     } else {
         ArmyManager::ScoutSmartPath();
