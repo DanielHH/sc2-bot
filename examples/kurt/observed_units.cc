@@ -183,6 +183,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     map<UNIT_TYPEID, int> *const enemy_units_map = enemy_units.GetSavedUnits();
     float max_cp_difference = 0;
     UNIT_TYPEID strongest_unit_type;
+    bool current_unit_is_flying;
 
     PRINT("\nFinding strongest unit...")
     PRINT("---------------------------")
@@ -217,7 +218,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
 
         const ObservedUnits::CombatPower* counter_units_cp = counter_units.GetCombatPower();
 
-        bool current_unit_is_flying = count(flying_units.begin(), flying_units.end(), current_unit_type) == 1;
+        current_unit_is_flying = count(flying_units.begin(), flying_units.end(), current_unit_type) == 1;
 
         float current_unit_total_cp = 0;
         float counter_units_total_cp = 0;
@@ -257,7 +258,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     if (strongest_unit != nullptr) {
         PRINT("Enemys strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
         PRINT("Enemy is flying: " << to_string(count(flying_units.begin(), flying_units.end(), strongest_unit_type) == 1))
-        best_counter_unit = GetBestCounterUnit(strongest_unit, strongest_unit_type, max_cp_difference, kurt);
+        best_counter_unit = GetBestCounterUnit(strongest_unit, strongest_unit_type, max_cp_difference, kurt, current_unit_is_flying);
     }
     else {
         // TODO: progression mode!
@@ -272,7 +273,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     return best_counter_unit;
 }
 
-BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference, Kurt* kurt) {
+BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_TYPEID strongest_enemy_type, float cp_difference, Kurt* kurt, bool current_unit_is_flying) {
     PRINT("------------------------")
     PRINT("In GetBestCounterUnit")
     ObservedUnits* best_counter_unit = nullptr;
@@ -307,28 +308,18 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
         }
     }
     PRINT("CHECK 3")
-
-    float add_cp = 0;
     const ObservedUnits::CombatPower* counter_unit_cp = best_counter_unit->GetCombatPower();
-    if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
+    float add_cp = 0;
+    if (current_unit_is_flying) {
         add_cp = counter_unit_cp->a2a + counter_unit_cp->g2a;
     }
     else {
         add_cp = counter_unit_cp->a2g + counter_unit_cp->g2g;
     }
-    float counter_cp = 0;
-    float relevant_enemy_cp = 0;
-    
-    if (count(flying_units.begin(), flying_units.end(), strongest_enemy_type) == 1) {
-        relevant_enemy_cp = strongest_enemy_cp->a2a + strongest_enemy_cp->g2a;
-    }
-    else {
-        relevant_enemy_cp = strongest_enemy_cp->a2g + strongest_enemy_cp->g2g;
-    }
     int number_of_counter_units = 0;
-    while (counter_cp < relevant_enemy_cp) { //TODO: add health
-        counter_cp += add_cp;
+    while (cp_difference > -10) {
         number_of_counter_units += 1;
+        cp_difference -= add_cp;
     }
 
     PRINT("MIDDLE STUFF")
