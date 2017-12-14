@@ -63,10 +63,12 @@ void ObservedUnits::AddUnits(const Unit* unit, const int amount) {
 
 void ObservedUnits::RemoveUnit(const Unit* unit) {
     saved_units[unit->unit_type] -= 1;
+    calculateCP();
 }
 
 void ObservedUnits::RemoveUnit(const sc2::UNIT_TYPEID unit_type) {
     saved_units[unit_type] -= 1;
+    calculateCP();
 }
 
 // TODO: Check if calculation is wrong
