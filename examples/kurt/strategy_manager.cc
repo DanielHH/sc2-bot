@@ -68,7 +68,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             if (dynamic_flag) {
                 CalculateCombatMode();
                 UpdateCurrentBestCounterType();
-                if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+                if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
                     progression_mode = false;
                     CalculateNewPlan();
                 }
@@ -178,7 +178,7 @@ void StrategyManager::CalculateCombatMode() {
         attack_score++;
     }
     // Do we have high air DPS relative to the enemy's air units' health?
-    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { 
+    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
         PRINT("We have good air DPS!")
         attack_score++;
     }
