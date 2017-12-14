@@ -188,7 +188,7 @@ void Kurt::CalculateBuildOrder() {
 }
 
 void Kurt::CalculateNewPlan() {
-    PRINT("\Creating new plan...")
+    PRINT("Creating new plan...")
         strategy_manager->CalculateNewPlan();
 }
 
