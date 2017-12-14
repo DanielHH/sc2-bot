@@ -83,6 +83,12 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     TimeNext(time_am);
     strategy_manager->SaveOurUnits(unit);
     TimeNext(time_sm);
+
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SCV:
+        Actions()->ToggleAutocast(unit->tag, ABILITY_ID::EFFECT_REPAIR);
+        break;
+    }
 }
 
 void Kurt::OnBuildingConstructionComplete(Unit const *unit) {
