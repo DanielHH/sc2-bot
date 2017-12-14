@@ -12,6 +12,7 @@ class StrategyManager{
 
 public:
     StrategyManager(Kurt* kurt);
+    static bool dynamic_flag;
 
     void OnStep(const sc2::ObservationInterface* observation);
 

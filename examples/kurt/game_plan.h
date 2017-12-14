@@ -7,7 +7,6 @@
     A sequence of build orders(BPStates) and attack orders (CombatMode) that can be executed in order.
 */
 class GamePlan {
-
 private:
     /* Superclass for more specific nodes */
     class Node {
