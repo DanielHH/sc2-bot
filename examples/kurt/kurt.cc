@@ -50,7 +50,9 @@ void Kurt::OnStep() {
 
     TimeNew();
     world_rep->UpdateWorldRep();
-    army_manager->OnStep(observation);
+    if (step % 5 == 0) {
+        army_manager->OnStep(observation);
+    }
     TimeNext(time_am);
     ExecAction::OnStep(this);
     build_manager->OnStep(observation);
@@ -81,6 +83,15 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     TimeNext(time_am);
     strategy_manager->SaveOurUnits(unit);
     TimeNext(time_sm);
+}
+
+void Kurt::OnBuildingConstructionComplete(Unit const *unit) {
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SUPPLYDEPOT:
+        PRINT("###### SUPPLY DEPOT CREATED ######\n       " << unit->build_progress * 100 << "% done");
+        Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+        break;
+    }
 }
 
 void Kurt::OnUnitIdle(const Unit* unit) {
@@ -169,18 +180,16 @@ void Kurt::SetCombatMode(CombatMode new_combat_mode) {
 }
 
 void Kurt::CalculateCombatMode() {
-    PRINT("Dynamic combat mode")
     strategy_manager->CalculateCombatMode();
 }
 
 void Kurt::CalculateBuildOrder() {
-    PRINT("Dynamic build order")
     strategy_manager->SetBuildGoal();
 }
 
 void Kurt::CalculateNewPlan() {
     PRINT("Creating new plan...")
-        strategy_manager->CalculateNewPlan();
+    strategy_manager->CalculateNewPlan();
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {
