@@ -323,9 +323,14 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
         add_cp = counter_unit_cp->a2g + counter_unit_cp->g2g;
     }
     int number_of_counter_units = 0;
-    while (cp_difference > -10) {
-        number_of_counter_units += 1;
-        cp_difference -= add_cp;
+    if (add_cp > 0) {
+        while (cp_difference > -10) {
+            number_of_counter_units += 1;
+            cp_difference -= add_cp;
+        }
+    }
+    else {
+        number_of_counter_units = 3;
     }
 
     PRINT("MIDDLE STUFF")

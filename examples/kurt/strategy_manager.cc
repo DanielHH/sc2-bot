@@ -103,7 +103,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
         if (kurt->IsStructure(unit)) {
             enemy_structures.RemoveUnit(unit);
         }
-        else if(Kurt::IsArmyUnit(unit)) {
+        else {
             enemy_units.RemoveUnit(unit);
         }
     }
@@ -138,7 +138,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
         if (kurt->IsStructure(*observed_unit)) {
             observed_structures.push_back(*observed_unit);
         }
-        else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
+        else { // Only add military to the observation
             observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
         }
     }
@@ -154,7 +154,7 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    const float attack_const = 8; // Lower values make the ai more agressive, but with riskier attacks
+    const float attack_const = 7; // Lower values make the ai more agressive, but with riskier attacks
     const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
     float c;
     int attack_score = 0;
@@ -178,12 +178,12 @@ void StrategyManager::CalculateCombatMode() {
         attack_score++;
     }
     // Do we have high air DPS relative to the enemy's air units' health?
-    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
+    if ((enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) && (enemy_units.GetAirHealth() > 0)) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
         PRINT("We have good air DPS!")
         attack_score++;
     }
     // Do we have high ground DPS relative to the enemy's ground units' health?
-    if (enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) {
+    if ((enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) && (enemy_units.GetGroundHealth() > 0)) {
         PRINT("We have good ground DPS!")
         attack_score++;
     }
