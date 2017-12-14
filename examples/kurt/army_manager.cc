@@ -111,7 +111,7 @@ void ArmyManager::PlanSmartScoutPath(){
             }
         };
         
-        if (kurt->Observation()->GetGameLoop() % 240000 != 239) {
+        if (kurt->Observation()->GetGameLoop() % 24000 != 120) {
             goto skip;
         }
         Point2D start = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
@@ -129,10 +129,13 @@ void ArmyManager::PlanSmartScoutPath(){
         ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
         std::cout << "world width: " << actual_world.width << std::endl;
         std::cout << "world height: " << actual_world.height << std::endl;
-        for (int x = 0; x < actual_world.width; x++) {
-            for (int y = 0; y < actual_world.height; y++) {
-                g_score[Point2D(x, y)] = INFINITY;
-                f_score[Point2D(x, y)] = INFINITY;
+        int cell_size = 1;
+        for (int x = 1; x <= actual_world.width; x++) {
+            for (int y = 1; y <= actual_world.height; y++) {
+                if (x % cell_size == 0 && y % cell_size == 0) {
+                    g_score[Point2D(x, y)] = INFINITY;
+                    f_score[Point2D(x, y)] = INFINITY;
+                }
             }
         }
         //add start (current) node to open
@@ -156,7 +159,7 @@ void ArmyManager::PlanSmartScoutPath(){
                     current = camefrom[current];
                 }
                 for (int i = path.size()-1; i >= 0; i--) {
-                    kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, path.at(i));
+                    kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, path.at(i), true);
                     std::cout <<"x: " << path.at(i).x << ", y: " << path.at(i).y <<std::endl;
                 }
                 break;
@@ -168,7 +171,7 @@ void ArmyManager::PlanSmartScoutPath(){
             std::vector<QueryInterface::PathingQuery> queries;
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
-                    Point2D neighbour = Point2D(current_node.pos.x+i, current_node.pos.y+j);
+                    Point2D neighbour = Point2D(current_node.pos.x+i*cell_size, current_node.pos.y+j*cell_size);
                     // check if neighbour in closed
                     if (std::find_if(closed_list.begin(), closed_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(closed_list)) {
                         continue;
@@ -179,7 +182,7 @@ void ArmyManager::PlanSmartScoutPath(){
                     
                 }
             }
-            // taxing query, but a lot faster by batchin it
+            // taxing query, but a lot faster by batching it
             std::vector<float> neighbour_distances = kurt->Query()->PathingDistance(queries);
             for (int i = 0; i < viable_neighbours.size(); i++) {
                 float distance = neighbour_distances.at(i);
