@@ -74,6 +74,7 @@ void ArmyManager::PlanSmartScoutPath(){
     for (int i = 0; i < scoutCellPriorityQueue->queue.size(); ++i) {
         points_to_visit.push_back(scoutCellPriorityQueue->queue.at(i)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size));
     }
+    
     for (const Unit* scout : kurt->scouts) {
         // pick a good point
         Point2D picked_point;
@@ -91,7 +92,7 @@ void ArmyManager::PlanSmartScoutPath(){
         }
     picked:
         picked_points.push_back(picked_point);
-        kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, picked_point);
+        //kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, picked_point);
         
         
         // do A* to reach picked point
@@ -110,70 +111,100 @@ void ArmyManager::PlanSmartScoutPath(){
             }
         };
         
-        
-        Point2D start_pos = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
+        if (kurt->Observation()->GetGameLoop() % 240000 != 239) {
+            goto skip;
+        }
+        Point2D start = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
         Point2D goal = Point2D((int)picked_point.x, (int)picked_point.y); // convert float pos to grid pos
+        std::cout << "start " << "x: " << start.x << ", y: " << start.y <<std::endl;
+        std::cout << "goal " << "x: " << goal.x << ", y: " << goal.y <<std::endl;
         std::vector<Node> open_list; // needs to be sorted after insert/update, best should be at back!
         std::vector<Node> closed_list;
-        //bstd::less<Point2D> foo;
-        //foo.operator() = [](sc2::Point2D &lhs, sc2::Point2D &rhs){return true;};
-        auto cmp = [](const Point2D&a, const Point2D& b) { return a.x < b.x; };
+        auto cmp = [](const Point2D& lhs, const Point2D& rhs) {
+            return (lhs.x < rhs.x) || ((lhs.x == rhs.x) && (lhs.y < rhs.y));
+        };
         std::map<Point2D, float, decltype(cmp)> g_score(cmp);
         std::map<Point2D, float, decltype(cmp)> f_score(cmp);
         std::map<Point2D, Point2D, decltype(cmp)> camefrom(cmp);
         ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
+        std::cout << "world width: " << actual_world.width << std::endl;
+        std::cout << "world height: " << actual_world.height << std::endl;
         for (int x = 0; x < actual_world.width; x++) {
             for (int y = 0; y < actual_world.height; y++) {
-                
-                //g_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
-                //f_score.insert(std::pair<Point2D, float>(Point2D(x, y), INFINITY));
                 g_score[Point2D(x, y)] = INFINITY;
-                g_score[Point2D(x, y)] = INFINITY;
+                f_score[Point2D(x, y)] = INFINITY;
             }
         }
         //add start (current) node to open
-        f_score[start_pos] = Distance2D(start_pos, goal);
-        open_list.push_back(Node(start_pos, f_score[start_pos]));
-        g_score[start_pos] = 0;
+        f_score[start] = Distance2D(start, goal);
+        open_list.push_back(Node(start, f_score[start]));
+        g_score[start] = 0;
+        std::cout << "start astar" << std::endl;
         while (!open_list.empty()) {
             Node current_node = open_list.back();
             //Point2D current_pos = (open_list.back()).pos;
             if (current_node.pos == goal) {
-                // done, walk to it
+                std::cout << "path found!" << std::endl;
+                // path found, walk to it
+                std::vector<Point2D> path;
+                Point2D current = current_node.pos;
+                while (true) {
+                    path.push_back(current);
+                    if (camefrom[current].x == start.x && camefrom[current].y == start.y) {
+                        break;
+                    }
+                    current = camefrom[current];
+                }
+                for (int i = path.size()-1; i >= 0; i--) {
+                    kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, path.at(i));
+                    std::cout <<"x: " << path.at(i).x << ", y: " << path.at(i).y <<std::endl;
+                }
+                break;
             }
-            //open_list.erase(std::find(open_list.begin(), open_list.end(), current_node));
             open_list.pop_back();
             closed_list.push_back(current_node);
             // loop over neighbours
+            std::vector<Point2D> viable_neighbours;
+            std::vector<QueryInterface::PathingQuery> queries;
             for (int i = -1; i < 2; i++) {
-                for (int j = -1; j > 2; j++) {
-                    Point2D neighbour = Point2D(current_node.pos.x+i, current_node.pos.x+j);
+                for (int j = -1; j < 2; j++) {
+                    Point2D neighbour = Point2D(current_node.pos.x+i, current_node.pos.y+j);
                     // check if neighbour in closed
                     if (std::find_if(closed_list.begin(), closed_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(closed_list)) {
                         continue;
                     }
-                    float distance = kurt->Query()->PathingDistance(scout, neighbour);
-                    if (distance > 0.1f) { // pathable
-                        float tentative_g_score = g_score[current_node.pos] + distance;
-                        if (tentative_g_score >= g_score[neighbour]) {
-                            continue;		// This is not a better path.
-                        }
-                        // This path is the best until now. Record it!
-                        g_score[neighbour] = tentative_g_score;
-                        camefrom[neighbour] = current_node.pos;
-                        f_score[neighbour] = g_score[neighbour] + Distance2D(neighbour, goal);
-                        // check if neighbour not in open
-                        if (!(std::find_if(open_list.begin(), open_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(open_list))) {
-                            
-                            open_list.push_back(Node(neighbour, f_score[neighbour]));
-                            std::sort(open_list.begin(), open_list.end(), NodeComp());
-                        }
+                    viable_neighbours.push_back(neighbour);
+                    QueryInterface::PathingQuery path_query{scout->tag, current_node.pos, neighbour};
+                    queries.push_back(path_query);
+                    
+                }
+            }
+            // taxing query, but a lot faster by batchin it
+            std::vector<float> neighbour_distances = kurt->Query()->PathingDistance(queries);
+            for (int i = 0; i < viable_neighbours.size(); i++) {
+                float distance = neighbour_distances.at(i);
+                if (distance > 0.1f) { // pathable
+                    float tentative_g_score = g_score[current_node.pos] + distance;
+                    Point2D neighbour = viable_neighbours.at(i);
+                    if (tentative_g_score >= g_score[neighbour]) {
+                        continue;		// This is not a better path.
+                    }
+                    // This path is the best until now. Record it!
+                    g_score[neighbour] = tentative_g_score;
+                    camefrom[neighbour] = current_node.pos;
+                    f_score[neighbour] = g_score[neighbour] + Distance2D(neighbour, goal);
+                    // check if neighbour not in open
+                    if (!(std::find_if(open_list.begin(), open_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(open_list))) {
+                        open_list.push_back(Node(neighbour, f_score[neighbour]));
+                        std::sort(open_list.begin(), open_list.end(), NodeComp());
                     }
                 }
             }
         }
+        std::cout << "done astar" << std::endl;
+        
     }
-    
+skip:
     //  try to avoid danger points
     for (const Unit* scout : kurt->scouts) {
         sc2::Point2D target;
