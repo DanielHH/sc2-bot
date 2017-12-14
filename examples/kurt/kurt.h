@@ -33,8 +33,6 @@ public:
     /* Called every time a new unit is created*/
     virtual void OnUnitCreated(const sc2::Unit* unit);
 
-	virtual void OnBuildingConstructionComplete(sc2::Unit const * unit);
-
     virtual void OnBuildingConstructionComplete(sc2::Unit const * unit);
 
     /* Called when a unit is idle */
