@@ -99,21 +99,17 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
 void StrategyManager::RemoveDeadUnit(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Enemy) {
         if (kurt->IsStructure(unit)) {
-            PRINT("ENEMY BUILDING DESTROYED")
             enemy_structures.RemoveUnit(unit);
         }
         else if(Kurt::IsArmyUnit(unit)) {
-            PRINT("ENEMY UNIT KILLED")
             enemy_units.RemoveUnit(unit);
         }
     }
     else if (unit->alliance == Unit::Alliance::Self) {
         if (kurt->IsStructure(unit)) {
-            PRINT("OUR BUILDING DESTROYED")
             our_structures.RemoveUnit(unit);
         }
         else if (Kurt::IsArmyUnit(unit)) {
-            PRINT("OUR UNIT KILLED")
             our_units.RemoveUnit(unit);
         }
     }
