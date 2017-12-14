@@ -151,7 +151,7 @@ void ArmyManager::Attack() {
         Point2D point_to_attack;
         for (int i = 0; i < squads.size(); i++) {
             Squad* squad = squads.at(i);
-            cell_to_attack = armyCellPriorityQueue->queue.at(i % 2);
+            cell_to_attack = armyCellPriorityQueue->queue.at(i);
             point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
             squad->attackMove(point_to_attack);
         }
@@ -160,6 +160,7 @@ void ArmyManager::Attack() {
 
 void ArmyManager::Harass() {
     // TODO: implement Harass
+    Defend();
 }
 
 // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
@@ -222,6 +223,7 @@ void ArmyManager::PutUnitInSquad(const Unit* unit) {
             if (tmp_squad->members.size() < Squad::SQUAD_SIZE && !tmp_squad->members.empty() && tmp_squad->members.at(0)->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
                 tmp_squad->members.push_back(unit);
                 reaper_in_squad = true;
+                break;
             }
         }
         if (!reaper_in_squad) {
@@ -241,12 +243,14 @@ void ArmyManager::PutUnitInSquad(const Unit* unit) {
                 tmp_squad->filled_up = false;
                 tmp_squad->members.push_back(unit);
                 unit_in_squad = true;
+                break;
             } else if (tmp_squad->members.size() < Squad::SQUAD_SIZE && tmp_squad->members.at(0)->unit_type != UNIT_TYPEID::TERRAN_REAPER && !tmp_squad->filled_up) {
                 tmp_squad->members.push_back(unit);
                 unit_in_squad = true;
                 if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
                     tmp_squad->filled_up = true;
                 }
+                break;
             }
         }
         if (!unit_in_squad) {
