@@ -235,6 +235,9 @@ BPState::BPState(Kurt * const kurt) {
                 IncreaseUnitAvailableAmount(type, amount);
             }
             double time = aa.time_left - ExecAction::TimeSinceOrderSent(unit, kurt);
+            if (ability == ABILITY_ID::BUILD_COMMANDCENTER) {
+                time += 70;
+            }
             if (time < 0) {
                 time = 0;
             }
