@@ -218,6 +218,12 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
         }
     }
 
+    // Don't build more supply depots if we reach the hard food cap
+    if (action == ACTION::BUILD_SUPPLY_DEPOT &&
+            obs->GetFoodCap() >= FOOD_CAP_HARD) {
+        return false;
+    }
+
     switch (action) {
     default:
         //
