@@ -17,7 +17,6 @@ GamePlan* CreateDefaultGamePlan(Kurt* kurt) {
     PRINT("DefaultGamePlan")
     GamePlan* plan = new GamePlan(kurt);
 
-    // Build order of 3 marines
     BPState* first_build_order= new BPState();
     BPState* second_build_order = new BPState();
     BPState* third_build_order = new BPState();
@@ -59,21 +58,17 @@ GamePlan* RushPlan(Kurt* kurt) {
 
     BPState* first_build_order = new BPState();
     BPState* second_build_order = new BPState();
-    BPState* third_build_order = new BPState();
 
-    // Create 6 marines to use in the rush
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 6);
+    // Create 7 marines to use in the rush
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 1);
     
     // Continue produce marines and reapers as reinforcements to the rush force
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 12);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 12);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 10);
 
     plan->AddStatBuildOrderNode(first_build_order);
     plan->AddStatCombatNode(Kurt::ATTACK); // Send the marines to attack
     plan->AddStatBuildOrderNode(second_build_order);
-    plan->AddStatCombatNode(Kurt::DEFEND); // Send the marines to defend
-    plan->AddStatBuildOrderNode(third_build_order);
 
     return plan;
 }
@@ -85,20 +80,15 @@ GamePlan* CruiserPlan(Kurt* kurt) {
     BPState* second_build_order = new BPState();
     BPState* third_build_order = new BPState();
 
-    // Create some more svcs and a barracks at start
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_SCV, 16);
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BARRACKS, 1);
-
     // Create 10 marines as a base defence army
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 10);
 
     // Start work agains 2 battlecruisers
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
 
     plan->AddStatCombatNode(Kurt::DEFEND); // Defend base until both battlecruisers are done
     plan->AddStatBuildOrderNode(first_build_order);
     plan->AddStatBuildOrderNode(second_build_order);
-    plan->AddStatBuildOrderNode(third_build_order);
     plan->AddStatCombatNode(Kurt::ATTACK); //ATTACK!
 
     return plan;
@@ -124,26 +114,6 @@ GamePlan* DynamicGamePlan(Kurt* kurt) {
     return plan; 
 }
 
-GamePlan* DefendGamePlan(Kurt* kurt) {
-    GamePlan* plan = new GamePlan(kurt);
-    BPState* first_build_order = new BPState();
-    BPState* second_build_order = new BPState();
-    BPState* third_build_order = new BPState();
-    BPState* fourth_build_order = new BPState();
-
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 8);
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
-    second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_REAPER, 8);
-    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 5);
-    fourth_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
-    
-    plan->AddStatCombatNode(Kurt::DEFEND);
-    plan->AddStatBuildOrderNode(first_build_order);
-    plan->AddStatBuildOrderNode(second_build_order);
-    plan->AddStatBuildOrderNode(third_build_order);
-    plan->AddStatBuildOrderNode(fourth_build_order);
-    return plan;
-}
 #undef DEBUG // Stop debug prints from leaking
 #undef TEST
 #undef PRINT
