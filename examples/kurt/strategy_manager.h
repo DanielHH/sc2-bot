@@ -53,8 +53,4 @@ private:
     amount of units that we know the enemy has, but the enemy might have more units in the fog of war.
     */
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
-
-    /* Returns a BPstate with some amount of units that counters the currently strongest enemy unit */
-    BPState* CounterEnemyUnit();
-
 };

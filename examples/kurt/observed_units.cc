@@ -85,7 +85,7 @@ void ObservedUnits::calculateCP() { //TODO: Remove DPS with dead units.
         bool is_flying = count(flying_units.begin(), flying_units.end(), unit->first) == 1;
 
         for (auto weapon : unit_data->weapons) {
-            weapon_dps = weapon.damage_ / weapon.speed; // This is correct assuming damage_ == damage_ per attack
+            weapon_dps = weapon.damage_ * weapon.attacks / weapon.speed; // This is correct assuming damage_ == damage_ per attack
             if (weapon.type == Weapon::TargetType::Any) { // Kolla upp om targettype::any är samma sak som air och ground, och det kommer dubbleras eller ej.
                 // GroundToBoth
                 if (!is_flying) {
