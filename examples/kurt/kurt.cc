@@ -188,8 +188,8 @@ void Kurt::CalculateBuildOrder() {
 }
 
 void Kurt::CalculateNewPlan() {
-    PRINT("\Creating new plan...")
-        strategy_manager->CalculateNewPlan();
+    PRINT("Creating new plan...")
+    strategy_manager->CalculateNewPlan();
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {
