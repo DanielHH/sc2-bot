@@ -106,6 +106,7 @@ GamePlan* VespeneGasTycoon(Kurt* kurt) {
 }
 
 GamePlan* DynamicGamePlan(Kurt* kurt) {
+    dynamic_flag = true;
     GamePlan* plan = new GamePlan(kurt);
 
     plan->AddDynBuildOrderNode();

@@ -63,12 +63,13 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             /*PRINT("------Our structures---------")
             PRINT(our_structures.ToString())*/
             PRINT("---------------------------------\n")
-
-            CalculateCombatMode();
-        UpdateCurrentBestCounterType();
-        if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
-            progression_mode = false;
-            CalculateNewPlan();
+            if (dynamic_flag) {
+                CalculateCombatMode();
+                UpdateCurrentBestCounterType();
+                if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+                    progression_mode = false;
+                    CalculateNewPlan();
+                }
         }
     } 
 
@@ -90,7 +91,7 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnits(unit);
     }
-    else if(unit->unit_type != UNIT_TYPEID::TERRAN_SCV) { // Don't add SCVs because they are "created" when exiting refineries
+    else if(Kurt::IsArmyUnit(unit)) { // Don't add SCVs because they are "created" when exiting refineries
         our_units.AddUnits(unit);
     }
 }
