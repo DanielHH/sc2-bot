@@ -103,7 +103,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
         if (kurt->IsStructure(unit)) {
             enemy_structures.RemoveUnit(unit);
         }
-        else if(Kurt::IsArmyUnit(unit)) {
+        else {
             enemy_units.RemoveUnit(unit);
         }
     }
@@ -138,7 +138,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
         if (kurt->IsStructure(*observed_unit)) {
             observed_structures.push_back(*observed_unit);
         }
-        else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
+        else { // Only add military to the observation
             observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
         }
     }
