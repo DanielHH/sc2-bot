@@ -49,6 +49,10 @@ public:
             sc2::Point3D const & nearby,
             sc2::Point2D & ans);
 
+    static bool FindNextMissileTowerSOP(
+            sc2::ObservationInterface const * obs,
+            sc2::Point2D & ans);
+
 private:
 
     static std::map<sc2::Unit const *, int> sent_order_time;
@@ -58,4 +62,5 @@ private:
 
     static int scv_gather_vespene_delay;
     static int scv_gather_minerals_delay;
+    static int build_missile_tower_delay;
 };

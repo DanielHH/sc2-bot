@@ -36,6 +36,7 @@ std::map<Unit const*, int> ExecAction::built_refinery_time;
 std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
+int ExecAction::build_missile_tower_delay = 0;
 
 set<Tag> techlab_builders;
 set<Tag> reactor_builders;
@@ -52,6 +53,7 @@ double ExecAction::TimeSinceOrderSent(Unit const * unit, Kurt * kurt) {
 void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
+    if (build_missile_tower_delay > 0) { --build_missile_tower_delay; }
 
     //
     // Update scv to not gather minerals at overfull commandcenters
@@ -133,6 +135,10 @@ bool IsCommandcenter(Unit const & unit) {
         unit.unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
         unit.unit_type == UNIT_TYPEID::TERRAN_ORBITALCOMMAND ||
         unit.unit_type == UNIT_TYPEID::TERRAN_PLANETARYFORTRESS;
+};
+
+bool IsMissileTower(Unit const & unit) {
+    return unit.unit_type == UNIT_TYPEID::TERRAN_MISSILETURRET;
 };
 
 void ExecAction::OnUnitIdle(
@@ -221,6 +227,10 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
     // Don't build more supply depots if we reach the hard food cap
     if (action == ACTION::BUILD_SUPPLY_DEPOT &&
             obs->GetFoodCap() >= FOOD_CAP_HARD) {
+        return false;
+    }
+
+    if (build_missile_tower_delay > 0) {
         return false;
     }
 
@@ -526,7 +536,8 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
         if (!can_afford_it) {
             continue;
         }
-        Point2D target_point(Kurt::RandomPoint(u->pos, 15, 15));
+        Point2D search_origin(u->pos);
+        Point2D target_point(Kurt::RandomPoint(search_origin, 15, 15));
         Unit const *target_unit;
         switch (Kurt::GetAbility(ability)->target) {
         case sc2::AbilityData::Target::None:
@@ -539,12 +550,14 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                     return false;
                 }
                 break;
+            case ABILITY_ID::BUILD_MISSILETURRET:
+                FindNextMissileTowerSOP(obs, search_origin);
             default:
             {
                 bool success = false;
                 // Assume we have to place a unit.
                 for (float dist = 12; dist < 22; dist += 0.5) {
-                    target_point = Kurt::RandomPoint(u->pos, dist, dist);
+                    target_point = Kurt::RandomPoint(search_origin, dist, dist);
                     if (query->Placement(ability, target_point, u)) {
                         success = true;
                         break;
@@ -553,6 +566,9 @@ bool ExecAction::ExecAbility(Kurt * const kurt, ABILITY_ID ability, Unit const *
                 }
                 if (!success) return false;
             }
+            }
+            if (ability == ABILITY_ID::BUILD_MISSILETURRET) {
+                build_missile_tower_delay = 14 * STEPS_PER_SEC;
             }
             action_interface->UnitCommand(u, ability, target_point);
             break;
@@ -722,6 +738,35 @@ bool ExecAction::FindNextCommandcenterLoc(
         closest2 = dist2;
     }
     return closest2 < INFINITY;
+}
+
+bool ExecAction::FindNextMissileTowerSOP(
+        ObservationInterface const * obs,
+        Point2D & ans) {
+    Units commandcenters = obs->GetUnits(IsCommandcenter);
+    Units missile_towers = obs->GetUnits(IsMissileTower);
+    // Take commandcenter with longest distance to closest missile tower.
+    float farthest2 = -1;
+    for (auto commandcenter : commandcenters) {
+        Point3D c_pos = commandcenter->pos;
+        if (missile_towers.empty()) {
+            ans.x = c_pos.x;
+            ans.y = c_pos.y;
+            return true;
+        }
+        // dist squared to closest missile tower
+        float dist2 = INFINITY;
+        for (auto missile_tower : missile_towers) {
+            dist2 = std::min(dist2, DistanceSquared3D(
+                        c_pos, missile_tower->pos));
+        }
+        if (dist2 > farthest2) {
+            ans.x = c_pos.x;
+            ans.y = c_pos.y;
+            farthest2 = dist2;
+        }
+    }
+    return farthest2 >= 0;
 }
 
 Unit const * ExecAction::FindNearestUnitOfType(
