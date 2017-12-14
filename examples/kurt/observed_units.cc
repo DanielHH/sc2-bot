@@ -256,6 +256,7 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
 
     BPState* best_counter_unit = new BPState();
     if (strongest_unit != nullptr) {
+        kurt->SetProgressionMode(false);
         PRINT("Enemys strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
         PRINT("Enemy is flying: " << to_string(count(flying_units.begin(), flying_units.end(), strongest_unit_type) == 1))
         best_counter_unit = GetBestCounterUnit(strongest_unit, strongest_unit_type, max_cp_difference, kurt, current_unit_is_flying);
@@ -263,8 +264,13 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
     else {
         // TODO: progression mode!
         PRINT("Enemys strongest unit: Nothing to counter!")
-        kurt->SetProgressionMode(true);
-        best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
+            if (kurt->GetProgressionMode()) {
+                best_counter_unit->SetUnitAmount(current_best_counter_type, 1);
+        }
+            else {
+                kurt->SetProgressionMode(true);
+                best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
+            }
     }
     PRINT("---------------------------\n")
 
@@ -330,15 +336,8 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
     PRINT("AFTER PRINTS!")
     BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
-    bool prog_mode = kurt->GetProgressionMode();
     if (current_best_counter_type != best_counter_type) {
         current_best_counter_type = best_counter_type;
-        if (prog_mode) {
-            kurt->SetProgressionMode(false);
-        }
-    }
-    else if (prog_mode) {
-        counter_order->SetUnitAmount(sc2::UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
     }
     counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
     return counter_order;

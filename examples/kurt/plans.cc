@@ -98,6 +98,7 @@ GamePlan* VespeneGasTycoon(Kurt* kurt) {
     GamePlan* plan = new GamePlan(kurt);
 
     BPState* first_build_order = new BPState();
+    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 4);
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 1);
 
     plan->AddStatBuildOrderNode(first_build_order);

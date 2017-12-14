@@ -70,7 +70,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
                 UpdateCurrentBestCounterType();
                 if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
                     progression_mode = false;
-                    CalculateNewPlan();
+                    AddToBuildGoal();
                 }
         }
     } 
@@ -154,7 +154,7 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    const float attack_const = 6; // Lower values make the ai more agressive, but with riskier attacks
+    const float attack_const = 8; // Lower values make the ai more agressive, but with riskier attacks
     const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
     float c;
     int attack_score = 0;
@@ -217,7 +217,7 @@ void StrategyManager::SetBuildGoal() {
         number_of_missile_turrets++;
         new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
     }
-
+    PRINT("###CONTACT BUILDGOAL###")
     kurt->SendBuildOrder(new_goal_state);
 };
 
@@ -236,7 +236,7 @@ void StrategyManager::AddToBuildGoal() {
         number_of_missile_turrets++;
         new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
     }
-
+    PRINT("###CONTACT BUILDGOAL###")
     kurt->AddToBuildOrder(new_goal_state);
 };
 
