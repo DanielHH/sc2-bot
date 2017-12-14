@@ -3,7 +3,6 @@ include_directories("common")
 include_directories("kurt")
 
 
-
 file(GLOB common_sources "common/*.h" "common/*.cc")
 file(GLOB kurt_files "kurt/*.h" "kurt/*.cc")
 

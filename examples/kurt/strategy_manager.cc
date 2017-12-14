@@ -154,8 +154,12 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    const float attack_const = 8; // Lower values make the ai more agressive, but with riskier attacks
-    const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
+    // Don't set defend_const lower than attack_const, or the modes will just swith back and forth
+    // High attack_const = bigger army before we attack, while lower attacks with smaller armies.
+    // High defend_const = Retreat when only a little outnumbered, while lower means we will continue
+    // attack even though we take heavy losses. 
+    const float attack_const = 7;
+    const float defend_const = 6;
     float c;
     int attack_score = 0;
 
