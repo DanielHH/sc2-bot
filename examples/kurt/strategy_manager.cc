@@ -193,12 +193,18 @@ void StrategyManager::CalculateCombatMode() {
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+    int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
     BPState* new_goal_state = new BPState();
-
-    // TODO: Add missle turrets if enemy has many air units
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units);
+
+    // Add 1 missle turret for every 100 hp the enemy air units have
+    while (number_of_missile_turrets < enemy_units.GetAirHealth() / 100) {
+        number_of_missile_turrets++;
+        new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
+    }
+
     kurt->SendBuildOrder(new_goal_state);
 };
 
