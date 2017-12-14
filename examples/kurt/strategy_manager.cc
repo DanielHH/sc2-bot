@@ -65,6 +65,11 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("---------------------------------\n")
 
             CalculateCombatMode();
+        UpdateCurrentBestCounterType();
+        if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+            progression_mode = false;
+            CalculateNewPlan();
+        }
     } 
 
 }
@@ -73,11 +78,6 @@ void StrategyManager::OnUnitEnterVision(const Unit* unit) {
     // Save how much health each type of new unit have
     if (ObservedUnits::unit_max_health.count(unit->unit_type) == 0) {
         ObservedUnits::unit_max_health.insert(pair<UNIT_TYPEID, float>(unit->unit_type, unit->health_max));
-        UpdateCurrentBestCounterType();
-        if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
-            progression_mode = false;
-            CalculateNewPlan();
-        }
     }
 }
 
@@ -224,7 +224,8 @@ bool StrategyManager::GetProgressionMode() {
 }
 
 void StrategyManager::UpdateCurrentBestCounterType() {
-    enemy_units.GetStrongestUnit(our_units, kurt);
+    BPState* check_current_best = enemy_units.GetStrongestUnit(our_units, kurt);
+    delete check_current_best;
 }
 
 
