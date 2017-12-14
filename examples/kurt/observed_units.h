@@ -18,6 +18,13 @@ public:
         float a2g; // Air to ground DPS
         float a2a; // Air to air DPS
 
+        CombatPower() {
+            g2g = 0;
+            g2a = 0;
+            a2g = 0;
+            a2a = 0;
+        }
+
         float const GetAirCp() const {
             return g2a + a2a;
         }
@@ -29,6 +36,8 @@ public:
 
     // A map with health data for all units already seen
     static std::map <sc2::UNIT_TYPEID, float> unit_max_health;
+
+    static sc2::UNIT_TYPEID current_best_counter_type;
 
     ObservedUnits();
 
@@ -67,14 +76,19 @@ public:
     std::map <sc2::UNIT_TYPEID, int> *const GetSavedUnits();
 
     /* Returns the strongest unit relative to the enemy units in the enemies parameter */
-    BPState* GetStrongestUnit(ObservedUnits enemies);
+    BPState* GetStrongestUnit(ObservedUnits enemies, Kurt* kurt);
 
     ObservedUnits* GetBestCounterUnit();
-    BPState* GetBestCounterUnit2(ObservedUnits* strongest_unit, sc2::UNIT_TYPEID strongest_enemy_type, float max_cp_difference);
+    BPState* GetBestCounterUnit2(ObservedUnits* strongest_unit, sc2::UNIT_TYPEID strongest_enemy_type, float max_cp_difference, Kurt* kurt);
 
+    /* Returns the number of air units */
     int GetNumberOfAirUnits();
 
+    /* Returns the number of ground units */
     int GetNumberOfGroundUnits();
+
+    /* Returns the number of a specific unit type currently saved */
+    int GetnumberOfUnits(sc2::UNIT_TYPEID unit_type);
 
     /* Returns a string that prints type and amount of observed units */
     std::string ToString();

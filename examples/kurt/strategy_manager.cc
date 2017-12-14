@@ -23,8 +23,11 @@ ObservedUnits our_structures;
 ObservedUnits enemy_units;
 ObservedUnits enemy_structures;
 
+UNIT_TYPEID StrategyManager::current_best_counter_type;
+
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
+    progression_mode = false;
 
     //current_plan = CreateDefaultGamePlan(kurt);
     //current_plan = RushPlan(kurt);
@@ -39,6 +42,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
     SaveSpottedEnemyUnits(observation);
 
     if (current_game_loop % 400 == 0) {
+
         const ObservedUnits::CombatPower* our_cp = our_units.GetCombatPower();
         const ObservedUnits::CombatPower* enemy_cp = enemy_units.GetCombatPower();
 
@@ -55,11 +59,20 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             PRINT("|Ground health: " << to_string(our_units.GetGroundHealth()) << "\t|")
             PRINT("|Air DPS: " << to_string(our_cp->GetAirCp()) << "\t\t|")
             PRINT("|Ground DPS: " << to_string(our_cp->GetGroundCp()) << "\t\t|")
-        PRINT(our_units.ToString())
-        /*PRINT("------Our structures---------")
-        PRINT(our_structures.ToString())*/
-        PRINT("---------------------------------\n")
+            PRINT(our_units.ToString())
+            /*PRINT("------Our structures---------")
+            PRINT(our_structures.ToString())*/
+            PRINT("---------------------------------\n")
+            if (dynamic_flag) {
+                CalculateCombatMode();
+                UpdateCurrentBestCounterType();
+                if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+                    progression_mode = false;
+                    CalculateNewPlan();
+                }
+        }
     } 
+
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -78,7 +91,7 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     if (kurt->IsStructure(unit)) {
         our_structures.AddUnits(unit);
     }
-    else if(unit->unit_type != UNIT_TYPEID::TERRAN_SCV) { // Don't add SCVs because they are "created" when exiting refineries
+    else if(Kurt::IsArmyUnit(unit)) { // Don't add SCVs because they are "created" when exiting refineries
         our_units.AddUnits(unit);
     }
 }
@@ -86,21 +99,17 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
 void StrategyManager::RemoveDeadUnit(const Unit* unit) {
     if (unit->alliance == Unit::Alliance::Enemy) {
         if (kurt->IsStructure(unit)) {
-            PRINT("ENEMY BUILDING DESTROYED")
             enemy_structures.RemoveUnit(unit);
         }
         else if(Kurt::IsArmyUnit(unit)) {
-            PRINT("ENEMY UNIT KILLED")
             enemy_units.RemoveUnit(unit);
         }
     }
     else if (unit->alliance == Unit::Alliance::Self) {
         if (kurt->IsStructure(unit)) {
-            PRINT("OUR BUILDING DESTROYED")
             our_structures.RemoveUnit(unit);
         }
         else if (Kurt::IsArmyUnit(unit)) {
-            PRINT("OUR UNIT KILLED")
             our_units.RemoveUnit(unit);
         }
     }
@@ -127,7 +136,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
             observed_structures.push_back(*observed_unit);
         }
         else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
-            observed_units.push_back(*observed_unit);
+            observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
         }
     }
 
@@ -193,14 +202,34 @@ void StrategyManager::CalculateCombatMode() {
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+    int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
     BPState* new_goal_state = new BPState();
 
-    // TODO: Add missle turrets if enemy has many air units
-
     // Add some amount of the currently best counter unit to the build order
-    new_goal_state = enemy_units.GetStrongestUnit(our_units);
+    new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
+    current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
+
+    // Add 1 missle turret for every 100 hp the enemy air units have
+    while (number_of_missile_turrets < enemy_units.GetAirHealth() / 100) {
+        number_of_missile_turrets++;
+        new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
+    }
+
     kurt->SendBuildOrder(new_goal_state);
 };
+
+void StrategyManager::SetProgressionMode(bool new_progression_mode) {
+    progression_mode = new_progression_mode;
+}
+
+bool StrategyManager::GetProgressionMode() {
+    return progression_mode;
+}
+
+void StrategyManager::UpdateCurrentBestCounterType() {
+    BPState* check_current_best = enemy_units.GetStrongestUnit(our_units, kurt);
+    delete check_current_best;
+}
 
 #undef DEBUG
 #undef PRINT

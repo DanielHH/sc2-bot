@@ -17,6 +17,8 @@ public:
 
     void OnUnitEnterVision(const sc2::Unit* unit);
 
+    static sc2::UNIT_TYPEID current_best_counter_type;
+
     // New unit is saved in vector Units. (Call this function whenever a new unit is created)
     void SaveOurUnits(const sc2::Unit* unit);
 
@@ -29,23 +31,26 @@ public:
     /* Calculates a new plan to execute */
     void CalculateNewPlan();
 
+    void UpdateCurrentBestCounterType();
+
     // Decides whether we should be in attack-mode, Defence-mode or Harrass-mode based on a comparison of our_cp and enemy_cp.
     void CalculateCombatMode();
 
     // Decides what units should be built.
     void SetBuildGoal();
 
+    void SetProgressionMode(bool new_progression_mode);
+
+    bool GetProgressionMode();
+
 private:
     Kurt* kurt;
     GamePlan* current_plan;
+    bool progression_mode;
 
     /*
     Splits up observed enemy units into enemy_structures and enemy_units vectors. This saves the minimal
     amount of units that we know the enemy has, but the enemy might have more units in the fog of war.
     */
     void SaveSpottedEnemyUnits(const sc2::ObservationInterface* observation);
-
-    /* Returns a BPstate with some amount of units that counters the currently strongest enemy unit */
-    BPState* CounterEnemyUnit();
-
 };

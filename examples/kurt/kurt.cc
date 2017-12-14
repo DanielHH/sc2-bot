@@ -88,7 +88,6 @@ void Kurt::OnUnitCreated(const Unit* unit) {
 void Kurt::OnBuildingConstructionComplete(Unit const *unit) {
     switch (unit->unit_type.ToType()) {
     case UNIT_TYPEID::TERRAN_SUPPLYDEPOT:
-        PRINT("###### SUPPLY DEPOT CREATED ######\n       " << unit->build_progress * 100 << "% done");
         Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         break;
     }
@@ -190,6 +189,15 @@ void Kurt::CalculateBuildOrder() {
 void Kurt::CalculateNewPlan() {
     PRINT("Creating new plan...")
     strategy_manager->CalculateNewPlan();
+}
+
+void Kurt::SetProgressionMode(bool new_progression_mode) {
+    strategy_manager->SetProgressionMode(new_progression_mode);
+}
+
+bool Kurt::GetProgressionMode() {
+    bool progression_mode = strategy_manager->GetProgressionMode();
+    return progression_mode;
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {
