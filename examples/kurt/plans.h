@@ -3,6 +3,8 @@
 #include "game_plan.h"
 #include <sc2api/sc2_api.h>
 
+static bool dynamic_flag = false;
+
 /* The default plan */
 GamePlan* CreateDefaultGamePlan(Kurt* kurt);
 

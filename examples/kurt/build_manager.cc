@@ -87,6 +87,10 @@ void TestMCTS(BPState * const start, BPState * const goal) {
 }
 
 void BuildManager::OnStep(const ObservationInterface* observation) {
+    // The first tick is lacking data.
+    if (observation->GetGameLoop() == 0) {
+        return;
+    }
     // If there is no goal in life, what is the point of living?
     if (goal == nullptr) {
         return;
@@ -215,6 +219,18 @@ void BuildManager::SetGoal(BPState * const goal_) {
         goal->IncreaseUnitAmount(it->first, curr.GetUnitAmount(it->first));
     }
     InitNewPlan();
+    PRINT("--- SetGoal, new goal: ---")
+    TEST(goal->Print();)
+}
+
+void BuildManager::AddToGoal(BPState * const additional_goals) {
+    for (auto it = additional_goals->UnitsBegin();
+            it != additional_goals->UnitsEnd(); ++it) {
+        goal->IncreaseUnitAmount(it->first, it->second);
+    }
+    InitNewPlan();
+    PRINT("--- AddToGoal, new goal: ---")
+    TEST(goal->Print();)
 }
 
 void BuildManager::InitNewPlan() {

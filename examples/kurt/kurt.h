@@ -33,6 +33,8 @@ public:
     /* Called every time a new unit is created*/
     virtual void OnUnitCreated(const sc2::Unit* unit);
 
+    virtual void OnBuildingConstructionComplete(sc2::Unit const * unit);
+
     /* Called when a unit is idle */
     virtual void OnUnitIdle(const sc2::Unit* unit);
 
@@ -74,6 +76,10 @@ public:
 
     /* Calculate a new plan */
     void CalculateNewPlan();
+
+    void SetProgressionMode(bool new_progression_mode);
+
+    bool GetProgressionMode();
 
     /* Returns true if unit is an terran army unit */
     static bool IsArmyUnit(const sc2::Unit* unit);

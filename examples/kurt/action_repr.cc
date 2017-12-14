@@ -44,7 +44,9 @@ std::map<ACTION, ActionRepr> ActionRepr::values = {
     { ACTION::MULE_GATHER_VESPENE, ActionRepr({{UNIT_TYPEID::TERRAN_REFINERY, 1}},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1},{UNIT_FAKEID::TERRAN_MULE_VESPENE, -1}},{}, 64) },
 
     // Building construction
-    { ACTION::BUILD_COMMAND_CENTER, ActionRepr({}, { { UNIT_FAKEID::MINERALS, 400 } }, { {UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, { {UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, 16}, {UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, 2}, {UNIT_FAKEID::FOOD_CAP, 15}}, 71 + 20) },
+    // Command centers take longer time to build but is modeled shorter to make the search choose them.
+    // Additional time is added to the active action once the building of one has started.
+    { ACTION::BUILD_COMMAND_CENTER, ActionRepr({}, { { UNIT_FAKEID::MINERALS, 400 } }, { {UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}}, { {UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_TOWNHALL_SCV_MINERALS, 16}, {UNIT_TYPEID::NEUTRAL_VESPENEGEYSER, 2}, {UNIT_FAKEID::FOOD_CAP, 15}}, 11) },
     { ACTION::BUILD_PLANETARY_FORTRESS, ActionRepr({{UNIT_TYPEID::TERRAN_ENGINEERINGBAY, 1}},{{UNIT_FAKEID::MINERALS, 150}, {UNIT_FAKEID::VESPENE, 150}, {UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}},{ { UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1 } },{{UNIT_TYPEID::TERRAN_PLANETARYFORTRESS, 1}}, 36) },
     { ACTION::BUILD_ORBITAL_COMMAND, ActionRepr({{UNIT_TYPEID::TERRAN_BARRACKS, 1}},{{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::MINERALS, 150}},{{UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1}}, 25) },
     { ACTION::BUILD_SUPPLY_DEPOT, ActionRepr({},{{UNIT_FAKEID::MINERALS, 100}},{{UNIT_FAKEID::TERRAN_SCV_MINERALS, 1}},{{UNIT_TYPEID::TERRAN_SUPPLYDEPOT, 1}, {UNIT_FAKEID::FOOD_CAP, 8}}, 21) },
@@ -91,11 +93,11 @@ std::map<ACTION, ActionRepr> ActionRepr::values = {
 
     // The FLY commands is NOT meaant to be used in the search
     // but only in the simulation of a current state
-    { ACTION::FLY_COMMAND_CENTER, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 10000}},{}, 3) },
-    { ACTION::FLY_ORBITAL_COMMAND, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 10000}},{}, 3) },
-    { ACTION::FLY_BARRACKS, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_BARRACKS, 1}, {UNIT_FAKEID::TERRAN_ANY_BARRACKS, 10000}},{}, 3) },
-    { ACTION::FLY_FACTORY, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_FACTORY, 1}, {UNIT_FAKEID::TERRAN_ANY_FACTORY, 10000}},{}, 3) },
-    { ACTION::FLY_STARPORT, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_STARPORT, 1}, {UNIT_FAKEID::TERRAN_ANY_STARPORT, 10000}},{}, 3) },
+    { ACTION::FLY_COMMAND_CENTER, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_COMMANDCENTER, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}},{}, 10000) },
+    { ACTION::FLY_ORBITAL_COMMAND, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_ORBITALCOMMAND, 1}, {UNIT_FAKEID::TERRAN_ANY_COMMANDCENTER, 1}},{}, 10000) },
+    { ACTION::FLY_BARRACKS, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_BARRACKS, 1}, {UNIT_FAKEID::TERRAN_ANY_BARRACKS, 1}},{}, 10000) },
+    { ACTION::FLY_FACTORY, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_FACTORY, 1}, {UNIT_FAKEID::TERRAN_ANY_FACTORY, 1}},{}, 10000) },
+    { ACTION::FLY_STARPORT, ActionRepr({},{},{{UNIT_TYPEID::TERRAN_STARPORT, 1}, {UNIT_FAKEID::TERRAN_ANY_STARPORT, 1}},{}, 10000) },
 };
 
 std::map<ACTION, ABILITY_ID> ActionRepr::convert_our_api = {};
@@ -153,6 +155,17 @@ ACTION ActionRepr::CreatesUnit(UNIT_TYPEID unit) {
     } else {
         return convert_api_our.at(ability);
     }
+}
+
+int ActionRepr::ConsumedUnits(ACTION action, UNIT_TYPEID unit) {
+    if (values.count(action) == 0) {
+        return 0;
+    }
+    std::map<UNIT_TYPEID, int> const * consumed = &values.at(action).consumed;
+    if (consumed->count(unit) == 0) {
+        return 0;
+    }
+    return consumed->at(unit);
 }
 
 #undef DEBUG

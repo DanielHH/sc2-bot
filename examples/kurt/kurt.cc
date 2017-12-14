@@ -50,7 +50,9 @@ void Kurt::OnStep() {
 
     TimeNew();
     world_rep->UpdateWorldRep();
-    army_manager->OnStep(observation);
+    if (step % 5 == 0) {
+        army_manager->OnStep(observation);
+    }
     TimeNext(time_am);
     ExecAction::OnStep(this);
     build_manager->OnStep(observation);
@@ -83,6 +85,14 @@ void Kurt::OnUnitCreated(const Unit* unit) {
     TimeNext(time_sm);
 }
 
+void Kurt::OnBuildingConstructionComplete(Unit const *unit) {
+    switch (unit->unit_type.ToType()) {
+    case UNIT_TYPEID::TERRAN_SUPPLYDEPOT:
+        Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+        break;
+    }
+}
+
 void Kurt::OnUnitIdle(const Unit* unit) {
     TimeNew();
     ExecAction::OnUnitIdle(unit, this);
@@ -108,10 +118,13 @@ void Kurt::OnUnitDestroyed(const Unit *destroyed_unit) {
         return;
     }
     TimeNew();
-    for (auto it = build_manager->goal->UnitsBegin(); it != build_manager->goal->UnitsEnd(); ++it) {
-        if ((*it).first == destroyed_unit->unit_type.ToType()) {
-            build_manager->InitNewPlan();
-            break;
+    if (build_manager->goal != nullptr) {
+        for (auto it = build_manager->goal->UnitsBegin();
+                it != build_manager->goal->UnitsEnd(); ++it) {
+            if ((*it).first == destroyed_unit->unit_type.ToType()) {
+                build_manager->InitNewPlan();
+                break;
+            }
         }
     }
     TimeNext(time_bm);
@@ -166,18 +179,25 @@ void Kurt::SetCombatMode(CombatMode new_combat_mode) {
 }
 
 void Kurt::CalculateCombatMode() {
-    PRINT("Dynamic combat mode")
     strategy_manager->CalculateCombatMode();
 }
 
 void Kurt::CalculateBuildOrder() {
-    PRINT("Dynamic build order")
     strategy_manager->SetBuildGoal();
 }
 
 void Kurt::CalculateNewPlan() {
     PRINT("Creating new plan...")
-        strategy_manager->CalculateNewPlan();
+    strategy_manager->CalculateNewPlan();
+}
+
+void Kurt::SetProgressionMode(bool new_progression_mode) {
+    strategy_manager->SetProgressionMode(new_progression_mode);
+}
+
+bool Kurt::GetProgressionMode() {
+    bool progression_mode = strategy_manager->GetProgressionMode();
+    return progression_mode;
 }
 
 bool Kurt::IsArmyUnit(const Unit* unit) {

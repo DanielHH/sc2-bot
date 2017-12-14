@@ -21,6 +21,8 @@ public:
     void OnGameStart(const sc2::ObservationInterface* observation);
     /* Removes all potential other goals and set given goal as the goal */
     void SetGoal(BPState * const);
+    /* Adds all units in given state to the current goal. */
+    void AddToGoal(BPState * const);
 
     /* Called when a major change
      * (like a new goal or loosing a building) happens
@@ -41,7 +43,7 @@ private:
 
     Kurt *const agent;
 
-    const int STEPS_BETWEEN_REPLAN_MAX = STEPS_PER_SEC * 10;
+    const int STEPS_BETWEEN_REPLAN_MAX = STEPS_PER_SEC * 4;
     const int STEPS_BETWEEN_REPLAN_MIN = 2;
     const int SEARCH_ITER_PER_STEP = 20;
 };

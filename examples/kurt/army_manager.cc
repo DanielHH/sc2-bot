@@ -16,6 +16,9 @@
 #define TEST(s)
 #endif // DEBUG
 
+bool second_scout = false;
+int number_of_scouts = 2;
+
 using namespace sc2;
 ArmyManager::ArmyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -30,23 +33,27 @@ void ArmyManager::OnStep(const ObservationInterface* observation) {
         armyCellPriorityQueue->Update();
         defendCellPriorityQueue->Update();
     }
+
+    if(kurt->Observation()->GetGameLoop() > 4000) {
+        // at around three minutes we add another scout
+        number_of_scouts = 2;
+    }
     
-    if (kurt->scouts.size() < 2) {
+    if (kurt->scouts.size() < number_of_scouts) {
         ArmyManager::TryGetScout();
     } else {
         //ArmyManager::ScoutSmartPath();
         ArmyManager::PlanSmartScoutPath();
     }
     switch (kurt->GetCombatMode()) {
-        case Kurt::DEFEND:
-            ArmyManager::Defend();
-            break;
+
         case Kurt::ATTACK:
             ArmyManager::Attack();
             break;
         case Kurt::HARASS:
+        case Kurt::DEFEND:
         default:
-            ArmyManager::Harass();
+            ArmyManager::Defend();
             break;
     }
 }
@@ -97,9 +104,9 @@ void ArmyManager::PlanSmartScoutPath(){
         
         // do A* to reach picked point
         struct Node {
-            Point2D pos;
+            Point3D pos;
             float score;
-            Node(Point2D _pos, float _score) {
+            Node(Point3D _pos, float _score) {
                 pos = _pos;
                 score = _score;
             }
@@ -111,30 +118,29 @@ void ArmyManager::PlanSmartScoutPath(){
             }
         };
         
-        if (kurt->Observation()->GetGameLoop() % 24000 != 120) {
+        if (kurt->Observation()->GetGameLoop() % 2400 != 120) {
             goto skip;
         }
-        Point2D start = Point2D((int)scout->pos.x, (int)scout->pos.y); // convert float pos to grid pos
-        Point2D goal = Point2D((int)picked_point.x, (int)picked_point.y); // convert float pos to grid pos
-        std::cout << "start " << "x: " << start.x << ", y: " << start.y <<std::endl;
+        Point3D start = Point3D((int)scout->pos.x, (int)scout->pos.y, scout->pos.z); // convert float pos to grid pos
+        Point3D goal = Point3D((int)picked_point.x, (int)picked_point.y, kurt->Observation()->TerrainHeight(Point2D((int)picked_point.x, (int)picked_point.y))); // convert float pos to grid pos
+        std::cout << "start " << "x: " << start.x << ", y: " << start.y << ", z: " << start.z <<std::endl;
         std::cout << "goal " << "x: " << goal.x << ", y: " << goal.y <<std::endl;
         std::vector<Node> open_list; // needs to be sorted after insert/update, best should be at back!
         std::vector<Node> closed_list;
-        auto cmp = [](const Point2D& lhs, const Point2D& rhs) {
-            return (lhs.x < rhs.x) || ((lhs.x == rhs.x) && (lhs.y < rhs.y));
+        auto cmp = [](const Point3D& lhs, const Point3D& rhs) {
+            return (lhs.x < rhs.x) || ((lhs.x == rhs.x) && (lhs.y < rhs.y)) || ((lhs.x == rhs.x) && (lhs.y == rhs.y) && (lhs.z < rhs.z));
         };
-        std::map<Point2D, float, decltype(cmp)> g_score(cmp);
-        std::map<Point2D, float, decltype(cmp)> f_score(cmp);
-        std::map<Point2D, Point2D, decltype(cmp)> camefrom(cmp);
+        std::map<Point3D, float, decltype(cmp)> g_score(cmp);
+        std::map<Point3D, float, decltype(cmp)> f_score(cmp);
+        std::map<Point3D, Point3D, decltype(cmp)> camefrom(cmp);
         ImageData actual_world = kurt->Observation()->GetGameInfo().pathing_grid;
-        std::cout << "world width: " << actual_world.width << std::endl;
-        std::cout << "world height: " << actual_world.height << std::endl;
+        std::cout << "scout t height: " << scout->pos.z << std::endl;
         int cell_size = 1;
         for (int x = 1; x <= actual_world.width; x++) {
             for (int y = 1; y <= actual_world.height; y++) {
                 if (x % cell_size == 0 && y % cell_size == 0) {
-                    g_score[Point2D(x, y)] = INFINITY;
-                    f_score[Point2D(x, y)] = INFINITY;
+                    g_score[Point3D(x, y, kurt->Observation()->TerrainHeight(Point2D(x, y)))] = INFINITY;
+                    f_score[Point3D(x, y, kurt->Observation()->TerrainHeight(Point2D(x, y)))] = INFINITY;
                 }
             }
         }
@@ -146,11 +152,11 @@ void ArmyManager::PlanSmartScoutPath(){
         while (!open_list.empty()) {
             Node current_node = open_list.back();
             //Point2D current_pos = (open_list.back()).pos;
-            if (current_node.pos == goal) {
+            if (current_node.pos.x == goal.x && current_node.pos.y == goal.y) {
                 std::cout << "path found!" << std::endl;
                 // path found, walk to it
                 std::vector<Point2D> path;
-                Point2D current = current_node.pos;
+                Point3D current = current_node.pos;
                 while (true) {
                     path.push_back(current);
                     if (camefrom[current].x == start.x && camefrom[current].y == start.y) {
@@ -158,7 +164,8 @@ void ArmyManager::PlanSmartScoutPath(){
                     }
                     current = camefrom[current];
                 }
-                for (int i = path.size()-1; i >= 0; i--) {
+                kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, path.back());
+                for (int i = path.size()-2; i >= 0; i--) {
                     kurt->Actions()->UnitCommand(scout, ABILITY_ID::MOVE, path.at(i), true);
                     std::cout <<"x: " << path.at(i).x << ", y: " << path.at(i).y <<std::endl;
                 }
@@ -167,19 +174,22 @@ void ArmyManager::PlanSmartScoutPath(){
             open_list.pop_back();
             closed_list.push_back(current_node);
             // loop over neighbours
-            std::vector<Point2D> viable_neighbours;
+            std::vector<Point3D> viable_neighbours;
             std::vector<QueryInterface::PathingQuery> queries;
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
-                    Point2D neighbour = Point2D(current_node.pos.x+i*cell_size, current_node.pos.y+j*cell_size);
+                    Point3D neighbour = Point3D(current_node.pos.x+i*cell_size, current_node.pos.y+j*cell_size, kurt->Observation()->TerrainHeight(Point2D(current_node.pos.x+i*cell_size, current_node.pos.y+j*cell_size)));
                     // check if neighbour in closed
                     if (std::find_if(closed_list.begin(), closed_list.end(), [&](Node &f) { return f.pos.x == neighbour.x && f.pos.y == neighbour.y; }) != end(closed_list)) {
+                        continue;
+                    }
+                    // check if terrain height differnce is too large
+                    if (std::abs(current_node.pos.z-neighbour.z) > 0.79f && !scout->is_flying) {
                         continue;
                     }
                     viable_neighbours.push_back(neighbour);
                     QueryInterface::PathingQuery path_query{scout->tag, current_node.pos, neighbour};
                     queries.push_back(path_query);
-                    
                 }
             }
             // taxing query, but a lot faster by batching it
@@ -188,7 +198,7 @@ void ArmyManager::PlanSmartScoutPath(){
                 float distance = neighbour_distances.at(i);
                 if (distance > 0.1f) { // pathable
                     float tentative_g_score = g_score[current_node.pos] + distance;
-                    Point2D neighbour = viable_neighbours.at(i);
+                    Point3D neighbour = viable_neighbours.at(i);
                     if (tentative_g_score >= g_score[neighbour]) {
                         continue;		// This is not a better path.
                     }
@@ -293,7 +303,7 @@ void ArmyManager::Attack() {
         Point2D point_to_attack;
         for (int i = 0; i < squads.size(); i++) {
             Squad* squad = squads.at(i);
-            cell_to_attack = armyCellPriorityQueue->queue.at(i % 2);
+            cell_to_attack = armyCellPriorityQueue->queue.at(i);
             point_to_attack = (cell_to_attack)->GetCellLocationAs2DPoint(kurt->world_rep->chunk_size);
             squad->attackMove(point_to_attack);
         }
@@ -302,6 +312,7 @@ void ArmyManager::Attack() {
 
 void ArmyManager::Harass() {
     // TODO: implement Harass
+    Defend();
 }
 
 // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
@@ -364,6 +375,7 @@ void ArmyManager::PutUnitInSquad(const Unit* unit) {
             if (tmp_squad->members.size() < Squad::SQUAD_SIZE && !tmp_squad->members.empty() && tmp_squad->members.at(0)->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
                 tmp_squad->members.push_back(unit);
                 reaper_in_squad = true;
+                break;
             }
         }
         if (!reaper_in_squad) {
@@ -383,12 +395,14 @@ void ArmyManager::PutUnitInSquad(const Unit* unit) {
                 tmp_squad->filled_up = false;
                 tmp_squad->members.push_back(unit);
                 unit_in_squad = true;
+                break;
             } else if (tmp_squad->members.size() < Squad::SQUAD_SIZE && tmp_squad->members.at(0)->unit_type != UNIT_TYPEID::TERRAN_REAPER && !tmp_squad->filled_up) {
                 tmp_squad->members.push_back(unit);
                 unit_in_squad = true;
                 if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
                     tmp_squad->filled_up = true;
                 }
+                break;
             }
         }
         if (!unit_in_squad) {

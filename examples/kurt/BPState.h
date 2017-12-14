@@ -27,8 +27,9 @@ public:
 
     /* Updates this state until given action can be executed in this state.
      * If the action can be executed now, this update does nothing.
+     * Returns true if success, false on failure.
      */
-    void UpdateUntilAvailable(ACTION);
+    bool UpdateUntilAvailable(ACTION);
 
     /* Updates this state by adding all actions in given plan
      * and run CompleteAllActions.
@@ -37,8 +38,10 @@ public:
     bool SimulatePlan(BPPlan &);
     bool SimulatePlan(BPPlan * const);
 
-    /* Updates this state and add the action. */
-    void AddAction(ACTION action, double time_left = -1);
+    /* Updates this state and add the action.
+     * Returns true if success, false on failure.
+     */
+    bool AddAction(ACTION action, double time_left = -1);
 
     /* Updates this state with completing all active actions. */
     void CompleteAllActions();
@@ -126,6 +129,16 @@ public:
 
     bool operator<(BPState const &other) const;
 
+    /* Checks if this state contains all units that the
+     * given state contains
+     */
+    bool ContainsAllUnitsOf(BPState const &) const;
+
+    /* Returns the percent of the units in given state
+     * that also exist in this state.
+     */
+    double ContainsPercentOf(BPState const *) const;
+
     /* USED BY MCTS, empty by default.
      * List containing all available actions from this state.
      */
@@ -152,11 +165,6 @@ public:
      * The amount of times a search iteration has passed through this state.
      */
     int iter_amount;
-
-    /* Checks if this state contains all units that the
-     * given state contains
-     */
-    bool ContainsAllUnitsOf(BPState const &) const;
 
 private:
     /* Updates this state given time (in seconds)
