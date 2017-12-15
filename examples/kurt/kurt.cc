@@ -13,7 +13,7 @@
 #include "exec_action.h"
 #include "constants.h"
 
-#define DEBUG // Comment out to disable debug prints in this file.
+//#define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
 #define PRINT(s) std::cout << s << std::endl;
@@ -88,7 +88,6 @@ void Kurt::OnUnitCreated(const Unit* unit) {
 void Kurt::OnBuildingConstructionComplete(Unit const *unit) {
     switch (unit->unit_type.ToType()) {
     case UNIT_TYPEID::TERRAN_SUPPLYDEPOT:
-        PRINT("###### SUPPLY DEPOT CREATED ######\n       " << unit->build_progress * 100 << "% done");
         Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         break;
     }

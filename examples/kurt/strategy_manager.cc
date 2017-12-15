@@ -68,9 +68,11 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             if (dynamic_flag) {
                 CalculateCombatMode();
                 UpdateCurrentBestCounterType();
-                if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
-                    progression_mode = false;
-                    CalculateNewPlan();
+                if (progression_mode) {
+                    AddToBuildGoal();
+                }
+                else if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
+                    AddToBuildGoal();
                 }
         }
     } 
@@ -103,7 +105,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
         if (kurt->IsStructure(unit)) {
             enemy_structures.RemoveUnit(unit);
         }
-        else if(Kurt::IsArmyUnit(unit)) {
+        else {
             enemy_units.RemoveUnit(unit);
         }
     }
@@ -138,7 +140,7 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
         if (kurt->IsStructure(*observed_unit)) {
             observed_structures.push_back(*observed_unit);
         }
-        else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
+        else { // Only add military to the observation
             observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
         }
     }
@@ -155,19 +157,29 @@ void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
     // Don't set defend_const lower than attack_const, or the modes will just swith back and forth
-    // High attack_const = bigger army before we attack, while lower attacks with smaller armies.
-    // High defend_const = Retreat when only a little outnumbered, while lower means we will continue
-    // attack even though we take heavy losses. 
-    const float attack_const = 8;
-    const float defend_const = 5;
+    // High our_health_attack = bigger army before we attack, while lower attacks with smaller armies.
+    // High our_health_defence = Retreat when only a little outnumbered, while lower means we will continue
+    // High our_cp_attack = smaller army before we attack, while lower attacks with smaller armies.
+    // High our_cp_defence = Retreat only when very outnumbered, while lower means we will continue
+    // attack even though we take heavy losses.
+    // Aggressive playstyle => Low our_health_attack, Lower our_health_defence, High our_cp_attack, Higher our_cp_defence
+    // Defensive playstyle => High our_health_attack, High our_health_defence, Low our_cp_attack, Low our_cp_defence
+    const float our_health_attack = 5;
+    const float our_health_defence = 4;
+    const float our_cp_attack = 7;
+    const float our_cp_defence = 8;
+
     float c;
+    float d;
     int attack_score = 0;
 
     if (current_combat_mode == Kurt::ATTACK) {
-        c = defend_const;
+        c = our_health_defence;
+        d = our_cp_defence;
     }
     else {
-        c = attack_const;
+        c = our_health_attack;
+        d = our_cp_attack;
     }
     PRINT("\n--------Calculate CombatMode--------")
 
@@ -182,12 +194,12 @@ void StrategyManager::CalculateCombatMode() {
         attack_score++;
     }
     // Do we have high air DPS relative to the enemy's air units' health?
-    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
+    if ((enemy_units.GetAirHealth() < our_cp->GetAirCp() * d) && (enemy_units.GetNumberOfAirUnits() > 0)) { //TODO: Om vi t ex har a2a och fienden inte har några a2a eller a2g, lär vi ju inte attackera med dem.
         PRINT("We have good air DPS!")
         attack_score++;
     }
     // Do we have high ground DPS relative to the enemy's ground units' health?
-    if (enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) {
+    if ((enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * d) && (enemy_units.GetNumberOfGroundUnits() > 0)) {
         PRINT("We have good ground DPS!")
         attack_score++;
     }
@@ -209,41 +221,52 @@ void StrategyManager::CalculateCombatMode() {
 void StrategyManager::SetBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
     BPState* new_goal_state = new BPState();
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
     current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
-
-    // Add 1 missle turret for every 100 hp the enemy air units have
-    while (number_of_missile_turrets < enemy_units.GetAirHealth() / 100) {
-        number_of_missile_turrets++;
-        new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
-    }
-
+    
+    PRINT("###CONTACT BUILDGOAL (SET)###")
     kurt->SendBuildOrder(new_goal_state);
+    StuffWeLikeToHave();
 };
 
 void StrategyManager::AddToBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
     BPState* new_goal_state = new BPState();
+    BPState* stuff = new BPState();
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
     current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
 
-    // Add 1 missle turret for every 100 hp the enemy air units have
-    while (number_of_missile_turrets < enemy_units.GetAirHealth() / 100) {
-        number_of_missile_turrets++;
-        new_goal_state->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
-    }
-
+    PRINT("###CONTACT BUILDGOAL (ADD)###")
     kurt->AddToBuildOrder(new_goal_state);
+    StuffWeLikeToHave();
 };
 
+void StrategyManager::StuffWeLikeToHave() {
+    BPState* stuff = new BPState();
+    int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
+    // Add 1 missle turret for every 100 hp the enemy air units have
+    while (number_of_missile_turrets < (enemy_units.GetAirHealth() / 100)) {
+        number_of_missile_turrets++;
+        stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
+    }
+    int number_of_marines = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MARINE);
+    while (number_of_marines < (our_units.GetNumberOfGroundUnits() / 5)) {
+        number_of_marines++;
+        stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+    }
+    int number_of_medivacs = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MEDIVAC);
+    while (number_of_medivacs < (number_of_marines / 6)) {
+        number_of_medivacs++;
+        stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
+    }
+    kurt->AddToBuildOrder(stuff);
+}
 
 void StrategyManager::SetProgressionMode(bool new_progression_mode) {
     progression_mode = new_progression_mode;
