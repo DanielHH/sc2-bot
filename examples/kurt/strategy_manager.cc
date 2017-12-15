@@ -168,6 +168,7 @@ void StrategyManager::CalculateCombatMode() {
     const float our_health_defence = 4;
     const float our_cp_attack = 7;
     const float our_cp_defence = 8;
+
     float c;
     float d;
     int attack_score = 0;
@@ -180,7 +181,7 @@ void StrategyManager::CalculateCombatMode() {
         c = our_health_attack;
         d = our_cp_attack;
     }
-    PRINT("\n-------Calculate CombatMode---------")
+    PRINT("\n--------Calculate CombatMode--------")
 
     // Do our air units have much health relative to the enemy air DPS? 
     if (our_units.GetAirHealth() > enemy_cp->GetAirCp() * c) {
@@ -213,8 +214,8 @@ void StrategyManager::CalculateCombatMode() {
         PRINT("RETREAT!")
         kurt->SetCombatMode(Kurt::DEFEND);
     }
-    
-    PRINT("---------------------\n")
+
+    PRINT("------------------------------------\n")
 };
 
 void StrategyManager::SetBuildGoal() {
