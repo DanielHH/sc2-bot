@@ -2,6 +2,7 @@
 
 #include "sc2api/sc2_api.h"
 
+#include "strategy_manager.h"
 #include "BPPlan.h"
 #include "BPState.h"
 #include "action_enum.h"
@@ -77,7 +78,9 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     interesting_actions.insert(ACTION::SCV_GATHER_VESPENE);
     interesting_actions.insert(ACTION::BUILD_REFINERY);
     interesting_actions.insert(ACTION::BUILD_SUPPLY_DEPOT);
-    interesting_actions.insert(ACTION::BUILD_COMMAND_CENTER);
+    if (StrategyManager::dynamic_flag) {
+        interesting_actions.insert(ACTION::BUILD_COMMAND_CENTER);
+    }
     interesting_actions.insert(ACTION::TRAIN_SCV);
     if (interesting_actions.count(ACTION::BUILD_BARRACKS) != 0) {
         interesting_actions.insert(ACTION::BUILD_BARRACKS_REACTOR);
