@@ -95,6 +95,18 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
     if (goal == nullptr) {
         return;
     }
+    // Print current goal
+    if (observation->GetGameLoop() % (10 * STEPS_PER_SEC) == 0) {
+        std::cout << "Current goal: ";
+        for (auto it = goal->UnitsBegin(); it != goal->UnitsEnd(); ++it) {
+            if (it != goal->UnitsBegin()) {
+                std::cout << ", ";
+            }
+            std::cout << UnitTypeToName(it->first) << ": " << it->second;
+        }
+        std::cout << std::endl;
+    }
+
     BPState current_state(agent);
     //
     // Do the searching for a better plan.
@@ -135,8 +147,15 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
         double search_start = current_state.GetTime() +
             steps_until_replan * SEC_PER_STEP;
         BPState test_state(current_state);
-        for (int i = 0; i < next_plan.size(); ++i) {
-            ACTION action = next_plan[i];
+        int minerals = observation->GetMinerals();
+        int vespene = observation->GetVespene();
+        int food = observation->GetFoodCap() - observation->GetFoodUsed();
+        int index;
+        for (index = 0; index < next_plan.size(); ++index) {
+            ACTION action = next_plan[index];
+            minerals -= ActionRepr::ConsumedUnits(action, UNIT_FAKEID::MINERALS);
+            vespene -= ActionRepr::ConsumedUnits(action, UNIT_FAKEID::VESPENE);
+            food += ActionRepr::ConsumedUnits(action, UNIT_FAKEID::FOOD_USED);
             if (test_state.CanExecuteNowOrSoon(action)) {
                 test_state.AddAction(action);
                 if (test_state.GetTime() <= search_start) {
@@ -149,9 +168,23 @@ void BuildManager::OnStep(const ObservationInterface* observation) {
                 break;
             }
         }
+        ++index;
         if (! abort) {
             BPState search_from(current_state);
             if (search_from.SimulatePlan(current_plan)) {
+                for (; index < next_plan.size(); ++index) {
+                    ACTION action = next_plan[index];
+                    minerals -= ActionRepr::ConsumedUnits(action, UNIT_FAKEID::MINERALS);
+                    vespene -= ActionRepr::ConsumedUnits(action, UNIT_FAKEID::VESPENE);
+                    food += ActionRepr::ConsumedUnits(action, UNIT_FAKEID::FOOD_USED);
+                    if (minerals < 0 || vespene < 0 || food < 0) {
+                        break;
+                    }
+                    if (search_from.CanExecuteNow(action)) {
+                        search_from.AddAction(action);
+                        current_plan.push_back(action);
+                    }
+                }
                 mcts = new MCTS(&search_from, goal);
             } else {
                 abort = true;
