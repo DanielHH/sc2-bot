@@ -37,6 +37,7 @@ std::vector<Point3D> ExecAction::commandcenter_locations;
 int ExecAction::scv_gather_vespene_delay = 0;
 int ExecAction::scv_gather_minerals_delay = 0;
 int ExecAction::build_missile_tower_delay = 0;
+int ExecAction::build_commandcenter_delay = 0;
 
 set<Tag> techlab_builders;
 set<Tag> reactor_builders;
@@ -62,6 +63,7 @@ void ExecAction::OnStep(Kurt * kurt) {
     if (scv_gather_vespene_delay > 0) { --scv_gather_vespene_delay; }
     if (scv_gather_minerals_delay > 0) { --scv_gather_minerals_delay; }
     if (build_missile_tower_delay > 0) { --build_missile_tower_delay; }
+    if (build_commandcenter_delay > 0) { --build_commandcenter_delay; }
 
     //
     // Update scv to not gather minerals at overfull commandcenters
@@ -123,7 +125,7 @@ void ExecAction::OnStep(Kurt * kurt) {
     if (step % (2 * STEPS_PER_SEC) == 0 && ! kurt->army_units.empty()) {
         Point2D target_point = kurt->army_units.front()->pos;
         for (auto it = kurt->scv_idle.begin(); it != kurt->scv_idle.end(); ++it) {
-            kurt->Actions()->UnitCommand(*it, ABILITY_ID::MOVE, target_point);
+            kurt->Actions()->UnitCommand(*it, ABILITY_ID::PATROL, target_point);
         }
     }
 }
@@ -248,8 +250,16 @@ bool ExecAction::Exec(Kurt * const kurt, ACTION action) {
         return false;
     }
 
-    if (build_missile_tower_delay > 0) {
+    if (action == ACTION::BUILD_MISSILE_TURRET &&
+            build_missile_tower_delay > 0) {
         return false;
+    } else if (action == ACTION::BUILD_COMMAND_CENTER) {
+        if (build_commandcenter_delay > 0) {
+            return false;
+        } else {
+            // Only attempt to build a commandcenter with 1 sec delay
+            build_commandcenter_delay = 1 * STEPS_PER_SEC;
+        }
     }
 
     switch (action) {
