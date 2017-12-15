@@ -417,7 +417,7 @@ bool BPState::AddAction(ACTION action, double time) {
         IncreaseUnitProdAmount(type, amount);
     }
     int food_diff = GetUnitProdAmount(UNIT_FAKEID::FOOD_CAP) +
-        GetUnitAmount(UNIT_FAKEID::FOOD_CAP) - 200;
+        GetUnitAmount(UNIT_FAKEID::FOOD_CAP) - FOOD_CAP_HARD;
     food_diff = std::max(0, food_diff);
     IncreaseUnitProdAmount(UNIT_FAKEID::FOOD_CAP, -food_diff);
 
@@ -461,7 +461,8 @@ bool BPState::CompleteFirstAction() {
         IncreaseUnitAvailableAmount(type, amount);
         IncreaseUnitProdAmount(type, -amount);
     }
-    int food_cap = std::min(200, GetUnitAmount(UNIT_FAKEID::FOOD_CAP));
+    int food_cap = GetUnitAmount(UNIT_FAKEID::FOOD_CAP);
+    food_cap = std::min(FOOD_CAP_HARD, food_cap);
     SetUnitAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
     SetUnitAvailableAmount(UNIT_FAKEID::FOOD_CAP, food_cap);
     return true;

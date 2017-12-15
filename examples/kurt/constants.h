@@ -8,6 +8,8 @@ const double SEC_PER_STEP = 1 / (double) STEPS_PER_SEC;
 const double MINERALS_PER_SEC_PER_SCV = 1.08;
 const double VESPENE_PER_SEC_PER_SCV = 1.68;
 
+const int FOOD_CAP_HARD = 200;
+
 /* All minerals and vespene in a cluster "should" be within this range
  * from the potential commandcenter in the middle.
  * This value is squared.
