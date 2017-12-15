@@ -68,8 +68,10 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             if (dynamic_flag) {
                 CalculateCombatMode();
                 UpdateCurrentBestCounterType();
-                if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
-                    progression_mode = false;
+                if (progression_mode) {
+                    AddToBuildGoal();
+                }
+                else if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
                     AddToBuildGoal();
                 }
         }
@@ -155,19 +157,28 @@ void StrategyManager::CalculateCombatMode() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
     // Don't set defend_const lower than attack_const, or the modes will just swith back and forth
-    // High attack_const = bigger army before we attack, while lower attacks with smaller armies.
-    // High defend_const = Retreat when only a little outnumbered, while lower means we will continue
-    // attack even though we take heavy losses. 
-    const float attack_const = 7;
-    const float defend_const = 6;
+    // High our_health_attack = bigger army before we attack, while lower attacks with smaller armies.
+    // High our_health_defence = Retreat when only a little outnumbered, while lower means we will continue
+    // High our_cp_attack = smaller army before we attack, while lower attacks with smaller armies.
+    // High our_cp_defence = Retreat only when very outnumbered, while lower means we will continue
+    // attack even though we take heavy losses.
+    // Aggressive playstyle => Low our_health_attack, Lower our_health_defence, High our_cp_attack, Higher our_cp_defence
+    // Defensive playstyle => High our_health_attack, High our_health_defence, Low our_cp_attack, Low our_cp_defence
+    const float our_health_attack = 5;
+    const float our_health_defence = 4;
+    const float our_cp_attack = 7;
+    const float our_cp_defence = 8;
     float c;
+    float d;
     int attack_score = 0;
 
     if (current_combat_mode == Kurt::ATTACK) {
-        c = defend_const;
+        c = our_health_defence;
+        d = our_cp_defence;
     }
     else {
-        c = attack_const;
+        c = our_health_attack;
+        d = our_cp_attack;
     }
     PRINT("\n-------Calculate CombatMode---------")
 
@@ -182,12 +193,12 @@ void StrategyManager::CalculateCombatMode() {
         attack_score++;
     }
     // Do we have high air DPS relative to the enemy's air units' health?
-    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
+    if ((enemy_units.GetAirHealth() < our_cp->GetAirCp() * d) && (enemy_units.GetNumberOfAirUnits() > 0)) { //TODO: Om vi t ex har a2a och fienden inte har några a2a eller a2g, lär vi ju inte attackera med dem.
         PRINT("We have good air DPS!")
         attack_score++;
     }
     // Do we have high ground DPS relative to the enemy's ground units' health?
-    if (enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * c) {
+    if ((enemy_units.GetGroundHealth() < our_cp->GetGroundCp() * d) && (enemy_units.GetNumberOfGroundUnits() > 0)) {
         PRINT("We have good ground DPS!")
         attack_score++;
     }

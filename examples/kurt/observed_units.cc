@@ -255,7 +255,11 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
 
     BPState* best_counter_unit = new BPState();
     if (strongest_unit != nullptr) {
-        kurt->SetProgressionMode(false);
+        if (kurt->GetProgressionMode()) {
+            kurt->SetProgressionMode(false);
+            current_best_counter_type = UNIT_TYPEID::INVALID;
+        }
+
         bool strongest_unit_is_flying = count(flying_units.begin(), flying_units.end(), strongest_unit_type) == 1;
         PRINT("Enemys strongest unit: " << Kurt::GetUnitType(strongest_unit_type)->name)
         PRINT("Enemy is flying: " << to_string(strongest_unit_is_flying))
@@ -266,7 +270,8 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
         PRINT("Enemys strongest unit: Nothing to counter!")
             if (kurt->GetProgressionMode()) {
                 best_counter_unit->SetUnitAmount(current_best_counter_type, 1);
-        }
+                best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1); //They're really good anti-air
+            }
             else {
                 kurt->SetProgressionMode(true);
                 best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
@@ -330,10 +335,8 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
 
     UNIT_TYPEID best_counter_type = best_counter_unit->saved_units.begin()->first;
     delete best_counter_unit; // best_counter_units not needed any more
-
     PRINT("Best counter unit found: " << Kurt::GetUnitType(best_counter_type)->name)
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
-    PRINT("AFTER PRINTS!")
     BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
     if (current_best_counter_type != best_counter_type) {
         current_best_counter_type = best_counter_type;
