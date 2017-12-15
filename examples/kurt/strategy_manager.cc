@@ -158,8 +158,8 @@ void StrategyManager::CalculateCombatMode() {
     // High attack_const = bigger army before we attack, while lower attacks with smaller armies.
     // High defend_const = Retreat when only a little outnumbered, while lower means we will continue
     // attack even though we take heavy losses. 
-    const float attack_const = 7;
-    const float defend_const = 6;
+    const float attack_const = 8;
+    const float defend_const = 5;
     float c;
     int attack_score = 0;
 
@@ -169,7 +169,7 @@ void StrategyManager::CalculateCombatMode() {
     else {
         c = attack_const;
     }
-    PRINT("\n-------Calculate CombatMode---------")
+    PRINT("\n--------Calculate CombatMode--------")
 
     // Do our air units have much health relative to the enemy air DPS? 
     if (our_units.GetAirHealth() > enemy_cp->GetAirCp() * c) {
@@ -202,8 +202,8 @@ void StrategyManager::CalculateCombatMode() {
         PRINT("RETREAT!")
         kurt->SetCombatMode(Kurt::DEFEND);
     }
-    
-    PRINT("---------------------\n")
+
+    PRINT("------------------------------------\n")
 };
 
 void StrategyManager::SetBuildGoal() {
