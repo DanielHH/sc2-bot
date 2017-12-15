@@ -24,6 +24,7 @@ ObservedUnits enemy_units;
 ObservedUnits enemy_structures;
 
 UNIT_TYPEID StrategyManager::current_best_counter_type;
+bool StrategyManager::dynamic_flag = false;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
     kurt = parent_kurt;
@@ -32,6 +33,7 @@ StrategyManager::StrategyManager(Kurt* parent_kurt) {
     //current_plan = CreateDefaultGamePlan(kurt);
     //current_plan = RushPlan(kurt);
     current_plan = VespeneGasTycoon(kurt);
+    //current_plan = FlyingScout(kurt);
     //current_plan = DynamicGamePlan(kurt);
     current_plan->ExecuteNextNode();
 }
@@ -66,7 +68,7 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             if (dynamic_flag) {
                 CalculateCombatMode();
                 UpdateCurrentBestCounterType();
-                if (current_best_counter_type != ObservedUnits::current_best_counter_type) { //TODO: Check if this works correctly.
+                if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
                     progression_mode = false;
                     CalculateNewPlan();
                 }
@@ -122,6 +124,7 @@ void StrategyManager::ExecuteSubplan() {
 void StrategyManager::CalculateNewPlan() {
     delete current_plan;
     current_plan = DynamicGamePlan(kurt);
+    dynamic_flag = true;
     current_plan->ExecuteNextNode();
 }
 
@@ -151,7 +154,7 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
-    const float attack_const = 10; // Lower values make the ai more agressive, but with riskier attacks
+    const float attack_const = 6; // Lower values make the ai more agressive, but with riskier attacks
     const float defend_const = 7; // Higher value makes the ai retreat more quickly when outnumbered
     float c;
     int attack_score = 0;
@@ -175,7 +178,7 @@ void StrategyManager::CalculateCombatMode() {
         attack_score++;
     }
     // Do we have high air DPS relative to the enemy's air units' health?
-    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) {
+    if (enemy_units.GetAirHealth() < our_cp->GetAirCp() * c) { //TODO: Om vi t ex har a2a och fienden inte har några a2a, lär vi ju inte attackera med dem.
         PRINT("We have good air DPS!")
         attack_score++;
     }
