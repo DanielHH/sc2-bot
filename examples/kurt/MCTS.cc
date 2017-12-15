@@ -98,20 +98,21 @@ MCTS::~MCTS() {
     delete goal;
 }
 
-#define discourage_hoarding
+//#define discourage_hoarding
 double MCTS::CalcReward(
         double time,
         double mineral_rate, double vespene_rate,
         int mineral_stock, int vespene_stock) {
     return
-        time_portion * basic_time / (time + basic_time) +
+        (time_portion * basic_time / (time + basic_time) +
         m_rate_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
         v_rate_portion * vespene_rate / (vespene_rate + basic_vespene_rate) +
         m_stock_portion * mineral_stock / (mineral_stock + basic_mineral_stock) +
-        v_stock_portion * vespene_stock / (vespene_stock + basic_vespene_stock)
+        v_stock_portion * vespene_stock / (vespene_stock + basic_vespene_stock))
 #ifdef discourage_hoarding
-        * (mineral_stock > 800 ? ((1600 - mineral_stock)/800) : 1)
-        * (vespene_stock > 800 ? ((1600 - vespene_stock) / 800) : 1)
+        * 0.5
+        * ((mineral_stock > 800 ? (800.0 / mineral_stock) : 1)
+        + (vespene_stock > 800 ? (800.0 / vespene_stock) : 1))
 #endif
         ;
 }
