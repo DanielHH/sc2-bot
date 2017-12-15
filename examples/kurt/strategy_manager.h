@@ -42,6 +42,8 @@ public:
 
     void AddToBuildGoal();
 
+    void StuffWeLikeToHave();
+
     void SetProgressionMode(bool new_progression_mode);
 
     bool GetProgressionMode();

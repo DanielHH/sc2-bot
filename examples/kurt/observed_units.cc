@@ -328,7 +328,8 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
     }
 
     int number_of_counter_units = 0;
-    while (cp_difference > -10) {
+    const float buffer_cp = -10;
+    while (cp_difference > buffer_cp) {
         number_of_counter_units += 1;
         cp_difference -= add_cp;
     }
