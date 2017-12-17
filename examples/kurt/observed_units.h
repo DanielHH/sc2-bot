@@ -9,8 +9,6 @@
 class ObservedUnits {
 
 public:
-    static const std::vector<sc2::UNIT_TYPEID> flying_units; // A vector of the units that can fly
-
     /* Stores the total DPS all units has together against air and ground units  */
     struct CombatPower {
         float g2g; // Ground to ground DPS
@@ -85,6 +83,9 @@ public:
 
     /* Returns the number of ground units */
     int GetNumberOfGroundUnits();
+
+    /* Returns the number of cloaked units */
+    int GetNumberOfCloakedUnits();
 
     /* Returns the number of a specific unit type currently saved */
     int GetnumberOfUnits(sc2::UNIT_TYPEID unit_type);

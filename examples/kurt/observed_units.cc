@@ -16,15 +16,7 @@ using namespace sc2;
 #define TEST(s)
 #endif // DEBUG
 
-const vector<UNIT_TYPEID> ObservedUnits::flying_units = {
-    UNIT_TYPEID::TERRAN_VIKINGFIGHTER, UNIT_TYPEID::TERRAN_MEDIVAC, UNIT_TYPEID::TERRAN_LIBERATOR, UNIT_TYPEID::TERRAN_LIBERATORAG,
-    UNIT_TYPEID::TERRAN_RAVEN, UNIT_TYPEID::TERRAN_BANSHEE, UNIT_TYPEID::TERRAN_BATTLECRUISER, UNIT_TYPEID::TERRAN_POINTDEFENSEDRONE,
-    UNIT_TYPEID::ZERG_OVERLORD, UNIT_TYPEID::ZERG_OVERLORDCOCOON, UNIT_TYPEID::ZERG_OVERLORDTRANSPORT, UNIT_TYPEID::ZERG_TRANSPORTOVERLORDCOCOON,
-    UNIT_TYPEID::ZERG_OVERSEER, UNIT_TYPEID::ZERG_MUTALISK, UNIT_TYPEID::ZERG_CORRUPTOR, UNIT_TYPEID::ZERG_BROODLORD,
-    UNIT_TYPEID::ZERG_BROODLORDCOCOON, UNIT_TYPEID::ZERG_VIPER, UNIT_TYPEID::PROTOSS_OBSERVER, UNIT_TYPEID::PROTOSS_WARPPRISM,
-    UNIT_TYPEID::PROTOSS_PHOENIX, UNIT_TYPEID::PROTOSS_VOIDRAY, UNIT_TYPEID::PROTOSS_ORACLE, UNIT_TYPEID::PROTOSS_CARRIER,
-    UNIT_TYPEID::PROTOSS_TEMPEST, UNIT_TYPEID::PROTOSS_MOTHERSHIPCORE, UNIT_TYPEID::PROTOSS_MOTHERSHIP
-};
+
 
 map <UNIT_TYPEID, float> ObservedUnits::unit_max_health;
 UNIT_TYPEID ObservedUnits::current_best_counter_type;
@@ -382,6 +374,25 @@ int ObservedUnits::GetNumberOfGroundUnits() {
     }
 
     return number_of_ground_units;
+}
+
+int ObservedUnits::GetNumberOfCloakedUnits() {
+    int number_of_cloaked_units = 0;
+    UNIT_TYPEID unit_type;
+    int amount;
+    bool is_cloaked;
+
+    for (auto saved_unit = saved_units.begin(); saved_unit != saved_units.end(); ++saved_unit) {
+        unit_type = saved_unit->first;
+        amount = saved_unit->second;
+        is_cloaked = count(cloaked_units.begin(), cloaked_units.end(), unit_type) == 1;
+
+        if (!is_cloaked) {
+            number_of_cloaked_units += amount;
+        }
+    }
+
+    return number_of_cloaked_units;
 }
 
 int ObservedUnits::GetnumberOfUnits(sc2::UNIT_TYPEID unit_type) {

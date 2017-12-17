@@ -156,6 +156,7 @@ void StrategyManager::CalculateCombatMode() {
     Kurt::CombatMode current_combat_mode = kurt->GetCombatMode();
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
+
     // Don't set defend_const lower than attack_const, or the modes will just swith back and forth
     // High our_health_attack = bigger army before we attack, while lower attacks with smaller armies.
     // High our_health_defence = Retreat when only a little outnumbered, while lower means we will continue
@@ -225,7 +226,7 @@ void StrategyManager::SetBuildGoal() {
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
-    current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
+    current_best_counter_type = ObservedUnits::current_best_counter_type;
     
     PRINT("###CONTACT BUILDGOAL (SET)###")
     kurt->SendBuildOrder(new_goal_state);
@@ -240,7 +241,7 @@ void StrategyManager::AddToBuildGoal() {
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
-    current_best_counter_type = ObservedUnits::current_best_counter_type; //TODO: check if this works correctly.
+    current_best_counter_type = ObservedUnits::current_best_counter_type;
 
     PRINT("###CONTACT BUILDGOAL (ADD)###")
     kurt->AddToBuildOrder(new_goal_state);
@@ -249,19 +250,37 @@ void StrategyManager::AddToBuildGoal() {
 
 void StrategyManager::StuffWeLikeToHave() {
     BPState* stuff = new BPState();
+
     int number_of_missile_turrets = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MISSILETURRET);
-    // Add 1 missle turret for every 100 hp the enemy air units have
-    while (number_of_missile_turrets < (enemy_units.GetAirHealth() / 100)) {
+    // If the enemy have cloaked units, build a missile turret at every commandcenter to detect them in our bases
+    if (enemy_units.GetNumberOfCloakedUnits() > 0) {
+        int number_of_commandcenters = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+        stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, number_of_commandcenters - number_of_missile_turrets);
+    }
+
+    // Add 1 missle turret for every 300 hp the enemy air units have
+    while (number_of_missile_turrets < (enemy_units.GetAirHealth() / 300)) {
         number_of_missile_turrets++;
         stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MISSILETURRET, 1);
+        PRINT("Enemy have many air units! Create missle turret")
     }
+
+    // Always have 2 ravens available to detect cloaked enemies
+    int number_of_detector_units = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_RAVEN);
+    stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_RAVEN, 2 - number_of_detector_units);
+
+    // Always have marines, max 25
     int number_of_marines = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MARINE);
     while (number_of_marines < (our_units.GetNumberOfGroundUnits() / 5)) {
         number_of_marines++;
-        stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+        if (number_of_marines < 25) {
+            stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
+        }
     }
+
+    // Always have 1 medivac for every 5 marines
     int number_of_medivacs = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MEDIVAC);
-    while (number_of_medivacs < (number_of_marines / 6)) {
+    while (number_of_medivacs < (number_of_marines / 5)) {
         number_of_medivacs++;
         stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
     }
