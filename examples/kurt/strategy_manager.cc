@@ -3,8 +3,6 @@
 #include <algorithm>
 #include "observed_units.h"
 
-//TODO: Remove destroyed structures from enemy_structures (or our_strucutreS)
-
 #define DEBUG // Comment out to disable debug prints in this file.
 #ifdef DEBUG
 #include <iostream>
@@ -24,6 +22,7 @@ ObservedUnits enemy_units;
 ObservedUnits enemy_structures;
 
 UNIT_TYPEID StrategyManager::current_best_counter_type;
+ObservedUnits ordered_counter_units;
 bool StrategyManager::dynamic_flag = false;
 
 StrategyManager::StrategyManager(Kurt* parent_kurt) {
@@ -65,15 +64,15 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             /*PRINT("------Our structures---------")
             PRINT(our_structures.ToString())*/
             PRINT("---------------------------------\n")
-            if (dynamic_flag) {
-                CalculateCombatMode();
-                UpdateCurrentBestCounterType();
-                if (progression_mode) {
-                    AddToBuildGoal();
-                }
-                else if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
-                    AddToBuildGoal();
-                }
+        if (dynamic_flag) {
+            CalculateCombatMode();
+            UpdateCurrentBestCounterType();
+            if (progression_mode) {
+                AddToBuildGoal();
+            }
+            else if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
+                AddToBuildGoal();
+            }
         }
     } 
 
@@ -97,6 +96,11 @@ void StrategyManager::SaveOurUnits(const Unit* unit) {
     }
     else if(Kurt::IsArmyUnit(unit)) { // Don't add SCVs because they are "created" when exiting refineries
         our_units.AddUnits(unit);
+
+        // Keep track of ordered counter units. Prevents asking for to many units
+        if (ordered_counter_units.GetnumberOfUnits(unit->unit_type) != 0) {
+            ordered_counter_units.RemoveUnit(unit);
+        }
     }
 }
 
@@ -105,7 +109,7 @@ void StrategyManager::RemoveDeadUnit(const Unit* unit) {
         if (kurt->IsStructure(unit)) {
             enemy_structures.RemoveUnit(unit);
         }
-        else {
+        else if (Kurt::IsArmyUnit(unit)) {
             enemy_units.RemoveUnit(unit);
         }
     }
@@ -140,8 +144,8 @@ void StrategyManager::SaveSpottedEnemyUnits(const ObservationInterface* observat
         if (kurt->IsStructure(*observed_unit)) {
             observed_structures.push_back(*observed_unit);
         }
-        else { // Only add military to the observation
-            observed_units.push_back(*observed_unit); //TODO: Adding all units may be preferable.
+        else if (Kurt::IsArmyUnit(*observed_unit)) { // Only add military to the observation
+            observed_units.push_back(*observed_unit); 
         }
     }
 
@@ -243,9 +247,24 @@ void StrategyManager::AddToBuildGoal() {
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
     current_best_counter_type = ObservedUnits::current_best_counter_type;
 
+    // Update the amount of units of current_best_unit_type we need to order. Any old amount is overridden by the new.
+    // This should prevent the order from increasing over time.
+    ordered_counter_units.SetUnit(current_best_counter_type, new_goal_state->GetUnitAmount(current_best_counter_type));
+
+    // Loop through already ordered counter units and add them to the new order
+    const map<UNIT_TYPEID, int>* current_order = ordered_counter_units.GetSavedUnits();
+    for (auto counter_unit = current_order->begin(); counter_unit != current_order->end(); ++counter_unit) {
+        cout << "\n###############################################################" << endl;
+        cout << "Ordered counter unit: " << Kurt::GetUnitType(counter_unit->first)->name << ", " << to_string(counter_unit->second) << endl;
+        cout << "###############################################################\n" << endl;
+        new_goal_state->SetUnitAmount(counter_unit->first, counter_unit->second);
+    }
+
     PRINT("###CONTACT BUILDGOAL (ADD)###")
-    kurt->AddToBuildOrder(new_goal_state);
-    StuffWeLikeToHave();
+    // Send order as a new order, canceling the old one. This is okay because previously ordered
+    // counter units are already added to this order.
+    kurt->SendBuildOrder(new_goal_state); 
+    StuffWeLikeToHave(); // Ask for other stuff we want to add on top of all counter units. 
 };
 
 void StrategyManager::StuffWeLikeToHave() {
@@ -266,7 +285,7 @@ void StrategyManager::StuffWeLikeToHave() {
     }
 
     // Always have 2 ravens available to detect cloaked enemies
-    int number_of_detector_units = our_structures.GetnumberOfUnits(UNIT_TYPEID::TERRAN_RAVEN);
+    int number_of_detector_units = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_RAVEN);
     stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_RAVEN, 2 - number_of_detector_units);
 
     // Always have marines, max 25

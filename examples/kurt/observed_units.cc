@@ -53,6 +53,11 @@ void ObservedUnits::AddUnits(const Unit* unit, const int amount) {
     calculateCP();
 }
 
+void ObservedUnits::SetUnit(const sc2::UNIT_TYPEID unit_type, const int amount) {
+    saved_units[unit_type] += amount;
+    calculateCP();
+}
+
 void ObservedUnits::RemoveUnit(const Unit* unit) {
     saved_units[unit->unit_type] -= 1;
     calculateCP();
@@ -63,8 +68,7 @@ void ObservedUnits::RemoveUnit(const sc2::UNIT_TYPEID unit_type) {
     calculateCP();
 }
 
-// TODO: Check if calculation is wrong
-void ObservedUnits::calculateCP() { //TODO: Remove DPS with dead units.
+void ObservedUnits::calculateCP() {
     // Reset cp-data.
     cp.g2g = 0;
     cp.g2a = 0;
@@ -327,13 +331,13 @@ BPState* ObservedUnits::GetBestCounterUnit(ObservedUnits* strongest_enemy, UNIT_
     }
 
     UNIT_TYPEID best_counter_type = best_counter_unit->saved_units.begin()->first;
-    delete best_counter_unit; // best_counter_units not needed any more
     PRINT("Best counter unit found: " << Kurt::GetUnitType(best_counter_type)->name)
     PRINT("Number of counter units needed: " << to_string(number_of_counter_units))
+
+    delete best_counter_unit; // best_counter_units not needed any more
+    current_best_counter_type = best_counter_type;
+
     BPState* counter_order = new BPState(); //TODO: Add a BPState that saves all former build_order, and just add on to that when creating a new buildorder.
-    if (current_best_counter_type != best_counter_type) {
-        current_best_counter_type = best_counter_type;
-    }
     counter_order->SetUnitAmount(best_counter_type, number_of_counter_units);
     return counter_order;
 }
