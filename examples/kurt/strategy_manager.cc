@@ -253,12 +253,12 @@ void StrategyManager::AddToBuildGoal() {
 
     // Loop through already ordered counter units and add them to the new order
     const map<UNIT_TYPEID, int>* current_order = ordered_counter_units.GetSavedUnits();
+    PRINT("\n###############################################################")
     for (auto counter_unit = current_order->begin(); counter_unit != current_order->end(); ++counter_unit) {
-        cout << "\n###############################################################" << endl;
-        cout << "Ordered counter unit: " << Kurt::GetUnitType(counter_unit->first)->name << ", " << to_string(counter_unit->second) << endl;
-        cout << "###############################################################\n" << endl;
+        PRINT("Ordered counter unit: " << Kurt::GetUnitType(counter_unit->first)->name << ", " << to_string(counter_unit->second))
         new_goal_state->SetUnitAmount(counter_unit->first, counter_unit->second);
     }
+    PRINT("###############################################################\n")
 
     PRINT("###CONTACT BUILDGOAL (ADD)###")
     // Send order as a new order, canceling the old one. This is okay because previously ordered
