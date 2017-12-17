@@ -63,4 +63,5 @@ private:
     static int scv_gather_vespene_delay;
     static int scv_gather_minerals_delay;
     static int build_missile_tower_delay;
+    static int build_commandcenter_delay;
 };

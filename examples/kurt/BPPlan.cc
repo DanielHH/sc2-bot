@@ -145,7 +145,7 @@ void BPPlan::ExecuteStep(Kurt * const kurt, BPState * current_state) {
         ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::MINERALS);
     int vespene = obs->GetVespene() -
         ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::VESPENE);
-    int food = obs->GetFoodCap() - obs->GetFoodUsed() -
+    int food = obs->GetFoodCap() - obs->GetFoodUsed() +
         ActionRepr::ConsumedUnits(first_action, UNIT_FAKEID::FOOD_USED);
     for (int i = 0; i < vector::size(); ++i) {
         ACTION action = vector::operator[](i);
@@ -161,7 +161,7 @@ void BPPlan::ExecuteStep(Kurt * const kurt, BPState * current_state) {
         ACTION next_a = vector::operator[](i + 1);
         minerals -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::MINERALS);
         vespene -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::VESPENE);
-        food -= ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::FOOD_USED);
+        food += ActionRepr::ConsumedUnits(next_a, UNIT_FAKEID::FOOD_USED);
         if (minerals < 0 || vespene < 0 || food < 0) {
             break;
         }

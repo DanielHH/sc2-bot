@@ -2,6 +2,7 @@
 
 #include "sc2api/sc2_api.h"
 
+#include "strategy_manager.h"
 #include "BPPlan.h"
 #include "BPState.h"
 #include "action_enum.h"
@@ -77,7 +78,9 @@ MCTS::MCTS(BPState * const root_, BPState * const goal_) {
     interesting_actions.insert(ACTION::SCV_GATHER_VESPENE);
     interesting_actions.insert(ACTION::BUILD_REFINERY);
     interesting_actions.insert(ACTION::BUILD_SUPPLY_DEPOT);
-    interesting_actions.insert(ACTION::BUILD_COMMAND_CENTER);
+    if (StrategyManager::dynamic_flag) {
+        interesting_actions.insert(ACTION::BUILD_COMMAND_CENTER);
+    }
     interesting_actions.insert(ACTION::TRAIN_SCV);
     if (interesting_actions.count(ACTION::BUILD_BARRACKS) != 0) {
         interesting_actions.insert(ACTION::BUILD_BARRACKS_REACTOR);
@@ -95,16 +98,23 @@ MCTS::~MCTS() {
     delete goal;
 }
 
+//#define discourage_hoarding
 double MCTS::CalcReward(
         double time,
         double mineral_rate, double vespene_rate,
         int mineral_stock, int vespene_stock) {
     return
-        time_portion * basic_time / (time + basic_time) +
+        (time_portion * basic_time / (time + basic_time) +
         m_rate_portion * mineral_rate / (mineral_rate + basic_mineral_rate) +
         v_rate_portion * vespene_rate / (vespene_rate + basic_vespene_rate) +
-        m_stock_portion * mineral_stock / (mineral_stock+basic_mineral_stock) +
-        v_stock_portion * vespene_stock / (vespene_stock+basic_vespene_stock);
+        m_stock_portion * mineral_stock / (mineral_stock + basic_mineral_stock) +
+        v_stock_portion * vespene_stock / (vespene_stock + basic_vespene_stock))
+#ifdef discourage_hoarding
+        * 0.5
+        * ((mineral_stock > 800 ? (800.0 / mineral_stock) : 1)
+        + (vespene_stock > 800 ? (800.0 / vespene_stock) : 1))
+#endif
+        ;
 }
 
 void MCTS::Search(int num_iterations) {
