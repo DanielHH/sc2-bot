@@ -166,7 +166,7 @@ void ArmyManager::Harass() {
 // Returns true if a scout was found. Scout precedence: REAPER -> MARINE -> SCV
 bool ArmyManager::TryGetScout() {
     bool scout_found = false;
-    Squad* squad;
+    Squad* squad = nullptr;
     const Unit* scout;
     if (!squads.empty()) {
         for (int i = squads.size()-1; i >= 0; i--) {
@@ -175,6 +175,7 @@ bool ArmyManager::TryGetScout() {
                 squads.erase(std::find(squads.begin(), squads.end(), tmp_squad));
                 delete tmp_squad;
             } else {
+                goto REAPER_SCOUT;
                 for (const Unit* unit : squads.at(i)->members){
                     if (unit->unit_type.ToType() == UNIT_TYPEID::TERRAN_MARINE) {
                         // Marine found, but keep looking.
