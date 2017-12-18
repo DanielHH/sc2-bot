@@ -64,18 +64,22 @@ void StrategyManager::OnStep(const ObservationInterface* observation) {
             /*PRINT("------Our structures---------")
             PRINT(our_structures.ToString())*/
             PRINT("---------------------------------\n")
+
         if (dynamic_flag) {
             CalculateCombatMode();
             UpdateCurrentBestCounterType();
-            if (progression_mode) {
-                AddToBuildGoal();
+
+            // If in progression mode, create battlecruser + other needed units
+            if (progression_mode) { 
+                SetBuildGoal();
+                StuffWeLikeToHave();
             }
+            // If best counter unit has changed, create more of that type + older counter orders!
             else if (current_best_counter_type != ObservedUnits::current_best_counter_type) {
-                AddToBuildGoal();
+                SetBuildGoal();
             }
         }
     } 
-
 }
 
 void StrategyManager::OnUnitEnterVision(const Unit* unit) {
@@ -231,17 +235,29 @@ void StrategyManager::SetBuildGoal() {
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
     current_best_counter_type = ObservedUnits::current_best_counter_type;
-    
-    PRINT("###CONTACT BUILDGOAL (SET)###")
+
+    // Update the amount of units of current_best_unit_type we need to order. Any old amount is overridden by the new.
+    // This should prevent the order from increasing over time.
+    ordered_counter_units.SetUnit(current_best_counter_type, new_goal_state->GetUnitAmount(current_best_counter_type));
+
+    // Loop through already ordered counter units and add them to the new order
+    const map<UNIT_TYPEID, int>* current_order = ordered_counter_units.GetSavedUnits();
+    PRINT("\n###############################################################")
+        for (auto counter_unit = current_order->begin(); counter_unit != current_order->end(); ++counter_unit) {
+            PRINT("Ordered counter unit: " << Kurt::GetUnitType(counter_unit->first)->name << ", " << to_string(counter_unit->second))
+                new_goal_state->SetUnitAmount(counter_unit->first, counter_unit->second);
+        }
+    PRINT("###############################################################\n")
+
+    // Send order as a new order, canceling the old one. This is okay because previously ordered
+    // counter units are already added to this order.
     kurt->SendBuildOrder(new_goal_state);
-    StuffWeLikeToHave();
 };
 
 void StrategyManager::AddToBuildGoal() {
     const ObservedUnits::CombatPower* const our_cp = our_units.GetCombatPower();
     const ObservedUnits::CombatPower* const enemy_cp = enemy_units.GetCombatPower();
     BPState* new_goal_state = new BPState();
-    BPState* stuff = new BPState();
 
     // Add some amount of the currently best counter unit to the build order
     new_goal_state = enemy_units.GetStrongestUnit(our_units, kurt);
@@ -290,7 +306,7 @@ void StrategyManager::StuffWeLikeToHave() {
 
     // Always have marines, max 25
     int number_of_marines = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_MARINE);
-    while (number_of_marines < (our_units.GetNumberOfGroundUnits() / 5)) {
+    while (number_of_marines < (our_units.GetNumberOfGroundUnits() / 4)) {
         number_of_marines++;
         if (number_of_marines < 25) {
             stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1);
@@ -303,6 +319,15 @@ void StrategyManager::StuffWeLikeToHave() {
         number_of_medivacs++;
         stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_MEDIVAC, 1);
     }
+
+    // Always have 3 vikings
+    int number_of_vikings = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_VIKINGFIGHTER, 3 - number_of_vikings);
+
+    // Always have 2 thors
+    int number_of_thors = our_units.GetnumberOfUnits(UNIT_TYPEID::TERRAN_THOR);
+    stuff->IncreaseUnitAmount(UNIT_TYPEID::TERRAN_THOR, 2 - number_of_thors);
+
     kurt->AddToBuildOrder(stuff);
 }
 

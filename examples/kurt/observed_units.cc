@@ -54,7 +54,7 @@ void ObservedUnits::AddUnits(const Unit* unit, const int amount) {
 }
 
 void ObservedUnits::SetUnit(const sc2::UNIT_TYPEID unit_type, const int amount) {
-    saved_units[unit_type] += amount;
+    saved_units[unit_type] = amount;
     calculateCP();
 }
 
@@ -262,16 +262,11 @@ BPState* ObservedUnits::GetStrongestUnit(ObservedUnits enemy_units, Kurt* kurt) 
         best_counter_unit = GetBestCounterUnit(strongest_unit, strongest_unit_type, max_cp_difference, kurt, strongest_unit_is_flying);
     }
     else {
-        // TODO: progression mode!
-        PRINT("Enemys strongest unit: Nothing to counter!")
-            if (kurt->GetProgressionMode()) {
-                best_counter_unit->SetUnitAmount(current_best_counter_type, 1);
-                best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 1); //They're really good anti-air
-            }
-            else {
-                kurt->SetProgressionMode(true);
-                best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 10);
-            }
+        // When we counter all enemy units, work against a battlecruiser instead.
+        PRINT("Enemys strongest unit: None! Creating battlecruisers instead")
+        kurt->SetProgressionMode(true);
+        best_counter_unit->SetUnitAmount(UNIT_TYPEID::TERRAN_BATTLECRUISER, 2);
+        current_best_counter_type = UNIT_TYPEID::TERRAN_BATTLECRUISER;
     }
 
     PRINT("--------------------------------------\n")

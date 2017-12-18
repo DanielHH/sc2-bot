@@ -99,15 +99,19 @@ GamePlan* VespeneGasTycoon(Kurt* kurt) {
 
     BPState* first_build_order = new BPState();
     first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARINE, 4);
-    first_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 4);
 
     BPState* second_build_order = new BPState();
     second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
     second_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 4);
 
+    BPState* third_build_order = new BPState();
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_COMMANDCENTER, 1);
+    third_build_order->SetUnitAmount(UNIT_TYPEID::TERRAN_MARAUDER, 4);
+
     plan->AddStatCombatNode(Kurt::DEFEND);
     plan->AddStatBuildOrderNode(first_build_order);
     plan->AddStatBuildOrderNode(second_build_order);
+    plan->AddStatBuildOrderNode(third_build_order);
 
     return plan;
 }
