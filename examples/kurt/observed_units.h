@@ -49,7 +49,7 @@ public:
     void AddUnits(const sc2::Unit* unit, const int amount = 1);
 
     /* Sets the amount of a single type of unit */
-    void ObservedUnits::SetUnit(const sc2::UNIT_TYPEID unit_type, const int amount);
+    void SetUnit(const sc2::UNIT_TYPEID unit_type, const int amount);
 
     /* Removes a unit from the observations */
     void RemoveUnit(const sc2::Unit* unit);
