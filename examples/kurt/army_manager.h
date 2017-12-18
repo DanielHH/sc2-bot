@@ -38,5 +38,8 @@ private:
     void PlanSmartScoutPath();
     bool TryGetScout();
     void PutUnitInSquad(const sc2::Unit* unit);
+    void putLonelySpecificTypeInSquad(const sc2::Unit* unit);
+    void putFlyingInSquad(const sc2::Unit* unit);
+    void putRandomInSquad(const sc2::Unit* unit);
     void ScoutSmartPath();
 };

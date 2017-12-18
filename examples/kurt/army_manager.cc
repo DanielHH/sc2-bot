@@ -212,39 +212,36 @@ bool ArmyManager::TryGetScout() {
 }
 
 void ArmyManager::PutUnitInSquad(const Unit* unit) {
+    if (unit->is_flying) {
+        if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_MEDIVAC) {
+            putRandomInSquad(unit);
+        } else {
+            putFlyingInSquad(unit);
+        }
+    } else {
+        switch (unit->unit_type.ToType()) {
+            case UNIT_TYPEID::TERRAN_REAPER:
+                putLonelySpecificTypeInSquad(unit);
+                break;
+            default:
+                putRandomInSquad(unit);
+                break;
+        }
+    }
+}
+
+void ArmyManager::putLonelySpecificTypeInSquad(const Unit* unit) {
     if (squads.empty()) {
         Squad* new_squad = new Squad(kurt);
         squads.push_back(new_squad);
     }
-    if (unit->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
-        bool reaper_in_squad = false;
-        for (int i = squads.size()-1; i >= 0; i--) {
-            Squad* tmp_squad = squads.at(i);
-            if (tmp_squad->members.size() < Squad::SQUAD_SIZE && !tmp_squad->members.empty() && tmp_squad->members.at(0)->unit_type == UNIT_TYPEID::TERRAN_REAPER) {
-                tmp_squad->members.push_back(unit);
-                reaper_in_squad = true;
-                break;
-            }
-        }
-        if (!reaper_in_squad) {
-            if (squads.back()->members.empty()) {
-                squads.back()->members.push_back(unit);
-            } else {
-                Squad* new_squad = new Squad(kurt);
-                squads.push_back(new_squad);
-                new_squad->members.push_back(unit);
-            }
-        }
-    } else {
-        bool unit_in_squad = false;
-        for (int i = squads.size()-1; i >= 0; i--) {
-            Squad* tmp_squad = squads.at(i);
-            if (tmp_squad->members.empty()) {
-                tmp_squad->filled_up = false;
-                tmp_squad->members.push_back(unit);
-                unit_in_squad = true;
-                break;
-            } else if (tmp_squad->members.size() < Squad::SQUAD_SIZE && tmp_squad->members.at(0)->unit_type != UNIT_TYPEID::TERRAN_REAPER && !tmp_squad->filled_up) {
+    bool unit_in_squad = false;
+    Squad* empty_squad = nullptr;
+    for (int i = squads.size()-1; i >= 0; i--) {
+        // look for a squad where the same type are in, and if it's ok put in the unit there
+        Squad* tmp_squad = squads.at(i);
+        if (!tmp_squad->members.empty()) {
+            if (!tmp_squad->filled_up && tmp_squad->single_type && tmp_squad->members.at(0)->unit_type == unit->unit_type) {
                 tmp_squad->members.push_back(unit);
                 unit_in_squad = true;
                 if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
@@ -252,11 +249,105 @@ void ArmyManager::PutUnitInSquad(const Unit* unit) {
                 }
                 break;
             }
+        
+        } else {
+            empty_squad = tmp_squad;
+            empty_squad->filled_up = false;
+            empty_squad->single_type = true;
         }
-        if (!unit_in_squad) {
+    }
+    if (!unit_in_squad) {
+        if (empty_squad != nullptr) {
+            empty_squad->members.push_back(unit);
+        } else {
+            // new squad
             Squad* new_squad = new Squad(kurt);
             squads.push_back(new_squad);
             new_squad->members.push_back(unit);
+            new_squad->filled_up = false;
+            new_squad->single_type = true;
+        }
+    }
+}
+    
+void ArmyManager::putFlyingInSquad(const Unit* unit) {
+    if (squads.empty()) {
+        Squad* new_squad = new Squad(kurt);
+        squads.push_back(new_squad);
+    }
+    bool unit_in_squad = false;
+    Squad* empty_squad = nullptr;
+    for (int i = squads.size()-1; i >= 0; i--) {
+        // look for a squad where the same type are in, and if it's ok put in the unit there
+        Squad* tmp_squad = squads.at(i);
+        if (!tmp_squad->members.empty()) {
+            if (!tmp_squad->filled_up && tmp_squad->flying) {
+                tmp_squad->members.push_back(unit);
+                unit_in_squad = true;
+                if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
+                    tmp_squad->filled_up = true;
+                }
+                break;
+            }
+        } else {
+            empty_squad = tmp_squad;
+            empty_squad->filled_up = false;
+            empty_squad->single_type = false;
+            empty_squad->flying = true;
+        }
+    }
+    if (!unit_in_squad) {
+        if (empty_squad != nullptr) {
+            empty_squad->members.push_back(unit);
+        } else {
+            // new squad
+            Squad* new_squad = new Squad(kurt);
+            squads.push_back(new_squad);
+            new_squad->members.push_back(unit);
+            new_squad->filled_up = false;
+            new_squad->single_type = false;
+            new_squad->flying = true;
+        }
+    }
+}
+
+void ArmyManager::putRandomInSquad(const Unit* unit) {
+    if (squads.empty()) {
+        Squad* new_squad = new Squad(kurt);
+        squads.push_back(new_squad);
+    }
+    bool unit_in_squad = false;
+    Squad* empty_squad = nullptr;
+    for (int i = squads.size()-1; i >= 0; i--) {
+        // look for a squad where there are not sametype and not flying
+        Squad* tmp_squad = squads.at(i);
+        if (!tmp_squad->members.empty()) {
+            if (!tmp_squad->filled_up && !tmp_squad->single_type && !tmp_squad->flying) {
+                tmp_squad->members.push_back(unit);
+                unit_in_squad = true;
+                if (tmp_squad->members.size() == Squad::SQUAD_SIZE) {
+                    tmp_squad->filled_up = true;
+                }
+                break;
+            }
+        } else {
+            empty_squad = tmp_squad;
+            empty_squad->filled_up = false;
+            empty_squad->single_type = false;
+            empty_squad->flying = false;
+        }
+    }
+    if (!unit_in_squad) {
+        if (empty_squad != nullptr) {
+            empty_squad->members.push_back(unit);
+        } else {
+            // new squad
+            Squad* new_squad = new Squad(kurt);
+            squads.push_back(new_squad);
+            new_squad->members.push_back(unit);
+            new_squad->filled_up = false;
+            new_squad->single_type = false;
+            new_squad->flying = false;
         }
     }
 }

@@ -15,5 +15,7 @@ public:
     const static int SQUAD_SIZE = 6;
     const static int SQUAD_DISTANCE = 5;
     bool filled_up = false;
+    bool single_type = false;
+    bool flying = false;
     void attackMove(sc2::Point2D point);
 };
